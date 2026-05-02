@@ -309,6 +309,66 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.restore();
   }
 
+  function drawCharacterShaderOutline(pose, leftLegEndY, rightLegEndY, bodyProfile) {
+    const torsoWidth = bodyProfile.torsoWidth;
+    const torsoHeight = bodyProfile.torsoHeight;
+    const torsoY = -38 + bodyProfile.torsoYOffset;
+    const torsoX = -torsoWidth * 0.5;
+    const headCenterY = -62;
+
+    context.save();
+    context.strokeStyle = "rgba(16, 12, 9, 0.75)";
+    context.lineWidth = 4.2;
+    context.lineJoin = "round";
+    context.lineCap = "round";
+
+    // Main silhouette edge.
+    context.beginPath();
+    context.roundRect(torsoX, torsoY, torsoWidth, torsoHeight, bodyProfile.torsoRadius);
+    context.stroke();
+
+    context.beginPath();
+    context.arc(0, headCenterY, 25.5, 0, Math.PI * 2);
+    context.stroke();
+
+    context.beginPath();
+    context.moveTo(-14, 18);
+    context.quadraticCurveTo((pose.leftLeg.x - 14) * 0.5, (leftLegEndY + 18) * 0.5, pose.leftLeg.x, leftLegEndY);
+    context.moveTo(14, 18);
+    context.quadraticCurveTo((pose.rightLeg.x + 14) * 0.5, (rightLegEndY + 18) * 0.5, pose.rightLeg.x, rightLegEndY);
+    context.moveTo(-18, -28);
+    context.quadraticCurveTo((pose.leftArm.x - 18) * 0.5, (pose.leftArm.y - 28) * 0.5, pose.leftArm.x, pose.leftArm.y);
+    context.moveTo(18, -28);
+    context.quadraticCurveTo((pose.rightArm.x + 18) * 0.5, (pose.rightArm.y - 28) * 0.5, pose.rightArm.x, pose.rightArm.y);
+    context.stroke();
+
+    context.beginPath();
+    context.ellipse(pose.leftArm.x, pose.leftArm.y, 9.2, 7.7, 0, 0, Math.PI * 2);
+    context.stroke();
+    context.beginPath();
+    context.ellipse(pose.rightArm.x, pose.rightArm.y, 9.2, 7.7, 0, 0, Math.PI * 2);
+    context.stroke();
+
+    context.beginPath();
+    context.ellipse(pose.leftLeg.x - 1, leftLegEndY + 1.5, 10.8, 5.8, 0, 0, Math.PI * 2);
+    context.stroke();
+    context.beginPath();
+    context.ellipse(pose.rightLeg.x + 1, rightLegEndY + 1.5, 10.8, 5.8, 0, 0, Math.PI * 2);
+    context.stroke();
+
+    // Soft outer glow to mimic post-process shader edge.
+    context.strokeStyle = "rgba(20, 14, 10, 0.26)";
+    context.lineWidth = 6.8;
+    context.beginPath();
+    context.roundRect(torsoX, torsoY, torsoWidth, torsoHeight, bodyProfile.torsoRadius);
+    context.stroke();
+    context.beginPath();
+    context.arc(0, headCenterY, 25.5, 0, Math.PI * 2);
+    context.stroke();
+
+    context.restore();
+  }
+
   function drawHairStyle(styleName, hairColor, seconds) {
     const strokeColor = blendHexColor(hairColor, -0.45);
     const baselineY = -75;
@@ -881,6 +941,9 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const plantedCompensation = dampedBounce * 0.85;
     const leftLegEndY = pose.leftLeg.y - plantedCompensation;
     const rightLegEndY = pose.rightLeg.y - plantedCompensation;
+
+    // Draw outline under character fills/strokes so it reads as a back edge.
+    drawCharacterShaderOutline(pose, leftLegEndY, rightLegEndY, bodyProfile);
 
     drawLimb(-14, 18, pose.leftLeg.x, leftLegEndY, 5.5, colors.pantsColor, 4.2 * wobbleScale, seconds * 7 + 0.5);
     drawLimb(14, 18, pose.rightLeg.x, rightLegEndY, 5.5, colors.pantsColor, 4.2 * wobbleScale, seconds * 7 + 2.2);
