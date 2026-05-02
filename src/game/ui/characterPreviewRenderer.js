@@ -130,13 +130,23 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  function drawLimb(rootX, rootY, endX, endY, thickness, color) {
-    context.strokeStyle = color;
-    context.lineWidth = thickness;
+  function drawLimb(rootX, rootY, endX, endY, thickness, color, wobble = 0, phase = 0) {
+    const midX = (rootX + endX) * 0.5 + Math.sin(phase) * wobble;
+    const midY = (rootY + endY) * 0.5 + Math.cos(phase * 1.2) * wobble * 0.55;
+
+    context.strokeStyle = blendHexColor(color, -0.45);
+    context.lineWidth = thickness + 3;
     context.lineCap = "round";
     context.beginPath();
     context.moveTo(rootX, rootY);
-    context.lineTo(endX, endY);
+    context.quadraticCurveTo(midX, midY, endX, endY);
+    context.stroke();
+
+    context.strokeStyle = color;
+    context.lineWidth = thickness;
+    context.beginPath();
+    context.moveTo(rootX, rootY);
+    context.quadraticCurveTo(midX, midY, endX, endY);
     context.stroke();
   }
 
@@ -227,14 +237,19 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.save();
     context.translate(centerX, centerY + pose.bounce);
     context.rotate(pose.lean);
+    // Slight skew makes the character feel less flat and more staged.
+    context.transform(1, 0, -0.08, 1, 0, 0);
 
-    drawLimb(-12, 28, pose.leftLeg.x, pose.leftLeg.y, 11, colors.pantsColor);
-    drawLimb(12, 28, pose.rightLeg.x, pose.rightLeg.y, 11, colors.pantsColor);
+    drawLimb(-12, 28, pose.leftLeg.x, pose.leftLeg.y, 11, colors.pantsColor, 4.2, seconds * 7 + 0.5);
+    drawLimb(12, 28, pose.rightLeg.x, pose.rightLeg.y, 11, colors.pantsColor, 4.2, seconds * 7 + 2.2);
 
     context.fillStyle = colors.shirtColor;
+    context.strokeStyle = blendHexColor(colors.shirtColor, -0.45);
+    context.lineWidth = 2.5;
     context.beginPath();
     context.roundRect(-30, -48, 60, 80, 21);
     context.fill();
+    context.stroke();
 
     context.fillStyle = blendHexColor(colors.shirtColor, 0.1);
     context.beginPath();
@@ -242,38 +257,72 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.fill();
 
     context.fillStyle = colors.skinColor;
+    context.strokeStyle = blendHexColor(colors.skinColor, -0.45);
+    context.lineWidth = 2.2;
     context.beginPath();
     context.arc(0, -66, 24, 0, Math.PI * 2);
     context.fill();
+    context.stroke();
 
     context.fillStyle = colors.hairColor;
+    context.strokeStyle = blendHexColor(colors.hairColor, -0.45);
+    context.lineWidth = 2;
     context.beginPath();
     context.roundRect(-20, -86, 40, 15, 8);
     context.fill();
+    context.stroke();
     context.beginPath();
     context.arc(-20, -78, 8, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+    context.beginPath();
     context.arc(20, -78, 8, 0, Math.PI * 2);
     context.fill();
+    context.stroke();
 
-    context.fillStyle = "#2f2220";
+    context.fillStyle = "#241c1b";
     if (currentAnimation === "sleep") {
       context.strokeStyle = "#2f2220";
-      context.lineWidth = 2;
+      context.lineWidth = 2.7;
       context.beginPath();
-      context.moveTo(-12, -68);
-      context.lineTo(-5, -68);
-      context.moveTo(5, -68);
-      context.lineTo(12, -68);
+      context.moveTo(-14, -68);
+      context.lineTo(-3.5, -68);
+      context.moveTo(3.5, -68);
+      context.lineTo(14, -68);
       context.stroke();
     } else {
+      // Bold cartoon eyes.
+      context.fillStyle = "#ffffff";
+      context.strokeStyle = "#1f1715";
+      context.lineWidth = 2.5;
       context.beginPath();
-      context.ellipse(-8, -68, 2.8, 4, 0, 0, Math.PI * 2);
-      context.ellipse(8, -68, 2.8, 4, 0, 0, Math.PI * 2);
+      context.ellipse(-8.8, -68, 5.4, 6.8, 0, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.ellipse(8.8, -68, 5.4, 6.8, 0, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+
+      context.fillStyle = "#1e1615";
+      context.beginPath();
+      context.arc(-8.6, -67.5, 2.3, 0, Math.PI * 2);
+      context.fill();
+      context.beginPath();
+      context.arc(8.6, -67.5, 2.3, 0, Math.PI * 2);
+      context.fill();
+
+      context.fillStyle = "rgba(255,255,255,0.85)";
+      context.beginPath();
+      context.arc(-9.8, -68.8, 0.8, 0, Math.PI * 2);
+      context.fill();
+      context.beginPath();
+      context.arc(7.4, -68.8, 0.8, 0, Math.PI * 2);
       context.fill();
     }
 
     context.strokeStyle = "#5a3b35";
-    context.lineWidth = 2;
+    context.lineWidth = 2.8;
     context.lineCap = "round";
     context.beginPath();
     if (currentAnimation === "talk") {
@@ -287,18 +336,36 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.stroke();
 
     context.fillStyle = colors.shoeColor;
+    context.strokeStyle = blendHexColor(colors.shoeColor, -0.35);
+    context.lineWidth = 1.8;
     context.beginPath();
-    context.roundRect(pose.leftLeg.x - 8, pose.leftLeg.y - 2, 14, 6, 3);
-    context.roundRect(pose.rightLeg.x - 6, pose.rightLeg.y - 2, 14, 6, 3);
+    context.ellipse(pose.leftLeg.x - 1, pose.leftLeg.y + 1.5, 9.5, 5, 0, 0, Math.PI * 2);
     context.fill();
+    context.stroke();
+    context.beginPath();
+    context.ellipse(pose.rightLeg.x + 1, pose.rightLeg.y + 1.5, 9.5, 5, 0, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
 
     if (currentAnimation === "sandwich") {
       drawSandwich(pose.leftArm.x + 7, pose.leftArm.y - 2, -0.22 + Math.sin(seconds * 6) * 0.05);
     }
 
     // Arms are rendered last so they always stay in the foreground.
-    drawLimb(-22, -28, pose.leftArm.x, pose.leftArm.y, 10, colors.skinColor);
-    drawLimb(22, -28, pose.rightArm.x, pose.rightArm.y, 10, colors.skinColor);
+    drawLimb(-22, -28, pose.leftArm.x, pose.leftArm.y, 10, colors.skinColor, 4.6, seconds * 9 + 0.8);
+    drawLimb(22, -28, pose.rightArm.x, pose.rightArm.y, 10, colors.skinColor, 4.6, seconds * 9 + 2.7);
+
+    context.fillStyle = "#f7f2e9";
+    context.strokeStyle = "#4a3530";
+    context.lineWidth = 1.8;
+    context.beginPath();
+    context.ellipse(pose.leftArm.x, pose.leftArm.y, 5.5, 4.6, 0, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+    context.beginPath();
+    context.ellipse(pose.rightArm.x, pose.rightArm.y, 5.5, 4.6, 0, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
 
     context.restore();
 
