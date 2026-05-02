@@ -20,6 +20,10 @@
           <div>
             <div class="name" id="activeName">Ritu Shadowaxe</div>
             <div class="stats" id="activeStats"></div>
+            <div class="survivor-nav">
+              <button id="prevSurvivorBtn" class="survivor-nav-btn">PREV</button>
+              <button id="nextSurvivorBtn" class="survivor-nav-btn">NEXT</button>
+            </div>
           </div>
           <div class="level-pill" id="activeLevel">Level 5</div>
         </div>
@@ -75,7 +79,12 @@
       <button class="base-tab">HOUSE</button>
       <button class="base-tab">OUTPOSTS</button>
     </div>
-    <div class="survivor-count"><span>Survivors: 2/3</span><span class="count-chip">2</span><span class="count-chip yellow">0</span><span class="count-chip">0</span><span class="count-chip redc">0</span></div>
+    <div class="survivor-count"><span id="survivorsSummary">Survivors: 2/4</span><span class="count-chip" id="survivorCountChip">2</span><span class="count-chip yellow">0</span><span class="count-chip">0</span><span class="count-chip redc">0</span></div>
+    <div class="roster-controls">
+      <button class="roster-btn" id="addSurvivorBtn">RECRUIT</button>
+      <button class="roster-btn" id="removeSurvivorBtn">DISMISS ACTIVE</button>
+      <button class="roster-btn" id="goMissionsBtn">OPEN PROFILE</button>
+    </div>
     <div class="roster" id="roster"></div>
   </section>
 

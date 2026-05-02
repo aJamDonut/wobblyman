@@ -139,6 +139,17 @@ h1, h2, h3, p { margin: 0; }
 .stats { display: flex; gap: 6px; margin-top: 5px; font-family: Arial, sans-serif; font-weight: 700; font-size: 13px; }
 .stat { display: inline-flex; align-items: center; gap: 3px; background: #111317; border-radius: 7px; padding: 1px 6px; }
 
+.survivor-nav { margin-top: 8px; display: flex; gap: 6px; }
+.survivor-nav-btn {
+  background: #111317;
+  border: 1px solid #2f3a3f;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+}
+
 .bars { margin-top: 22px; display: grid; gap: 22px; }
 .bar-line { display: grid; grid-template-columns: 24px 1fr 38px 24px 1fr 38px 24px 1fr 52px; align-items: center; gap: 8px; }
 .icon-big { font-size: 23px; line-height: 1; }
@@ -194,6 +205,7 @@ h1, h2, h3, p { margin: 0; }
 
 .roster { display:grid; grid-template-columns: repeat(4, 122px); gap:0; margin-left:6px; height:357px; }
 .survivor-card { width:120px; height:357px; background:#101316; border:1px solid #050607; border-radius:4px; padding:8px; position:relative; }
+.survivor-card.active { border-color: #00a7cf; box-shadow: inset 0 0 0 1px rgba(0, 167, 207, 0.5); }
 .survivor-card.empty { background:transparent; border:0; border-left:2px solid rgba(255,255,255,.06); border-radius:0; }
 .survivor-name { font-size:17px; color:#bfc2c3; line-height:.88; text-shadow:1px 1px #000; }
 .mini-avatar { width:102px; height:114px; margin-top:8px; background:#050607; border-radius:5px; display:grid; place-items:center; position:relative; }
@@ -208,6 +220,17 @@ h1, h2, h3, p { margin: 0; }
 .small-xp .xp-fill { height:4px; width:15%; }
 .small-xp-text { position:absolute; left:36px; top:-15px; color:#888; font-family:Arial,sans-serif; font-size:10px; }
 .level { text-align:center; margin-top:5px; color:#aaa; font-family:Arial,sans-serif; font-size:12px; font-weight:700; }
+
+.roster-controls { margin: 0 0 8px 6px; display: flex; gap: 8px; }
+.roster-btn {
+  background: #111317;
+  border: 1px solid #2f3a3f;
+  border-radius: 4px;
+  padding: 7px 10px;
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+}
 
 .toast {
   position: fixed;

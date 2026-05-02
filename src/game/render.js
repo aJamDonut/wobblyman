@@ -1,5 +1,16 @@
 import { formatXp, survivorArtHtml, survivorStatsHtml } from "./helpers.js";
 
+function splitDisplayName(fullName) {
+  const parts = String(fullName || "Unknown").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) {
+    return ["UNKNOWN", "SURVIVOR"];
+  }
+
+  const first = parts[0].toUpperCase();
+  const second = (parts[1] || "SURVIVOR").toUpperCase();
+  return [first, second];
+}
+
 export function renderResources(state, elements) {
   elements.resources.innerHTML = `
     <div class="res">🥪 ${state.resources.sandwich}</div>
@@ -7,6 +18,23 @@ export function renderResources(state, elements) {
 }
 
 export function renderActive(state, elements, activeSurvivor) {
+  if (!activeSurvivor) {
+    elements.activeName.textContent = "No Survivors";
+    elements.activeLevel.textContent = "Level -";
+    elements.activeStats.innerHTML = "";
+
+    elements.hpText.textContent = "0 / 0";
+    elements.moraleText.textContent = "0 / 0";
+    elements.insanityText.textContent = "0 / 0";
+
+    elements.hpFill.style.width = "0%";
+    elements.moraleFill.style.width = "0%";
+    elements.insanityFill.style.width = "0%";
+    elements.xpFill.style.width = "0%";
+    elements.xpText.textContent = "0XP / 0XP";
+    return;
+  }
+
   elements.activeName.textContent = activeSurvivor.name;
   elements.activeLevel.textContent = `Level ${activeSurvivor.level}`;
   elements.activeStats.innerHTML = survivorStatsHtml(activeSurvivor);
@@ -27,10 +55,11 @@ export function renderRoster(state, elements, onSelectSurvivor) {
   elements.roster.innerHTML = "";
 
   state.survivors.forEach((survivor) => {
+    const [firstName, lastName] = splitDisplayName(survivor.name);
     const card = document.createElement("div");
-    card.className = "survivor-card";
+    card.className = `survivor-card ${state.activeId === survivor.id ? "active" : ""}`;
     card.innerHTML = `
-      <div class="survivor-name">${survivor.name.split(" ")[0].toUpperCase()}<br>${survivor.name.split(" ")[1].toUpperCase()}</div>
+      <div class="survivor-name">${firstName}<br>${lastName}</div>
       <div class="mini-avatar">${survivorArtHtml(survivor.gender)}</div>
       <div class="mini-stats"><span>✥ ${survivor.attack}</span><span>🛡 ${survivor.defense}</span></div>
       <div class="mini-stats"><span>🔧 ${survivor.tools}</span><span>💬 ${survivor.speech}</span><span>🔭 ${survivor.search}</span></div>
