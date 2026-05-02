@@ -40,6 +40,17 @@ button {
 .screen { display: none; height: 100vh; padding: 8px; }
 .screen.active { display: block; }
 
+.missions-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 968px) minmax(280px, 360px);
+  gap: 10px;
+  align-items: start;
+}
+
+.missions-main {
+  min-width: 0;
+}
+
 .top-link {
   display: inline-flex;
   align-items: center;
@@ -78,6 +89,45 @@ button {
 }
 
 .profile-panel { max-width: 968px; }
+
+.character-preview-panel {
+  width: 100%;
+  min-height: 410px;
+  max-height: calc(100vh - 24px);
+  overflow: hidden;
+}
+
+.preview-body {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-height: 374px;
+}
+
+.character-preview-canvas {
+  width: 100%;
+  height: 336px;
+  display: block;
+  background: radial-gradient(circle at 50% 20%, rgba(255,255,255,.15), rgba(0,0,0,.22) 75%);
+}
+
+.preview-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  color: #8fa0aa;
+  border-top: 1px solid #252d33;
+  background: #0d1216;
+}
+
+.preview-caption b {
+  font-size: 12px;
+  letter-spacing: 0.8px;
+  color: #d7e2e8;
+}
 
 .profile-body { padding: 15px 12px 13px; }
 
@@ -485,6 +535,37 @@ body.popup-open {
 }
 
 @media (max-width: 640px) {
+  body {
+    overflow: auto;
+  }
+
+  .screen {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .missions-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .character-preview-panel {
+    max-width: 968px;
+    min-height: 0;
+  }
+
+  .character-preview-canvas {
+    height: 260px;
+  }
+
+  .tabs {
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .tab {
+    flex: 0 0 auto;
+  }
+
   .popup-window {
     padding: 14px;
   }

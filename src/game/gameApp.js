@@ -5,6 +5,7 @@ import { clock } from "./helpers.js";
 import { clearPersistedState, loadPersistedState, savePersistedState } from "./persistence.js";
 import { renderActive, renderResources, renderRoster } from "./render.js";
 import { createMissionTimerPopup } from "./ui/missionTimerPopup.js";
+import { createCharacterPreviewRenderer } from "./ui/characterPreviewRenderer.js";
 import { createPopupSystem } from "./ui/popupSystem.js";
 import {
   addSurvivor,
@@ -52,11 +53,65 @@ export function createGameApp() {
     resetGameBtn: document.querySelector("#resetGameBtn"),
     popupLayer: document.querySelector("#popupLayer"),
     missionPanelTitle: document.querySelector("#missionPanelTitle"),
-    missionsList: document.querySelector("#missionsList")
+    missionsList: document.querySelector("#missionsList"),
+    characterPreviewCanvas: document.querySelector("#characterPreviewCanvas"),
+    characterPreviewStatus: document.querySelector("#characterPreviewStatus")
   };
 
   const popupSystem = createPopupSystem(elements.popupLayer);
   const missionTimerPopup = createMissionTimerPopup(popupSystem);
+  const characterPreview = createCharacterPreviewRenderer({
+    canvas: elements.characterPreviewCanvas,
+    statusLabel: elements.characterPreviewStatus
+  });
+
+  function getSurvivorPreviewColors(survivor) {
+    const hasShirtColor = typeof survivor?.shirtColor === "string" && survivor.shirtColor.trim() !== "";
+    const defaultShirtColor = survivor?.gender === "male" ? "#5f9ecf" : "#d94a35";
+
+    return {
+      shirtColor: hasShirtColor ? survivor.shirtColor : defaultShirtColor,
+      hairColor: survivor?.gender === "male" ? "#2a2523" : "#6f2d28",
+      skinColor: survivor?.gender === "male" ? "#b17a52" : "#cf8b58",
+      pantsColor: survivor?.gender === "male" ? "#303946" : "#4a3f5b"
+    };
+  }
+
+  function getMissionAnimationName(missionKey) {
+    if (missionKey === "sandwich") {
+      return "sandwich";
+    }
+
+    if (missionKey === "platter") {
+      return "working";
+    }
+
+    return "wave";
+  }
+
+  function syncCharacterPreview(activeSurvivor) {
+    if (!activeSurvivor) {
+      characterPreview.playAnimation("idle", { loop: true });
+      return;
+    }
+
+    characterPreview.setCharacterProperties(getSurvivorPreviewColors(activeSurvivor));
+
+    if (state.running && state.running.survivorId === activeSurvivor.id) {
+      characterPreview.playAnimation(getMissionAnimationName(state.running.key), { loop: true });
+      return;
+    }
+
+    characterPreview.playAnimation("idle", { loop: true });
+  }
+
+  // Expose a function-call API for animation triggers during development/testing.
+  window.triggerCharacterPreviewAnimation = (animationName, durationMs = 0) => {
+    characterPreview.playAnimation(String(animationName || "idle"), {
+      durationMs: Number(durationMs) || 0,
+      loop: !durationMs
+    });
+  };
 
   function getMissionCategories() {
     return Object.keys(state.missions || {});
@@ -239,6 +294,7 @@ export function createGameApp() {
     renderRoster(state, elements, onSelectSurvivor);
     updateSurvivorSummary();
     syncActionButtons();
+    syncCharacterPreview(activeSurvivor);
     queuePersist();
   }
 
@@ -339,6 +395,7 @@ export function createGameApp() {
     });
 
     state.running.entityId = missionEntityId;
+    characterPreview.playAnimation(getMissionAnimationName(missionKey), { loop: true });
 
     renderMissionTimer(categoryKey, missionKey, selectedSeconds);
     renderAll();
@@ -363,6 +420,7 @@ export function createGameApp() {
     }
 
     state.running = null;
+    characterPreview.playAnimation("idle", { loop: true });
     renderAll();
     toast("Mission canceled.");
   }
@@ -404,6 +462,7 @@ export function createGameApp() {
 
   function completeMission(missionProgress) {
     state.running = null;
+    characterPreview.playAnimation("celebrate", { durationMs: 900 });
 
     renderAll();
 
@@ -440,6 +499,10 @@ export function createGameApp() {
     activeSurvivor.morale = Math.max(0, activeSurvivor.morale - (missionProgress.key === "platter" ? 2 : 1));
     state.resources[missionProgress.reward] += 1;
 
+    if (missionProgress.key === "sandwich") {
+      characterPreview.playAnimation("celebrate", { durationMs: 550 });
+    }
+
     const getLevelXpTarget = () => Math.max(10, Math.round(17 * Math.pow(1.28, Math.max(0, activeSurvivor.level - 1))));
 
     while (activeSurvivor.healthXp >= getLevelXpTarget()) {
@@ -469,6 +532,7 @@ export function createGameApp() {
   gameLoop.start(world);
 
   window.addEventListener("beforeunload", () => {
+    characterPreview.destroy();
     gameLoop.stop();
     flushPersist();
   });

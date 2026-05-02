@@ -17,7 +17,8 @@ export function createInitialState() {
         id: "ritu",
         name: "Ritu Shadowaxe",
         level: 5,
-        gender: "female"
+        gender: "female",
+        shirtColor: "#d94a35"
       }, {
         health: 99,
         healthMax: 100,
@@ -164,7 +165,8 @@ export function createRecruitTemplate(index) {
   return createSurvivor({
     name: isMale ? "Mason Drift" : "Nyra Vale",
     level: 1,
-    gender: isMale ? "male" : "female"
+    gender: isMale ? "male" : "female",
+    shirtColor: isMale ? "#5f9ecf" : "#c45f86"
   }, {
     health: 95,
     healthMax: 95,

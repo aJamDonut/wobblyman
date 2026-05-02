@@ -14,60 +14,75 @@
         <span class="chevron"></span>GO BACK
       </div>
 
-      <div class="card profile-panel">
-        <div class="header-strip">SURsVIVOR</div>
-        <div class="profile-body">
-          <div class="profile-row">
-            <div class="avatar">
-              <div class="survivor-art">
-                <i class="hair"></i><i class="head"></i><i class="torso"></i
-                ><i class="arm-l"></i><i class="arm-r"></i><i class="leg-l"></i
-                ><i class="leg-r"></i><i class="shoe-l"></i
-                ><i class="shoe-r"></i>
+      <div class="missions-layout">
+        <div class="missions-main">
+          <div class="card profile-panel">
+            <div class="header-strip">SURsVIVOR</div>
+            <div class="profile-body">
+              <div class="profile-row">
+                <div class="avatar">
+                  <div class="survivor-art">
+                    <i class="hair"></i><i class="head"></i><i class="torso"></i
+                    ><i class="arm-l"></i><i class="arm-r"></i><i class="leg-l"></i
+                    ><i class="leg-r"></i><i class="shoe-l"></i
+                    ><i class="shoe-r"></i>
+                  </div>
+                </div>
+                <div>
+                  <div class="name" id="activeName">Ristu Shadowaxe</div>
+                  <div class="stats" id="activeStats"></div>
+                  <div class="survivor-nav">
+                    <button id="prevSurvivorBtn" class="survivor-nav-btn">
+                      PREV
+                    </button>
+                    <button id="nextSurvivorBtn" class="survivor-nav-btn">
+                      NEXT
+                    </button>
+                  </div>
+                </div>
+                <div class="level-pill" id="activeLevel">Level 5</div>
+              </div>
+
+              <div class="bars" id="activeStatRows"></div>
+              <div class="xp">
+                <span id="xpFill" class="xp-fill"></span
+                ><span id="xpText" class="xp-text"></span>
+              </div>
+              <div class="trait">
+                <b>Adrenaline Junky</b> “I want to go where the action is. (I never
+                become Traumatized)”
               </div>
             </div>
-            <div>
-              <div class="name" id="activeName">Ristu Shadowaxe</div>
-              <div class="stats" id="activeStats"></div>
-              <div class="survivor-nav">
-                <button id="prevSurvivorBtn" class="survivor-nav-btn">
-                  PREV
-                </button>
-                <button id="nextSurvivorBtn" class="survivor-nav-btn">
-                  NEXT
-                </button>
-              </div>
-            </div>
-            <div class="level-pill" id="activeLevel">Level 5</div>
           </div>
 
-          <div class="bars" id="activeStatRows"></div>
-          <div class="xp">
-            <span id="xpFill" class="xp-fill"></span
-            ><span id="xpText" class="xp-text"></span>
+          <div class="tabs">
+            <button class="tab active" data-mission-category="missions">
+              MISSIONS
+            </button>
+            <button class="tab" data-mission-category="camp">CAMP</button>
+            <button class="tab" data-mission-category="med bay">MED BAY</button>
+            <button class="tab" data-mission-category="library">LIBRARY</button>
+            <button class="tab">JOURNAL</button>
           </div>
-          <div class="trait">
-            <b>Adrenaline Junky</b> “I want to go where the action is. (I never
-            become Traumatized)”
+
+          <div class="card mission-panel">
+            <h2 class="section-title" id="missionPanelTitle">MISSIONS</h2>
+            <div class="danger-skulls"><span>☠</span>☠ ☠ ☠ ☠</div>
           </div>
+          <div id="missionsList"></div>
         </div>
-      </div>
 
-      <div class="tabs">
-        <button class="tab active" data-mission-category="missions">
-          MISSIONS
-        </button>
-        <button class="tab" data-mission-category="camp">CAMP</button>
-        <button class="tab" data-mission-category="med bay">MED BAY</button>
-        <button class="tab" data-mission-category="library">LIBRARY</button>
-        <button class="tab">JOURNAL</button>
+        <aside class="card character-preview-panel">
+          <div class="header-strip">LIVE CHARACTER</div>
+          <div class="preview-body">
+            <canvas id="characterPreviewCanvas" class="character-preview-canvas" aria-label="Character preview"></canvas>
+            <div class="preview-caption">
+              <span>Animation</span>
+              <b id="characterPreviewStatus">IDLE</b>
+            </div>
+          </div>
+        </aside>
       </div>
-
-      <div class="card mission-panel">
-        <h2 class="section-title" id="missionPanelTitle">MISSIONS</h2>
-        <div class="danger-skulls"><span>☠</span>☠ ☠ ☠ ☠</div>
-      </div>
-      <div id="missionsList"></div>
     </section>
 
     <section id="baseScreen" class="screen">
