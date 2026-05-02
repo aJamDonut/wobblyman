@@ -88,6 +88,32 @@
     <div class="roster" id="roster"></div>
   </section>
 
+  <div class="popup-layer" id="popupLayer" aria-hidden="true">
+    <section class="popup-window" data-popup-id="mission-timer" role="dialog" aria-modal="true" aria-labelledby="missionTimerTitle">
+      <h2 class="popup-title" id="missionTimerTitle">SCOUT THE AREA</h2>
+      <div class="popup-current-time" id="missionTimerCurrent">00:01:00</div>
+
+      <div class="popup-scale" id="missionTimerScale">
+        <div class="popup-scale-track" aria-hidden="true"></div>
+        <span class="popup-scale-label">1m</span>
+        <span class="popup-scale-label">6h</span>
+        <span class="popup-scale-label">12h</span>
+        <span class="popup-scale-label">18h</span>
+        <span class="popup-scale-label">1d</span>
+      </div>
+
+      <div class="popup-stepper">
+        <button type="button" class="popup-step-btn" id="missionTimerMinus">-</button>
+        <button type="button" class="popup-step-btn" id="missionTimerPlus">+</button>
+      </div>
+
+      <div class="popup-actions">
+        <button type="button" class="popup-cancel" id="missionTimerCancel">CANCEL</button>
+        <button type="button" class="popup-confirm" id="missionTimerStart">START</button>
+      </div>
+    </section>
+  </div>
+
   <div class="toast" id="toast"></div>
   <script type="module" src="/src/main.js"></script>
 </body>

@@ -4,6 +4,8 @@ import { GameLoop } from "./engine/GameLoop.js";
 import { clock } from "./helpers.js";
 import { loadPersistedState, savePersistedState } from "./persistence.js";
 import { renderActive, renderResources, renderRoster } from "./render.js";
+import { createMissionTimerPopup } from "./ui/missionTimerPopup.js";
+import { createPopupSystem } from "./ui/popupSystem.js";
 import {
   addSurvivor,
   createInitialState,
@@ -48,8 +50,12 @@ export function createGameApp() {
     nextSurvivorBtn: document.querySelector("#nextSurvivorBtn"),
     addSurvivorBtn: document.querySelector("#addSurvivorBtn"),
     removeSurvivorBtn: document.querySelector("#removeSurvivorBtn"),
-    goMissionsBtn: document.querySelector("#goMissionsBtn")
+    goMissionsBtn: document.querySelector("#goMissionsBtn"),
+    popupLayer: document.querySelector("#popupLayer")
   };
+
+  const popupSystem = createPopupSystem(elements.popupLayer);
+  const missionTimerPopup = createMissionTimerPopup(popupSystem);
 
   const missionRoots = new Map(
     [...document.querySelectorAll(".mission")].map((missionElement) => [missionElement.dataset.mission, missionElement])
@@ -68,9 +74,32 @@ export function createGameApp() {
 
   function syncActionButtons() {
     const hasSurvivor = Boolean(getSurvivorById(state, state.activeId));
+    const runningMissionKey = state.running?.key || null;
 
-    document.querySelectorAll(".start-btn").forEach((button) => {
-      button.disabled = !hasSurvivor || Boolean(state.running);
+    document.querySelectorAll(".mission").forEach((missionElement) => {
+      const missionKey = missionElement.dataset.mission;
+      const button = missionElement.querySelector(".start-btn");
+
+      if (!hasSurvivor) {
+        button.disabled = true;
+        button.textContent = "START";
+        return;
+      }
+
+      if (!runningMissionKey) {
+        button.disabled = false;
+        button.textContent = "START";
+        return;
+      }
+
+      if (runningMissionKey === missionKey) {
+        button.disabled = false;
+        button.textContent = "CANCEL";
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "WORKING";
     });
 
     elements.prevSurvivorBtn.disabled = !hasSurvivor;
@@ -125,7 +154,8 @@ export function createGameApp() {
     toast.timer = setTimeout(() => elements.toast.classList.remove("show"), 1800);
   }
 
-  function startMission(key, missionRoot) {
+  function beginMission(key, missionRoot, totalSeconds) {
+    const selectedSeconds = Math.max(1, Math.floor(totalSeconds));
     if (state.running) {
       toast("A survivor is already on a mission.");
       return;
@@ -140,23 +170,73 @@ export function createGameApp() {
 
     const button = missionRoot.querySelector(".start-btn");
     state.running = { key, survivorId: activeSurvivor.id };
-    button.disabled = true;
-    button.textContent = "WORKING";
+    button.textContent = "CANCEL";
 
-    world.createEntity({
+    const missionEntityId = world.createEntity({
       [Components.MissionProgress]: {
         key,
         survivorId: activeSurvivor.id,
         xp: mission.xp,
         reward: mission.reward,
-        totalSeconds: mission.seconds,
-        remainingSeconds: mission.seconds,
+        totalSeconds: selectedSeconds,
+        remainingSeconds: selectedSeconds,
         elapsedSeconds: 0
       }
     });
 
-    renderMissionTimer(key, mission.seconds);
+    state.running.entityId = missionEntityId;
+
+    renderMissionTimer(key, selectedSeconds);
     renderAll();
+  }
+
+  function cancelMission() {
+    if (!state.running) {
+      return;
+    }
+
+    const { key, entityId } = state.running;
+    if (Number.isInteger(entityId)) {
+      world.removeEntity(entityId);
+    } else {
+      const missionEntities = world.getEntitiesWith([Components.MissionProgress]);
+      missionEntities.forEach((missionEntityId) => {
+        const progress = world.getComponent(missionEntityId, Components.MissionProgress);
+        if (progress?.key === key) {
+          world.removeEntity(missionEntityId);
+        }
+      });
+    }
+
+    state.running = null;
+    renderMissionTimer(key, state.missions[key].seconds);
+    renderAll();
+    toast("Mission canceled.");
+  }
+
+  async function startMission(key, missionRoot) {
+    if (state.running) {
+      toast("A survivor is already on a mission.");
+      return;
+    }
+
+    const mission = state.missions[key];
+    const activeSurvivor = getSurvivorById(state, state.activeId);
+    if (!mission || !activeSurvivor) {
+      toast("No survivor selected.");
+      return;
+    }
+
+    const result = await missionTimerPopup.selectDuration({
+      missionKey: key,
+      defaultSeconds: mission.seconds
+    });
+
+    if (!result || !result.confirmed) {
+      return;
+    }
+
+    beginMission(key, missionRoot, result.seconds);
   }
 
   function renderMissionTimer(missionKey, remainingSeconds) {
@@ -188,14 +268,7 @@ export function createGameApp() {
 
     state.running = null;
 
-    const missionRoot = missionRoots.get(missionProgress.key);
-    if (missionRoot) {
-      const button = missionRoot.querySelector(".start-btn");
-      button.disabled = false;
-      button.textContent = "START";
-    }
-
-    renderMissionTimer(missionProgress.key, missionProgress.totalSeconds);
+    renderMissionTimer(missionProgress.key, state.missions[missionProgress.key].seconds);
     renderAll();
     toast(
       `${activeSurvivor.name} completed ${missionProgress.key === "platter" ? "Sandwich Platter" : "Sandwich"}.`
@@ -274,9 +347,14 @@ export function createGameApp() {
   });
 
   document.querySelectorAll(".mission").forEach((missionElement) => {
-    missionElement
-      .querySelector(".start-btn")
-      .addEventListener("click", () => startMission(missionElement.dataset.mission, missionElement));
+    missionElement.querySelector(".start-btn").addEventListener("click", () => {
+      if (state.running?.key === missionElement.dataset.mission) {
+        cancelMission();
+        return;
+      }
+
+      startMission(missionElement.dataset.mission, missionElement);
+    });
   });
 
   document.querySelectorAll(".base-tab, .tab").forEach((tab) => {
