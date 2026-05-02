@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Survivor Mission UI Game</title>
+  <link rel="stylesheet" href="/src/styles/game.css" />
+</head>
+<body>
+  <div class="resources" id="resources"></div>
+
+  <section id="missionsScreen" class="screen active">
+    <div class="top-link" id="goBase"><span class="chevron"></span>GO BACK</div>
+
+    <div class="card profile-panel">
+      <div class="header-strip">SURVIVOR</div>
+      <div class="profile-body">
+        <div class="profile-row">
+          <div class="avatar"><div class="survivor-art"><i class="hair"></i><i class="head"></i><i class="torso"></i><i class="arm-l"></i><i class="arm-r"></i><i class="leg-l"></i><i class="leg-r"></i><i class="shoe-l"></i><i class="shoe-r"></i></div></div>
+          <div>
+            <div class="name" id="activeName">Ritu Shadowaxe</div>
+            <div class="stats" id="activeStats"></div>
+          </div>
+          <div class="level-pill" id="activeLevel">Level 5</div>
+        </div>
+
+        <div class="bars">
+          <div class="bar-line">
+            <div class="icon-big">❤</div><div><div class="label">HEALTH</div><div class="bar-wrap"><span id="hpFill" class="bar-fill red"></span></div></div><div id="hpText" class="bar-value"></div>
+            <div class="icon-big">✊</div><div><div class="label">MORALE</div><div class="bar-wrap"><span id="moraleFill" class="bar-fill blue"></span></div></div><div id="moraleText" class="bar-value"></div>
+            <div class="icon-big">🧠</div><div><div class="label">INSANITY</div><div class="bar-wrap"><span id="insanityFill" class="bar-fill purple"></span></div></div><div id="insanityText" class="bar-value"></div>
+          </div>
+        </div>
+        <div class="xp"><span id="xpFill" class="xp-fill"></span><span id="xpText" class="xp-text"></span></div>
+        <div class="trait"><b>Adrenaline Junky</b> “I want to go where the action is. (I never become Traumatized)”</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active">MISSIONS</button>
+      <button class="tab">CAMP</button>
+      <button class="tab">MED BAY</button>
+      <button class="tab">LIBRARY</button>
+      <button class="tab">JOURNAL</button>
+    </div>
+
+    <div class="card mission-panel">
+      <h2 class="section-title">KITCHEN</h2>
+      <div class="danger-skulls"><span>☠</span>☠ ☠ ☠ ☠</div>
+    </div>
+
+    <div class="card mission" data-mission="sandwich">
+      <div>
+        <h2>MAKE SANDWICH <span class="info">ⓘ</span></h2>
+        <div class="provides">Provides</div>
+        <div class="reward-row"><div class="reward"><span class="sandwich">🥪</span>Sandwich</div><div class="reward xp-chip"><span class="xp-dot">XP</span>+0.35</div></div>
+      </div>
+      <div class="start-block"><button class="start-btn">START</button><div class="timer">⏱ 00:05</div></div>
+    </div>
+
+    <div class="card mission" data-mission="platter">
+      <div>
+        <h2>MAKE SANDWICH PLATTER</h2>
+        <div class="provides">Provides</div>
+        <div class="reward-row"><div><div class="reward"><span class="sandwich">🥪</span>Sandwich Platter</div><div class="low">LOW %</div></div><div class="reward xp-chip"><span class="xp-dot">XP</span>+3-5</div></div>
+      </div>
+      <div class="start-block"><button class="start-btn">START</button><div class="timer">⏱ 00:45</div></div>
+    </div>
+  </section>
+
+  <section id="baseScreen" class="screen">
+    <div class="base-tabs">
+      <button class="base-tab">STRONGHOLD</button>
+      <button class="base-tab active">SURVIVORS</button>
+      <button class="base-tab">HOUSE</button>
+      <button class="base-tab">OUTPOSTS</button>
+    </div>
+    <div class="survivor-count"><span>Survivors: 2/3</span><span class="count-chip">2</span><span class="count-chip yellow">0</span><span class="count-chip">0</span><span class="count-chip redc">0</span></div>
+    <div class="roster" id="roster"></div>
+  </section>
+
+  <div class="toast" id="toast"></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
