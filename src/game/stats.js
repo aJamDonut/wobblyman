@@ -192,4 +192,83 @@ export function getSurvivorDisplayStats(displayType) {
   return survivorStatDefinitions.filter((definition) => definition.displayType === displayType);
 }
 
+export function getStatDefinition(statKey) {
+  return survivorStatDefinitions.find((definition) => definition.key === statKey) || null;
+}
+
+export function getStatXpTarget(statKey, statLevel) {
+  const definition = getStatDefinition(statKey);
+  if (!definition) {
+    return 0;
+  }
+
+  const normalizedLevel = Math.max(
+    definition.lowest,
+    toNumber(statLevel, definition.default)
+  );
+  const scaledLevel = Math.max(0, normalizedLevel - definition.lowest);
+
+  return Math.max(
+    8,
+    Math.round(12 + scaledLevel * 0.35 + Math.pow(scaledLevel, 1.08) * 0.05)
+  );
+}
+
+export function gainStatXp(survivor, statKey, xpAmount) {
+  if (!survivor) {
+    return 0;
+  }
+
+  const definition = getStatDefinition(statKey);
+  if (!definition) {
+    return 0;
+  }
+
+  const amount = Math.max(0, toNumber(xpAmount, 0));
+  if (amount <= 0) {
+    return 0;
+  }
+
+  const { key, highest, displayType } = definition;
+  const { max, xp } = getStatHiddenKeys(key);
+
+  if (!Number.isFinite(survivor[key])) {
+    survivor[key] = definition.default;
+  }
+
+  if (!Number.isFinite(survivor[xp])) {
+    survivor[xp] = 0;
+  }
+
+  if (displayType === STAT_DISPLAY_TYPES.BAR && !Number.isFinite(survivor[max])) {
+    survivor[max] = Math.max(survivor[key], definition.default);
+  }
+
+  survivor[xp] += amount;
+
+  let levelsGained = 0;
+  while (survivor[key] < highest) {
+    const targetXp = getStatXpTarget(key, survivor[key]);
+    if (survivor[xp] < targetXp) {
+      break;
+    }
+
+    survivor[xp] -= targetXp;
+    survivor[key] = Math.min(highest, survivor[key] + 1);
+
+    if (displayType === STAT_DISPLAY_TYPES.BAR) {
+      survivor[max] = Math.min(highest, Math.max(survivor[max], survivor[key]));
+      survivor[key] = Math.min(survivor[key], survivor[max]);
+    }
+
+    levelsGained += 1;
+  }
+
+  if (survivor[key] >= highest) {
+    survivor[xp] = 0;
+  }
+
+  return levelsGained;
+}
+
 export { STAT_DISPLAY_TYPES };

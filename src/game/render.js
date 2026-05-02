@@ -1,5 +1,5 @@
 import { formatXp, survivorArtHtml, survivorStatsHtml } from "./helpers.js";
-import { STAT_DISPLAY_TYPES, getStatHiddenKeys, getSurvivorDisplayStats } from "./stats.js";
+import { STAT_DISPLAY_TYPES, getStatHiddenKeys, getStatXpTarget, getSurvivorDisplayStats } from "./stats.js";
 
 function toSafeNumber(value, fallback = 0) {
   return Number.isFinite(value) ? value : fallback;
@@ -67,7 +67,24 @@ export function renderActive(state, elements, activeSurvivor) {
   const intRows = getSurvivorDisplayStats(STAT_DISPLAY_TYPES.INT)
     .map((definition) => {
       const value = toSafeNumber(activeSurvivor[definition.key]);
-      return `<div class="dynamic-int"><span>${definition.icon} ${definition.label}</span><b>${value}</b></div>`;
+      const { xp } = getStatHiddenKeys(definition.key);
+      const xpCurrent = toSafeNumber(activeSurvivor[xp]);
+      const xpTarget = getStatXpTarget(definition.key, value);
+      const xpPercent =
+        value >= definition.highest
+          ? 100
+          : Math.min(100, Math.max(0, (xpCurrent / Math.max(1, xpTarget)) * 100));
+      const xpSummary = value >= definition.highest ? "XP MAX" : `${formatXp(xpCurrent)} / ${formatXp(xpTarget)} XP`;
+
+      return `
+        <div class="dynamic-int">
+          <span class="dynamic-int-label">${definition.icon} ${definition.label}</span>
+          <div class="dynamic-int-value-wrap">
+            <b>${value}</b>
+            <small>${xpSummary}</small>
+            <span class="dynamic-int-xp"><i style="width:${xpPercent}%"></i></span>
+          </div>
+        </div>`;
     })
     .join("");
 

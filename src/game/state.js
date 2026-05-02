@@ -59,9 +59,10 @@ export function createInitialState() {
         sandwich: {
           title: "MAKE SANDWICH",
           rewardLabel: "Sandwich",
-          xpLabel: "+0.35",
-          seconds: 5,
+          xpLabel: "+2 Cooking XP",
+          seconds: 1,
           xp: 0.35,
+          statXp: { cooking: 2 },
           reward: "sandwich"
         },
         platter: {

@@ -18,6 +18,7 @@ import {
   selectPreviousSurvivor,
   selectSurvivor
 } from "./state.js";
+import { gainStatXp } from "./stats.js";
 import { missionProgressSystem } from "./systems/missionProgressSystem.js";
 import { survivorRecoverySystem } from "./systems/survivorRecoverySystem.js";
 
@@ -323,6 +324,7 @@ export function createGameApp() {
         key: missionKey,
         survivorId: activeSurvivor.id,
         xp: mission.xp,
+        statXp: mission.statXp || null,
         reward: mission.reward,
         rewardLabel: mission.rewardLabel,
         totalSeconds: selectedSeconds,
@@ -404,6 +406,18 @@ export function createGameApp() {
     const mission = getMission(missionProgress.categoryKey, missionProgress.key);
 
     activeSurvivor.healthXp += missionProgress.xp;
+
+    const statXpAwards =
+      missionProgress.statXp && typeof missionProgress.statXp === "object"
+        ? missionProgress.statXp
+        : mission?.statXp;
+
+    if (statXpAwards && typeof statXpAwards === "object") {
+      Object.entries(statXpAwards).forEach(([statKey, xpAmount]) => {
+        gainStatXp(activeSurvivor, statKey, xpAmount);
+      });
+    }
+
     activeSurvivor.morale = Math.max(0, activeSurvivor.morale - (missionProgress.key === "platter" ? 2 : 1));
     state.resources[missionProgress.reward] += 1;
 
