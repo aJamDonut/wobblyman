@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PixiJS Energetic IK Character</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #f8efe1;
+      font-family: system-ui, sans-serif;
+    }
+
+    #stage {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+
+    .label {
+      position: fixed;
+      left: 16px;
+      top: 14px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.72);
+      color: #4c3c35;
+      font-size: 13px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 24px rgba(80, 45, 20, .12);
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stage"></canvas>
+  <div class="label">PixiJS geometry character · procedural IK animation</div>
+
+  <script type="module">
+    import * as PIXI from "https://cdn.jsdelivr.net/npm/pixi.js@8.16.0/dist/pixi.mjs";
+
+    const canvas = document.querySelector("#stage");
+    const app = new PIXI.Application();
+
+    await app.init({
+      canvas,
+      resizeTo: window,
+      antialias: true,
+      backgroundAlpha: 0,
+      resolution: Math.min(window.devicePixelRatio || 1, 2),
+      autoDensity: true,
+    });
+
+    const stage = app.stage;
+    stage.eventMode = "static";
+
+    const world = new PIXI.Container();
+    stage.addChild(world);
+
+    const bg = new PIXI.Graphics();
+    const shadow = new PIXI.Graphics();
+    const energy = new PIXI.Graphics();
+    const character = new PIXI.Container();
+    const limbsBack = new PIXI.Graphics();
+    const body = new PIXI.Graphics();
+    const face = new PIXI.Graphics();
+    const limbsFront = new PIXI.Graphics();
+    const debugTargets = new PIXI.Graphics();
+
+    world.addChild(bg, energy, shadow, character);
+    character.addChild(limbsBack, body, face, limbsFront, debugTargets);
+
+    const TAU = Math.PI * 2;
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    const pulse = t => Math.sin(t * Math.PI);
+
+    const vec = (x = 0, y = 0) => ({ x, y });
+    const add = (a, b) => vec(a.x + b.x, a.y + b.y);
+    const sub = (a, b) => vec(a.x - b.x, a.y - b.y);
+    const mul = (a, s) => vec(a.x * s, a.y * s);
+    const len = v => Math.hypot(v.x, v.y);
+    const norm = v => {
+      const l = len(v) || 1;
+      return vec(v.x / l, v.y / l);
+    };
+    const perp = v => vec(-v.y, v.x);
+
+    function twoBoneIK(root, target, upperLen, lowerLen, bend = 1) {
+      const toTarget = sub(target, root);
+      const d = clamp(len(toTarget), 0.0001, upperLen + lowerLen - 0.0001);
+      const dir = norm(toTarget);
+      const side = perp(dir);
+
+      const a = (upperLen * upperLen - lowerLen * lowerLen + d * d) / (2 * d);
+      const h = Math.sqrt(Math.max(0, upperLen * upperLen - a * a));
+
+      const joint = add(add(root, mul(dir, a)), mul(side, h * bend));
+      return { root, joint, end: target };
+    }
+
+    function drawCapsule(g, a, b, radius, color, stroke = 0x593f36) {
+      g.moveTo(a.x, a.y)
+        .lineTo(b.x, b.y)
+        .stroke({ width: radius * 2, color, cap: "round", join: "round" });
+      g.moveTo(a.x, a.y)
+        .lineTo(b.x, b.y)
+        .stroke({ width: Math.max(1, radius * 2 + 2), color: stroke, alpha: 0.22, cap: "round" });
+    }
+
+    function drawLimb(g, chain, upperColor, lowerColor, handColor, width = 13) {
+      drawCapsule(g, chain.root, chain.joint, width, upperColor);
+      drawCapsule(g, chain.joint, chain.end, width * 0.88, lowerColor);
+      g.circle(chain.joint.x, chain.joint.y, width * 0.92).fill(upperColor);
+      g.circle(chain.end.x, chain.end.y, width * 1.06).fill(handColor);
+      g.circle(chain.end.x - 2, chain.end.y - 2, width * 0.35).fill({ color: 0xffffff, alpha: 0.28 });
+    }
+
+    const poseNames = ["hand to mouth", "hand to foot", "big wave", "little hop"];
+    let pointer = null;
+
+    stage.on("pointermove", e => {
+      const p = e.global;
+      pointer = vec(p.x - app.screen.width / 2, p.y - app.screen.height / 2 - 40);
+    });
+    stage.on("pointerleave", () => pointer = null);
+
+    function getPose(t) {
+      const cycle = 5.6;
+      const index = Math.floor(t / cycle) % 4;
+      const local = (t % cycle) / cycle;
+      const k = ease(local);
+      const excitement = 0.5 + 0.5 * Math.sin(t * 8.0);
+
+      const base = {
+        label: poseNames[index],
+        leftHand: vec(-72 + Math.sin(t * 4) * 7, -28 + Math.cos(t * 3.1) * 4),
+        rightHand: vec(88 + Math.sin(t * 6) * 18, -36 + Math.cos(t * 5) * 22),
+        leftFoot: vec(-42 + Math.sin(t * 5) * 6, 94),
+        rightFoot: vec(42 + Math.sin(t * 5 + Math.PI) * 6, 94),
+        bounce: Math.sin(t * 7) * 5,
+        lean: Math.sin(t * 2.7) * 0.06,
+        excitement,
+      };
+
+      if (index === 0) {
+        const prep = pulse(local);
+        base.leftHand = vec(lerp(-82, -20, k), lerp(-22, -70, k) - prep * 8);
+        base.rightHand = vec(80 + Math.sin(t * 9) * 16, -22 + Math.cos(t * 8) * 13);
+        base.lean = -0.11 * prep;
+      } else if (index === 1) {
+        const dip = pulse(local);
+        base.leftHand = vec(lerp(-74, -48, k), lerp(-20, 86, k) - dip * 12);
+        base.rightHand = vec(86 + Math.sin(t * 7) * 11, -56 + Math.cos(t * 6) * 15);
+        base.lean = -0.20 * dip;
+        base.bounce -= dip * 12;
+      } else if (index === 2) {
+        base.leftHand = vec(-88 + Math.sin(t * 10) * 10, -84 + Math.cos(t * 11) * 10);
+        base.rightHand = vec(92 + Math.sin(t * 11) * 20, -102 + Math.cos(t * 10) * 22);
+        base.lean = 0.14 * Math.sin(t * 3);
+        base.bounce += Math.abs(Math.sin(t * 9)) * 8;
+      } else {
+        const hop = Math.pow(Math.sin(local * Math.PI), 2);
+        base.leftHand = vec(-74 + Math.sin(t * 7) * 20, -40 + Math.cos(t * 8) * 18);
+        base.rightHand = vec(74 + Math.sin(t * 7 + 1) * 20, -40 + Math.cos(t * 8 + 1) * 18);
+        base.leftFoot = vec(-50 - hop * 12, 92 + hop * 10);
+        base.rightFoot = vec(50 + hop * 12, 92 - hop * 18);
+        base.bounce -= hop * 34;
+        base.lean = Math.sin(t * 11) * 0.05;
+      }
+
+      if (pointer) {
+        base.rightHand = vec(
+          clamp(pointer.x, -140, 140),
+          clamp(pointer.y, -140, 70)
+        );
+        base.label = "right hand follows pointer";
+      }
+
+      return base;
+    }
+
+    function drawBackground(w, h, t) {
+      bg.clear();
+      bg.rect(0, 0, w, h).fill(0xf8efe1);
+
+      const cx = w / 2;
+      const cy = h / 2 + 18;
+      bg.circle(cx, cy, 170 + Math.sin(t * 2) * 6).fill({ color: 0xffd98f, alpha: 0.35 });
+      bg.circle(cx, cy, 118 + Math.cos(t * 3) * 4).fill({ color: 0xffffff, alpha: 0.28 });
+
+      for (let i = 0; i < 12; i++) {
+        const a = i / 12 * TAU + t * 0.25;
+        const r = 210 + Math.sin(t * 2 + i) * 8;
+        const x = cx + Math.cos(a) * r;
+        const y = cy + Math.sin(a) * r * 0.72;
+        bg.roundRect(x - 9, y - 4, 18, 8, 4).fill({ color: 0xffffff, alpha: 0.28 });
+      }
+    }
+
+    function drawEnergy(g, t, pose) {
+      g.clear();
+      const burst = 0.25 + pose.excitement * 0.35;
+
+      for (let i = 0; i < 22; i++) {
+        const a = i / 22 * TAU + t * 1.7;
+        const r1 = 92 + (i % 3) * 22 + Math.sin(t * 8 + i) * 8;
+        const r2 = r1 + 12 + Math.sin(t * 12 + i) * 6;
+        const x1 = Math.cos(a) * r1;
+        const y1 = Math.sin(a) * r1 * 0.78 - 12;
+        const x2 = Math.cos(a) * r2;
+        const y2 = Math.sin(a) * r2 * 0.78 - 12;
+        g.moveTo(x1, y1).lineTo(x2, y2).stroke({ width: 3, color: 0xff9b54, alpha: burst, cap: "round" });
+      }
+
+      for (let i = 0; i < 9; i++) {
+        const a = i / 9 * TAU - t * 1.2;
+        const r = 130 + Math.sin(t * 5 + i) * 14;
+        const x = Math.cos(a) * r;
+        const y = Math.sin(a) * r * 0.75 - 18;
+        g.star(x, y, 5, 4, 9, t + i).fill({ color: 0xffcc4d, alpha: 0.42 });
+      }
+    }
+
+    function drawCharacter(t) {
+      const pose = getPose(t);
+      const w = app.screen.width;
+      const h = app.screen.height;
+
+      world.position.set(w / 2, h / 2 + 38 + pose.bounce);
+      character.rotation = pose.lean;
+      character.scale.set(1 + Math.sin(t * 7) * 0.018, 1 - Math.sin(t * 7) * 0.012);
+
+      drawBackground(w, h, t);
+      drawEnergy(energy, t, pose);
+
+      shadow.clear();
+      shadow.ellipse(0, 116 - pose.bounce * 0.25, 82 + Math.abs(pose.bounce) * 0.8, 16, 0)
+        .fill({ color: 0x6c4e3f, alpha: 0.18 });
+
+      const shoulderL = vec(-48, -42);
+      const shoulderR = vec(48, -42);
+      const hipL = vec(-34, 39);
+      const hipR = vec(34, 39);
+      const mouth = vec(-14 + Math.sin(t * 8) * 1.4, -92);
+      const leftFoot = pose.leftFoot;
+      const rightFoot = pose.rightFoot;
+
+      const leftArm = twoBoneIK(shoulderL, pose.leftHand, 48, 46, -1);
+      const rightArm = twoBoneIK(shoulderR, pose.rightHand, 48, 46, 1);
+      const leftLeg = twoBoneIK(hipL, leftFoot, 45, 47, 1);
+      const rightLeg = twoBoneIK(hipR, rightFoot, 45, 47, -1);
+
+      limbsBack.clear();
+      drawLimb(limbsBack, rightLeg, 0x6db4ff, 0x4f9bea, 0x54382f, 14);
+      drawLimb(limbsBack, leftLeg, 0x74c2ff, 0x55a8f2, 0x54382f, 14);
+      drawLimb(limbsBack, rightArm, 0xffbd70, 0xffcc84, 0xffd7a5, 12);
+
+      body.clear();
+      const squash = Math.sin(t * 7) * 2.5;
+      body.roundRect(-50, -62 - squash, 100, 108 + squash * 1.2, 38).fill(0xff7a59);
+      body.roundRect(-38, -50, 76, 82, 28).fill({ color: 0xffa066, alpha: 0.45 });
+      body.circle(0, -100 + Math.sin(t * 8) * 2, 43).fill(0xffd7a5);
+      body.circle(-28, -119, 12).fill(0xffd7a5);
+      body.circle(28, -119, 12).fill(0xffd7a5);
+      body.circle(-29, -120, 6).fill({ color: 0xff9b78, alpha: 0.35 });
+      body.circle(29, -120, 6).fill({ color: 0xff9b78, alpha: 0.35 });
+      body.roundRect(-22, -139, 44, 16, 8).fill(0x6b473b);
+      body.circle(-31, -132, 12).fill(0x6b473b);
+      body.circle(31, -132, 12).fill(0x6b473b);
+      body.circle(-17, -18, 5).fill({ color: 0xffffff, alpha: 0.38 });
+      body.circle(18, -18, 5).fill({ color: 0xffffff, alpha: 0.38 });
+
+      face.clear();
+      const blink = Math.sin(t * 2.1) > 0.94 ? 0.16 : 1;
+      face.ellipse(-15, -103, 5, 8 * blink).fill(0x3d2f2a);
+      face.ellipse(15, -103, 5, 8 * blink).fill(0x3d2f2a);
+      face.circle(-17, -106, 1.7).fill(0xffffff);
+      face.circle(13, -106, 1.7).fill(0xffffff);
+      face.circle(-27, -92, 6).fill({ color: 0xff8fa0, alpha: 0.55 });
+      face.circle(27, -92, 6).fill({ color: 0xff8fa0, alpha: 0.55 });
+      face.moveTo(mouth.x - 8, mouth.y).quadraticCurveTo(mouth.x, mouth.y + 8, mouth.x + 10, mouth.y)
+        .stroke({ width: 3, color: 0x5b3e35, cap: "round" });
+
+      limbsFront.clear();
+      drawLimb(limbsFront, leftArm, 0xffbd70, 0xffcc84, 0xffd7a5, 12);
+
+      // Tiny visual contact cues for the active target.
+      debugTargets.clear();
+      const labelAlpha = 0.22 + pose.excitement * 0.18;
+      debugTargets.circle(pose.leftHand.x, pose.leftHand.y, 20 + Math.sin(t * 10) * 3)
+        .stroke({ width: 2, color: 0xffffff, alpha: labelAlpha });
+      if (pointer) {
+        debugTargets.circle(pose.rightHand.x, pose.rightHand.y, 18 + Math.sin(t * 12) * 3)
+          .stroke({ width: 2, color: 0x6bfff2, alpha: 0.45 });
+      }
+    }
+
+    app.ticker.add(ticker => {
+      drawCharacter(performance.now() / 1000);
+    });
+  </script>
+</body>
+</html>

@@ -303,7 +303,6 @@ export function createGameApp() {
   }
 
   function beginMission(categoryKey, missionKey, totalSeconds) {
-    const selectedSeconds = Math.max(1, Math.floor(totalSeconds));
     if (state.running) {
       toast("A survivor is already on a mission.");
       return;
@@ -316,6 +315,9 @@ export function createGameApp() {
       return;
     }
 
+    const cycleSeconds = Math.max(1, Math.floor(mission.seconds || 1));
+    const selectedSeconds = Math.max(cycleSeconds, Math.floor(totalSeconds));
+
     state.running = { categoryKey, key: missionKey, survivorId: activeSurvivor.id };
 
     const missionEntityId = world.createEntity({
@@ -327,6 +329,9 @@ export function createGameApp() {
         statXp: mission.statXp || null,
         reward: mission.reward,
         rewardLabel: mission.rewardLabel,
+        cycleSeconds,
+        cycleRemainingSeconds: cycleSeconds,
+        cyclesCompleted: 0,
         totalSeconds: selectedSeconds,
         remainingSeconds: selectedSeconds,
         elapsedSeconds: 0
@@ -398,6 +403,20 @@ export function createGameApp() {
   }
 
   function completeMission(missionProgress) {
+    state.running = null;
+
+    renderAll();
+
+    const mission = getMission(missionProgress.categoryKey, missionProgress.key);
+    const cycles = missionProgress.cyclesCompleted || 0;
+    if (cycles > 0) {
+      toast(`Completed ${mission?.title || "mission"}: ${cycles} cycle${cycles === 1 ? "" : "s"}.`);
+    } else {
+      toast(`${mission?.title || "Mission"} finished with no full cycle completed.`);
+    }
+  }
+
+  function applyMissionCycleRewards(missionProgress) {
     const activeSurvivor = getSurvivorById(state, missionProgress.survivorId);
     if (!activeSurvivor) {
       return;
@@ -430,10 +449,7 @@ export function createGameApp() {
       activeSurvivor.health = activeSurvivor.healthMax;
     }
 
-    state.running = null;
-
     renderAll();
-    toast(`${activeSurvivor.name} completed ${mission?.rewardLabel || "the mission"}.`);
   }
 
   gameLoop.addSystem(missionProgressSystem, {
@@ -441,6 +457,7 @@ export function createGameApp() {
       renderMissionTimer(missionProgress.categoryKey, missionProgress.key, missionProgress.remainingSeconds);
       renderRoster(state, elements, onSelectSurvivor);
     },
+    onMissionCycleComplete: applyMissionCycleRewards,
     onMissionComplete: completeMission
   });
 

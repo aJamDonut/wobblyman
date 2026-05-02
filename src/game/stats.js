@@ -70,7 +70,7 @@ export const survivorStatDefinitions = [
     displayType: STAT_DISPLAY_TYPES.INT,
     lowest: 0,
     highest: 1000,
-    default: 100,
+    default: 1,
     icon: "🍳",
     showInHeader: true
   },
@@ -80,7 +80,7 @@ export const survivorStatDefinitions = [
     displayType: STAT_DISPLAY_TYPES.INT,
     lowest: 0,
     highest: 1000,
-    default: 10,
+    default: 1,
     icon: "✥",
     showInHeader: true
   },
@@ -90,7 +90,7 @@ export const survivorStatDefinitions = [
     displayType: STAT_DISPLAY_TYPES.INT,
     lowest: 0,
     highest: 1000,
-    default: 5,
+    default: 1,
     icon: "🛡",
     showInHeader: true
   },
@@ -100,7 +100,7 @@ export const survivorStatDefinitions = [
     displayType: STAT_DISPLAY_TYPES.INT,
     lowest: 0,
     highest: 1000,
-    default: 5,
+    default: 1,
     icon: "🔧",
     showInHeader: true
   },
@@ -110,7 +110,7 @@ export const survivorStatDefinitions = [
     displayType: STAT_DISPLAY_TYPES.INT,
     lowest: 0,
     highest: 1000,
-    default: 5,
+    default: 1,
     icon: "💬",
     showInHeader: true
   },
@@ -120,7 +120,7 @@ export const survivorStatDefinitions = [
     displayType: STAT_DISPLAY_TYPES.INT,
     lowest: 0,
     highest: 1000,
-    default: 5,
+    default: 1,
     icon: "🔭",
     showInHeader: true
   }

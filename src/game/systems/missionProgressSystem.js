@@ -7,17 +7,31 @@ export function missionProgressSystem(world, deltaSeconds, context) {
     const missionProgress = world.getComponent(entityId, Components.MissionProgress);
     missionProgress.elapsedSeconds += deltaSeconds;
 
-    const wholeSecondsElapsed = Math.floor(missionProgress.elapsedSeconds);
+    let wholeSecondsElapsed = Math.floor(missionProgress.elapsedSeconds);
     if (wholeSecondsElapsed > 0) {
       missionProgress.elapsedSeconds -= wholeSecondsElapsed;
-      missionProgress.remainingSeconds = Math.max(
-        0,
-        missionProgress.remainingSeconds - wholeSecondsElapsed
-      );
+    }
 
-      if (context.onMissionTick) {
-        context.onMissionTick(missionProgress);
+    while (wholeSecondsElapsed > 0 && missionProgress.remainingSeconds > 0) {
+      missionProgress.remainingSeconds -= 1;
+
+      missionProgress.cycleRemainingSeconds = Math.max(0, missionProgress.cycleRemainingSeconds - 1);
+      if (missionProgress.cycleRemainingSeconds === 0) {
+        missionProgress.cyclesCompleted += 1;
+        if (context.onMissionCycleComplete) {
+          context.onMissionCycleComplete(missionProgress);
+        }
+
+        if (missionProgress.remainingSeconds > 0) {
+          missionProgress.cycleRemainingSeconds = missionProgress.cycleSeconds;
+        }
       }
+
+      wholeSecondsElapsed -= 1;
+    }
+
+    if (context.onMissionTick) {
+      context.onMissionTick(missionProgress);
     }
 
     if (missionProgress.remainingSeconds === 0) {

@@ -14,19 +14,10 @@ function toClock(totalSeconds) {
   return [hours, minutes, seconds].map((value) => String(value).padStart(2, "0")).join(":");
 }
 
-function getClosestPresetIndex(seconds) {
-  let bestIndex = 0;
-  let bestDistance = Number.POSITIVE_INFINITY;
-
-  DURATION_PRESETS.forEach((preset, index) => {
-    const distance = Math.abs(preset.seconds - seconds);
-    if (distance < bestDistance) {
-      bestDistance = distance;
-      bestIndex = index;
-    }
-  });
-
-  return bestIndex;
+function getDefaultPresetIndex(seconds) {
+  const minimumSeconds = Math.max(1, Math.floor(seconds || 1));
+  const foundIndex = DURATION_PRESETS.findIndex((preset) => preset.seconds >= minimumSeconds);
+  return foundIndex === -1 ? DURATION_PRESETS.length - 1 : foundIndex;
 }
 
 export function createMissionTimerPopup(popupSystem) {
@@ -42,7 +33,7 @@ export function createMissionTimerPopup(popupSystem) {
         const startButton = popupRoot.querySelector("#missionTimerStart");
         const labels = [...popupRoot.querySelectorAll(".popup-scale-label")];
 
-        let selectedIndex = getClosestPresetIndex(defaultSeconds);
+        let selectedIndex = getDefaultPresetIndex(defaultSeconds);
 
         function render() {
           const selectedDuration = DURATION_PRESETS[selectedIndex];

@@ -1,98 +1,140 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Survivor Mission UI Game</title>
-  <link rel="stylesheet" href="/src/styles/game.css" />
-</head>
-<body>
-  <div class="resources" id="resources"></div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Survivor Mission UI Game</title>
+    <link rel="stylesheet" href="/src/styles/game.css" />
+  </head>
+  <body>
+    <div class="resources" id="resources"></div>
 
-  <section id="missionsScreen" class="screen active">
-    <div class="top-link" id="goBase"><span class="chevron"></span>GO BACK</div>
+    <section id="missionsScreen" class="screen active">
+      <div class="top-link" id="goBase">
+        <span class="chevron"></span>GO BACK
+      </div>
 
-    <div class="card profile-panel">
-      <div class="header-strip">SURsVIVOR</div>
-      <div class="profile-body">
-        <div class="profile-row">
-          <div class="avatar"><div class="survivor-art"><i class="hair"></i><i class="head"></i><i class="torso"></i><i class="arm-l"></i><i class="arm-r"></i><i class="leg-l"></i><i class="leg-r"></i><i class="shoe-l"></i><i class="shoe-r"></i></div></div>
-          <div>
-            <div class="name" id="activeName">Ristu Shadowaxe</div>
-            <div class="stats" id="activeStats"></div>
-            <div class="survivor-nav">
-              <button id="prevSurvivorBtn" class="survivor-nav-btn">PREV</button>
-              <button id="nextSurvivorBtn" class="survivor-nav-btn">NEXT</button>
+      <div class="card profile-panel">
+        <div class="header-strip">SURsVIVOR</div>
+        <div class="profile-body">
+          <div class="profile-row">
+            <div class="avatar">
+              <div class="survivor-art">
+                <i class="hair"></i><i class="head"></i><i class="torso"></i
+                ><i class="arm-l"></i><i class="arm-r"></i><i class="leg-l"></i
+                ><i class="leg-r"></i><i class="shoe-l"></i
+                ><i class="shoe-r"></i>
+              </div>
             </div>
+            <div>
+              <div class="name" id="activeName">Ristu Shadowaxe</div>
+              <div class="stats" id="activeStats"></div>
+              <div class="survivor-nav">
+                <button id="prevSurvivorBtn" class="survivor-nav-btn">
+                  PREV
+                </button>
+                <button id="nextSurvivorBtn" class="survivor-nav-btn">
+                  NEXT
+                </button>
+              </div>
+            </div>
+            <div class="level-pill" id="activeLevel">Level 5</div>
           </div>
-          <div class="level-pill" id="activeLevel">Level 5</div>
+
+          <div class="bars" id="activeStatRows"></div>
+          <div class="xp">
+            <span id="xpFill" class="xp-fill"></span
+            ><span id="xpText" class="xp-text"></span>
+          </div>
+          <div class="trait">
+            <b>Adrenaline Junky</b> “I want to go where the action is. (I never
+            become Traumatized)”
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-mission-category="missions">
+          MISSIONS
+        </button>
+        <button class="tab" data-mission-category="camp">CAMP</button>
+        <button class="tab" data-mission-category="med bay">MED BAY</button>
+        <button class="tab" data-mission-category="library">LIBRARY</button>
+        <button class="tab">JOURNAL</button>
+      </div>
+
+      <div class="card mission-panel">
+        <h2 class="section-title" id="missionPanelTitle">MISSIONS</h2>
+        <div class="danger-skulls"><span>☠</span>☠ ☠ ☠ ☠</div>
+      </div>
+      <div id="missionsList"></div>
+    </section>
+
+    <section id="baseScreen" class="screen">
+      <div class="base-tabs">
+        <button class="base-tab">STRONGHOLD</button>
+        <button class="base-tab active">SURVIVORS</button>
+        <button class="base-tab">HOUSE</button>
+        <button class="base-tab">OUTPOSTS</button>
+      </div>
+      <div class="survivor-count">
+        <span id="survivorsSummary">Survivors: 2/4</span
+        ><span class="count-chip" id="survivorCountChip">2</span
+        ><span class="count-chip yellow">0</span
+        ><span class="count-chip">0</span><span class="count-chip redc">0</span>
+      </div>
+      <div class="roster-controls">
+        <button class="roster-btn" id="addSurvivorBtn">RECRUIT</button>
+        <button class="roster-btn" id="removeSurvivorBtn">
+          DISMISS ACTIVE
+        </button>
+        <button class="roster-btn" id="goMissionsBtn">OPEN PROFILE</button>
+        <button class="roster-btn" id="resetGameBtn">RESET GAME</button>
+      </div>
+      <div class="roster" id="roster"></div>
+    </section>
+
+    <div class="popup-layer" id="popupLayer" aria-hidden="true">
+      <section
+        class="popup-window"
+        data-popup-id="mission-timer"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="missionTimerTitle"
+      >
+        <h2 class="popup-title" id="missionTimerTitle">SCOUT THE AREA</h2>
+        <div class="popup-current-time" id="missionTimerCurrent">00:01:00</div>
+
+        <div class="popup-scale" id="missionTimerScale">
+          <div class="popup-scale-track" aria-hidden="true"></div>
+          <span class="popup-scale-label">1m</span>
+          <span class="popup-scale-label">6h</span>
+          <span class="popup-scale-label">12h</span>
+          <span class="popup-scale-label">18h</span>
+          <span class="popup-scale-label">1d</span>
         </div>
 
-        <div class="bars" id="activeStatRows"></div>
-        <div class="xp"><span id="xpFill" class="xp-fill"></span><span id="xpText" class="xp-text"></span></div>
-        <div class="trait"><b>Adrenaline Junky</b> “I want to go where the action is. (I never become Traumatized)”</div>
-      </div>
+        <div class="popup-stepper">
+          <button type="button" class="popup-step-btn" id="missionTimerMinus">
+            -
+          </button>
+          <button type="button" class="popup-step-btn" id="missionTimerPlus">
+            +
+          </button>
+        </div>
+
+        <div class="popup-actions">
+          <button type="button" class="popup-cancel" id="missionTimerCancel">
+            CANCEL
+          </button>
+          <button type="button" class="popup-confirm" id="missionTimerStart">
+            START
+          </button>
+        </div>
+      </section>
     </div>
 
-    <div class="tabs">
-      <button class="tab active" data-mission-category="missions">MISSIONS</button>
-      <button class="tab" data-mission-category="camp">CAMP</button>
-      <button class="tab" data-mission-category="med bay">MED BAY</button>
-      <button class="tab" data-mission-category="library">LIBRARY</button>
-      <button class="tab">JOURNAL</button>
-    </div>
-
-    <div class="card mission-panel">
-      <h2 class="section-title" id="missionPanelTitle">MISSIONS</h2>
-      <div class="danger-skulls"><span>☠</span>☠ ☠ ☠ ☠</div>
-    </div>
-    <div id="missionsList"></div>
-  </section>
-
-  <section id="baseScreen" class="screen">
-    <div class="base-tabs">
-      <button class="base-tab">STRONGHOLD</button>
-      <button class="base-tab active">SURVIVORS</button>
-      <button class="base-tab">HOUSE</button>
-      <button class="base-tab">OUTPOSTS</button>
-    </div>
-    <div class="survivor-count"><span id="survivorsSummary">Survivors: 2/4</span><span class="count-chip" id="survivorCountChip">2</span><span class="count-chip yellow">0</span><span class="count-chip">0</span><span class="count-chip redc">0</span></div>
-    <div class="roster-controls">
-      <button class="roster-btn" id="addSurvivorBtn">RECRUIT</button>
-      <button class="roster-btn" id="removeSurvivorBtn">DISMISS ACTIVE</button>
-      <button class="roster-btn" id="goMissionsBtn">OPEN PROFILE</button>
-      <button class="roster-btn" id="resetGameBtn">RESET GAME</button>
-    </div>
-    <div class="roster" id="roster"></div>
-  </section>
-
-  <div class="popup-layer" id="popupLayer" aria-hidden="true">
-    <section class="popup-window" data-popup-id="mission-timer" role="dialog" aria-modal="true" aria-labelledby="missionTimerTitle">
-      <h2 class="popup-title" id="missionTimerTitle">SCOUT THE AREA</h2>
-      <div class="popup-current-time" id="missionTimerCurrent">00:01:00</div>
-
-      <div class="popup-scale" id="missionTimerScale">
-        <div class="popup-scale-track" aria-hidden="true"></div>
-        <span class="popup-scale-label">1m</span>
-        <span class="popup-scale-label">6h</span>
-        <span class="popup-scale-label">12h</span>
-        <span class="popup-scale-label">18h</span>
-        <span class="popup-scale-label">1d</span>
-      </div>
-
-      <div class="popup-stepper">
-        <button type="button" class="popup-step-btn" id="missionTimerMinus">-</button>
-        <button type="button" class="popup-step-btn" id="missionTimerPlus">+</button>
-      </div>
-
-      <div class="popup-actions">
-        <button type="button" class="popup-cancel" id="missionTimerCancel">CANCEL</button>
-        <button type="button" class="popup-confirm" id="missionTimerStart">START</button>
-      </div>
-    </section>
-  </div>
-
-  <div class="toast" id="toast"></div>
-  <script type="module" src="/src/main.js"></script>
-</body>
+    <div class="toast" id="toast"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
 </html>

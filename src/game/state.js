@@ -26,32 +26,12 @@ export function createInitialState() {
         moraleMax: 50,
         insanity: 0,
         insanityMax: 100,
-        attack: 11,
+        attack: 1,
         defense: 1,
-        tools: 9,
-        speech: 5,
-        search: 5,
-        cooking: 104
-      }),
-      createSurvivor({
-        id: "abhi",
-        name: "Abhishek Ironshield",
-        level: 1,
-        gender: "male"
-      }, {
-        health: 100,
-        healthMax: 100,
-        healthXp: 2.65,
-        morale: 50,
-        moraleMax: 50,
-        insanity: 0,
-        insanityMax: 100,
-        attack: 11,
-        defense: 1,
-        tools: 5,
-        speech: 5,
-        search: 5,
-        cooking: 100
+        tools: 1,
+        speech: 1,
+        search: 1,
+        cooking: 1
       })
     ],
     missions: {
