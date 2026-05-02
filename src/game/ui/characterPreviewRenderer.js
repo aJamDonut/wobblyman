@@ -41,6 +41,24 @@ const HAIR_STYLES = [
   "hat-wizard"
 ];
 
+const BODY_TYPES = [
+  "classic",
+  "petite",
+  "broad",
+  "stocky",
+  "tall",
+  "lanky"
+];
+
+const BODY_TYPE_PROFILES = {
+  classic: { torsoWidth: 48, torsoHeight: 62, torsoRadius: 25, torsoYOffset: 0, insetScaleX: 0.67, insetScaleY: 0.71 },
+  petite: { torsoWidth: 40, torsoHeight: 54, torsoRadius: 22, torsoYOffset: 4, insetScaleX: 0.7, insetScaleY: 0.7 },
+  broad: { torsoWidth: 58, torsoHeight: 60, torsoRadius: 24, torsoYOffset: 1, insetScaleX: 0.64, insetScaleY: 0.7 },
+  stocky: { torsoWidth: 60, torsoHeight: 52, torsoRadius: 24, torsoYOffset: 8, insetScaleX: 0.62, insetScaleY: 0.66 },
+  tall: { torsoWidth: 44, torsoHeight: 72, torsoRadius: 24, torsoYOffset: -5, insetScaleX: 0.66, insetScaleY: 0.74 },
+  lanky: { torsoWidth: 40, torsoHeight: 74, torsoRadius: 20, torsoYOffset: -6, insetScaleX: 0.64, insetScaleY: 0.76 }
+};
+
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
@@ -147,6 +165,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
 
   let colors = { ...DEFAULT_COLORS };
   let hairStyle = "classic";
+  let bodyType = "classic";
   let currentAnimation = "idle";
   let transitionFromAnimation = "idle";
   let transitionStartedAt = performance.now();
@@ -840,6 +859,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const sandwichWeight = getAnimationWeight("sandwich", easedMix);
     const dampedBounce = pose.bounce * 0.35;
     const wobbleScale = 0.65;
+    const bodyProfile = BODY_TYPE_PROFILES[bodyType] || BODY_TYPE_PROFILES.classic;
 
     const gradient = context.createRadialGradient(centerX, centerY - 48, 24, centerX, centerY, Math.max(width, height));
     gradient.addColorStop(0, "rgba(255,255,255,0.13)");
@@ -868,15 +888,25 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.fillStyle = colors.shirtColor;
     context.strokeStyle = blendHexColor(colors.shirtColor, -0.45);
     context.lineWidth = 2.5;
+    const torsoWidth = bodyProfile.torsoWidth;
+    const torsoHeight = bodyProfile.torsoHeight;
+    const torsoY = -38 + bodyProfile.torsoYOffset;
+    const torsoX = -torsoWidth * 0.5;
     context.beginPath();
-    context.roundRect(-24, -38, 48, 62, 25);
+    context.roundRect(torsoX, torsoY, torsoWidth, torsoHeight, bodyProfile.torsoRadius);
     context.fill();
     context.stroke();
 
     context.fillStyle = blendHexColor(colors.shirtColor, 0.1);
+    const innerWidth = torsoWidth * bodyProfile.insetScaleX;
+    const innerHeight = torsoHeight * bodyProfile.insetScaleY;
     context.beginPath();
-    context.roundRect(-16, -30, 32, 44, 16);
+    context.roundRect(-innerWidth * 0.5, torsoY + 8, innerWidth, innerHeight, Math.max(12, bodyProfile.torsoRadius * 0.65));
     context.fill();
+
+    const headOffsetY = 4;
+    context.save();
+    context.translate(0, headOffsetY);
 
     context.fillStyle = colors.skinColor;
     context.strokeStyle = blendHexColor(colors.skinColor, -0.45);
@@ -945,6 +975,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.moveTo(-7, -58);
     context.quadraticCurveTo(0, -53 + talkOpen * 3.5, 8, -58);
     context.stroke();
+
+    context.restore();
 
     context.fillStyle = colors.shoeColor;
     context.strokeStyle = blendHexColor(colors.shoeColor, -0.35);
@@ -1041,8 +1073,19 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
   }
 
+  function setBodyType(typeName) {
+    const nextType = String(typeName || "").toLowerCase();
+    if (BODY_TYPES.includes(nextType)) {
+      bodyType = nextType;
+    }
+  }
+
   function getHairStyles() {
     return [...HAIR_STYLES];
+  }
+
+  function getBodyTypes() {
+    return [...BODY_TYPES];
   }
 
   function destroy() {
@@ -1060,7 +1103,9 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   return {
     setCharacterProperties,
     setHairStyle,
+    setBodyType,
     getHairStyles,
+    getBodyTypes,
     playAnimation,
     destroy
   };
