@@ -55,9 +55,57 @@ export function createInitialState() {
       })
     ],
     missions: {
-      sandwich: { seconds: 5, xp: 0.35, reward: "sandwich" },
-      platter: { seconds: 45, xp: 4, reward: "platter" }
+      missions: {
+        sandwich: {
+          title: "MAKE SANDWICH",
+          rewardLabel: "Sandwich",
+          xpLabel: "+0.35",
+          seconds: 5,
+          xp: 0.35,
+          reward: "sandwich"
+        },
+        platter: {
+          title: "MAKE SANDWICH PLATTER",
+          rewardLabel: "Sandwich Platter",
+          xpLabel: "+4.0",
+          riskLabel: "LOW %",
+          seconds: 45,
+          xp: 4,
+          reward: "platter"
+        }
+      },
+      camp: {
+        foraging: {
+          title: "FORAGE SUPPLIES",
+          rewardLabel: "Sandwich",
+          xpLabel: "+0.5",
+          seconds: 30,
+          xp: 0.5,
+          reward: "sandwich"
+        }
+      },
+      "med bay": {
+        triage: {
+          title: "TRIAGE DUTY",
+          rewardLabel: "Sandwich",
+          xpLabel: "+0.7",
+          seconds: 60,
+          xp: 0.7,
+          reward: "sandwich"
+        }
+      },
+      library: {
+        archives: {
+          title: "CATALOG ARCHIVES",
+          rewardLabel: "Sandwich Platter",
+          xpLabel: "+1.2",
+          seconds: 90,
+          xp: 1.2,
+          reward: "platter"
+        }
+      }
     },
+    selectedMissionCategory: "missions",
     running: null
   };
 }

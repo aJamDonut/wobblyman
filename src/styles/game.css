@@ -203,6 +203,16 @@ h1, h2, h3, p { margin: 0; }
 .danger-skulls span:first-child { color:red; }
 
 .mission { max-width:968px; min-height:108px; padding:11px 14px; margin-bottom:5px; display:grid; grid-template-columns:1fr 122px; align-items:center; gap:20px; }
+.mission-empty {
+  max-width: 968px;
+  min-height: 72px;
+  padding: 16px;
+  display: grid;
+  align-items: center;
+  color: #bec5c8;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+}
 .mission h2 { font-size:22px; color:white; text-shadow: 1px 1px #000; }
 .info { font-family:Arial,sans-serif; color:#777; font-size:13px; margin-left:5px; }
 .provides { margin-top:8px; color:#bec5c8; font-family:Arial,sans-serif; font-size:11px; }

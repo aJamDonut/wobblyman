@@ -35,35 +35,18 @@
     </div>
 
     <div class="tabs">
-      <button class="tab active">MISSIONS</button>
-      <button class="tab">CAMP</button>
-      <button class="tab">MED BAY</button>
-      <button class="tab">LIBRARY</button>
+      <button class="tab active" data-mission-category="missions">MISSIONS</button>
+      <button class="tab" data-mission-category="camp">CAMP</button>
+      <button class="tab" data-mission-category="med bay">MED BAY</button>
+      <button class="tab" data-mission-category="library">LIBRARY</button>
       <button class="tab">JOURNAL</button>
     </div>
 
     <div class="card mission-panel">
-      <h2 class="section-title">KITCHEN</h2>
+      <h2 class="section-title" id="missionPanelTitle">MISSIONS</h2>
       <div class="danger-skulls"><span>☠</span>☠ ☠ ☠ ☠</div>
     </div>
-
-    <div class="card mission" data-mission="sandwich">
-      <div>
-        <h2>MAKE SANDWICH <span class="info">ⓘ</span></h2>
-        <div class="provides">Provides</div>
-        <div class="reward-row"><div class="reward"><span class="sandwich">🥪</span>Sandwich</div><div class="reward xp-chip"><span class="xp-dot">XP</span>+0.35</div></div>
-      </div>
-      <div class="start-block"><button class="start-btn">START</button><div class="timer">⏱ 00:05</div></div>
-    </div>
-
-    <div class="card mission" data-mission="platter">
-      <div>
-        <h2>MAKE SANDWICH PLATTER</h2>
-        <div class="provides">Provides</div>
-        <div class="reward-row"><div><div class="reward"><span class="sandwich">🥪</span>Sandwich Platter</div><div class="low">LOW %</div></div><div class="reward xp-chip"><span class="xp-dot">XP</span>+3-5</div></div>
-      </div>
-      <div class="start-block"><button class="start-btn">START</button><div class="timer">⏱ 00:45</div></div>
-    </div>
+    <div id="missionsList"></div>
   </section>
 
   <section id="baseScreen" class="screen">

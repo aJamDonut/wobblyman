@@ -6,11 +6,6 @@ const DURATION_PRESETS = [
   { label: "1d", seconds: 24 * 60 * 60 }
 ];
 
-const MISSION_TITLES = {
-  sandwich: "MAKE SANDWICH",
-  platter: "MAKE SANDWICH PLATTER"
-};
-
 function toClock(totalSeconds) {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -36,7 +31,7 @@ function getClosestPresetIndex(seconds) {
 
 export function createMissionTimerPopup(popupSystem) {
   return {
-    selectDuration({ missionKey, defaultSeconds }) {
+    selectDuration({ missionKey, missionTitle, defaultSeconds }) {
       return popupSystem.prompt("mission-timer", (popupRoot, { hidePopup }) => {
         const title = popupRoot.querySelector("#missionTimerTitle");
         const time = popupRoot.querySelector("#missionTimerCurrent");
@@ -51,7 +46,7 @@ export function createMissionTimerPopup(popupSystem) {
 
         function render() {
           const selectedDuration = DURATION_PRESETS[selectedIndex];
-          title.textContent = MISSION_TITLES[missionKey] || "SELECT DURATION";
+          title.textContent = missionTitle || missionKey || "SELECT DURATION";
           time.textContent = toClock(selectedDuration.seconds);
 
           minusButton.disabled = selectedIndex === 0;

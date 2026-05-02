@@ -49,15 +49,133 @@ export function createGameApp() {
     removeSurvivorBtn: document.querySelector("#removeSurvivorBtn"),
     goMissionsBtn: document.querySelector("#goMissionsBtn"),
     resetGameBtn: document.querySelector("#resetGameBtn"),
-    popupLayer: document.querySelector("#popupLayer")
+    popupLayer: document.querySelector("#popupLayer"),
+    missionPanelTitle: document.querySelector("#missionPanelTitle"),
+    missionsList: document.querySelector("#missionsList")
   };
 
   const popupSystem = createPopupSystem(elements.popupLayer);
   const missionTimerPopup = createMissionTimerPopup(popupSystem);
 
-  const missionRoots = new Map(
-    [...document.querySelectorAll(".mission")].map((missionElement) => [missionElement.dataset.mission, missionElement])
-  );
+  function getMissionCategories() {
+    return Object.keys(state.missions || {});
+  }
+
+  function ensureValidMissionCategory() {
+    const categories = getMissionCategories();
+    if (categories.length === 0) {
+      state.selectedMissionCategory = null;
+      return;
+    }
+
+    if (!state.selectedMissionCategory || !categories.includes(state.selectedMissionCategory)) {
+      state.selectedMissionCategory = categories[0];
+    }
+  }
+
+  function getMissionCollection(categoryKey) {
+    const collection = state.missions?.[categoryKey];
+    return collection && typeof collection === "object" ? collection : {};
+  }
+
+  function getMission(categoryKey, missionKey) {
+    return getMissionCollection(categoryKey)[missionKey] || null;
+  }
+
+  function findMissionRoot(categoryKey, missionKey) {
+    return [...elements.missionsList.querySelectorAll(".mission")].find(
+      (missionElement) =>
+        missionElement.dataset.missionCategory === categoryKey && missionElement.dataset.mission === missionKey
+    );
+  }
+
+  function getRunningMissionProgress() {
+    if (!state.running) {
+      return null;
+    }
+
+    if (Number.isInteger(state.running.entityId)) {
+      return world.getComponent(state.running.entityId, Components.MissionProgress) || null;
+    }
+
+    const missionEntityIds = world.getEntitiesWith([Components.MissionProgress]);
+    for (const missionEntityId of missionEntityIds) {
+      const progress = world.getComponent(missionEntityId, Components.MissionProgress);
+      if (!progress) {
+        continue;
+      }
+
+      if (progress.categoryKey === state.running.categoryKey && progress.key === state.running.key) {
+        return progress;
+      }
+    }
+
+    return null;
+  }
+
+  function renderMissionTabs() {
+    document.querySelectorAll(".tab[data-mission-category]").forEach((tab) => {
+      const isActive = tab.dataset.missionCategory === state.selectedMissionCategory;
+      tab.classList.toggle("active", isActive);
+    });
+  }
+
+  function renderMissionsList() {
+    ensureValidMissionCategory();
+
+    const categoryKey = state.selectedMissionCategory;
+    const missionCollection = getMissionCollection(categoryKey);
+    const missionEntries = Object.entries(missionCollection);
+    const categoryTitle = String(categoryKey || "missions").toUpperCase();
+    const runningProgress = getRunningMissionProgress();
+
+    elements.missionPanelTitle.textContent = categoryTitle;
+    elements.missionsList.innerHTML = "";
+
+    if (missionEntries.length === 0) {
+      elements.missionsList.innerHTML = '<div class="card mission-empty">No missions in this category yet.</div>';
+      return;
+    }
+
+    missionEntries.forEach(([missionKey, mission]) => {
+      const missionElement = document.createElement("div");
+      missionElement.className = "card mission";
+      missionElement.dataset.missionCategory = categoryKey;
+      missionElement.dataset.mission = missionKey;
+
+      const timerSeconds =
+        runningProgress && runningProgress.categoryKey === categoryKey && runningProgress.key === missionKey
+          ? runningProgress.remainingSeconds
+          : mission.seconds;
+
+      const riskMarkup = mission.riskLabel ? `<div class="low">${mission.riskLabel}</div>` : "";
+
+      missionElement.innerHTML = `
+        <div>
+          <h2>${mission.title}</h2>
+          <div class="provides">Provides</div>
+          <div class="reward-row">
+            <div>
+              <div class="reward"><span class="sandwich">🥪</span>${mission.rewardLabel}</div>
+              ${riskMarkup}
+            </div>
+            <div class="reward xp-chip"><span class="xp-dot">XP</span>${mission.xpLabel}</div>
+          </div>
+        </div>
+        <div class="start-block"><button class="start-btn">START</button><div class="timer">⏱ ${clock(timerSeconds)}</div></div>`;
+
+      missionElement.querySelector(".start-btn").addEventListener("click", () => {
+        if (state.running?.categoryKey === categoryKey && state.running?.key === missionKey) {
+          cancelMission();
+          return;
+        }
+
+        startMission(categoryKey, missionKey);
+      });
+
+      elements.missionsList.appendChild(missionElement);
+    });
+  }
 
   function onSelectSurvivor(survivorId) {
     selectSurvivor(state, survivorId);
@@ -72,9 +190,11 @@ export function createGameApp() {
 
   function syncActionButtons() {
     const hasSurvivor = Boolean(getSurvivorById(state, state.activeId));
+    const runningMissionCategory = state.running?.categoryKey || null;
     const runningMissionKey = state.running?.key || null;
 
-    document.querySelectorAll(".mission").forEach((missionElement) => {
+    elements.missionsList.querySelectorAll(".mission").forEach((missionElement) => {
+      const missionCategory = missionElement.dataset.missionCategory;
       const missionKey = missionElement.dataset.mission;
       const button = missionElement.querySelector(".start-btn");
 
@@ -90,7 +210,7 @@ export function createGameApp() {
         return;
       }
 
-      if (runningMissionKey === missionKey) {
+      if (runningMissionCategory === missionCategory && runningMissionKey === missionKey) {
         button.disabled = false;
         button.textContent = "CANCEL";
         return;
@@ -108,10 +228,13 @@ export function createGameApp() {
   }
 
   function renderAll() {
+    ensureValidMissionCategory();
     ensureValidActiveSurvivor(state);
     const activeSurvivor = getSurvivorById(state, state.activeId);
     renderResources(state, elements);
     renderActive(state, elements, activeSurvivor);
+    renderMissionTabs();
+    renderMissionsList();
     renderRoster(state, elements, onSelectSurvivor);
     updateSurvivorSummary();
     syncActionButtons();
@@ -178,30 +301,30 @@ export function createGameApp() {
     toast.timer = setTimeout(() => elements.toast.classList.remove("show"), 1800);
   }
 
-  function beginMission(key, missionRoot, totalSeconds) {
+  function beginMission(categoryKey, missionKey, totalSeconds) {
     const selectedSeconds = Math.max(1, Math.floor(totalSeconds));
     if (state.running) {
       toast("A survivor is already on a mission.");
       return;
     }
 
-    const mission = state.missions[key];
+    const mission = getMission(categoryKey, missionKey);
     const activeSurvivor = getSurvivorById(state, state.activeId);
-    if (!activeSurvivor) {
+    if (!mission || !activeSurvivor) {
       toast("No survivor selected.");
       return;
     }
 
-    const button = missionRoot.querySelector(".start-btn");
-    state.running = { key, survivorId: activeSurvivor.id };
-    button.textContent = "CANCEL";
+    state.running = { categoryKey, key: missionKey, survivorId: activeSurvivor.id };
 
     const missionEntityId = world.createEntity({
       [Components.MissionProgress]: {
-        key,
+        categoryKey,
+        key: missionKey,
         survivorId: activeSurvivor.id,
         xp: mission.xp,
         reward: mission.reward,
+        rewardLabel: mission.rewardLabel,
         totalSeconds: selectedSeconds,
         remainingSeconds: selectedSeconds,
         elapsedSeconds: 0
@@ -210,7 +333,7 @@ export function createGameApp() {
 
     state.running.entityId = missionEntityId;
 
-    renderMissionTimer(key, selectedSeconds);
+    renderMissionTimer(categoryKey, missionKey, selectedSeconds);
     renderAll();
   }
 
@@ -219,32 +342,31 @@ export function createGameApp() {
       return;
     }
 
-    const { key, entityId } = state.running;
+    const { categoryKey, key, entityId } = state.running;
     if (Number.isInteger(entityId)) {
       world.removeEntity(entityId);
     } else {
       const missionEntities = world.getEntitiesWith([Components.MissionProgress]);
       missionEntities.forEach((missionEntityId) => {
         const progress = world.getComponent(missionEntityId, Components.MissionProgress);
-        if (progress?.key === key) {
+        if (progress?.categoryKey === categoryKey && progress?.key === key) {
           world.removeEntity(missionEntityId);
         }
       });
     }
 
     state.running = null;
-    renderMissionTimer(key, state.missions[key].seconds);
     renderAll();
     toast("Mission canceled.");
   }
 
-  async function startMission(key, missionRoot) {
+  async function startMission(categoryKey, missionKey) {
     if (state.running) {
       toast("A survivor is already on a mission.");
       return;
     }
 
-    const mission = state.missions[key];
+    const mission = getMission(categoryKey, missionKey);
     const activeSurvivor = getSurvivorById(state, state.activeId);
     if (!mission || !activeSurvivor) {
       toast("No survivor selected.");
@@ -252,7 +374,8 @@ export function createGameApp() {
     }
 
     const result = await missionTimerPopup.selectDuration({
-      missionKey: key,
+      missionKey,
+      missionTitle: mission.title,
       defaultSeconds: mission.seconds
     });
 
@@ -260,11 +383,11 @@ export function createGameApp() {
       return;
     }
 
-    beginMission(key, missionRoot, result.seconds);
+    beginMission(categoryKey, missionKey, result.seconds);
   }
 
-  function renderMissionTimer(missionKey, remainingSeconds) {
-    const missionRoot = missionRoots.get(missionKey);
+  function renderMissionTimer(categoryKey, missionKey, remainingSeconds) {
+    const missionRoot = findMissionRoot(categoryKey, missionKey);
     if (!missionRoot) {
       return;
     }
@@ -277,6 +400,8 @@ export function createGameApp() {
     if (!activeSurvivor) {
       return;
     }
+
+    const mission = getMission(missionProgress.categoryKey, missionProgress.key);
 
     activeSurvivor.healthXp += missionProgress.xp;
     activeSurvivor.morale = Math.max(0, activeSurvivor.morale - (missionProgress.key === "platter" ? 2 : 1));
@@ -293,16 +418,13 @@ export function createGameApp() {
 
     state.running = null;
 
-    renderMissionTimer(missionProgress.key, state.missions[missionProgress.key].seconds);
     renderAll();
-    toast(
-      `${activeSurvivor.name} completed ${missionProgress.key === "platter" ? "Sandwich Platter" : "Sandwich"}.`
-    );
+    toast(`${activeSurvivor.name} completed ${mission?.rewardLabel || "the mission"}.`);
   }
 
   gameLoop.addSystem(missionProgressSystem, {
     onMissionTick: (missionProgress) => {
-      renderMissionTimer(missionProgress.key, missionProgress.remainingSeconds);
+      renderMissionTimer(missionProgress.categoryKey, missionProgress.key, missionProgress.remainingSeconds);
       renderRoster(state, elements, onSelectSurvivor);
     },
     onMissionComplete: completeMission
@@ -375,18 +497,14 @@ export function createGameApp() {
     showScreen("missionsScreen");
   });
 
-  document.querySelectorAll(".mission").forEach((missionElement) => {
-    missionElement.querySelector(".start-btn").addEventListener("click", () => {
-      if (state.running?.key === missionElement.dataset.mission) {
-        cancelMission();
-        return;
-      }
-
-      startMission(missionElement.dataset.mission, missionElement);
+  document.querySelectorAll(".tab[data-mission-category]").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      state.selectedMissionCategory = tab.dataset.missionCategory;
+      renderAll();
     });
   });
 
-  document.querySelectorAll(".base-tab, .tab").forEach((tab) => {
+  document.querySelectorAll(".base-tab").forEach((tab) => {
     tab.addEventListener("click", () => toast("Only the shown screens are implemented."));
   });
 

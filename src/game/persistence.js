@@ -47,6 +47,10 @@ export function loadPersistedState(initialState) {
       state.survivorCapacity = persisted.survivorCapacity;
     }
 
+    if (typeof persisted.selectedMissionCategory === "string") {
+      state.selectedMissionCategory = persisted.selectedMissionCategory;
+    }
+
     // Runtime jobs should always restart cleanly after refresh.
     state.running = null;
 
@@ -61,7 +65,8 @@ export function savePersistedState(state) {
     survivors: state.survivors,
     resources: state.resources,
     activeId: state.activeId,
-    survivorCapacity: state.survivorCapacity
+    survivorCapacity: state.survivorCapacity,
+    selectedMissionCategory: state.selectedMissionCategory
   };
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
