@@ -148,10 +148,58 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   let colors = { ...DEFAULT_COLORS };
   let hairStyle = "classic";
   let currentAnimation = "idle";
+  let transitionFromAnimation = "idle";
+  let transitionStartedAt = performance.now();
+  let transitionDurationMs = 0;
   let loopAnimation = "idle";
   let animationStartedAt = performance.now();
   let animationDurationMs = 0;
   let rafId = null;
+
+  function lerp(a, b, t) {
+    return a + (b - a) * t;
+  }
+
+  function easeOutQuad(t) {
+    return 1 - (1 - t) * (1 - t);
+  }
+
+  function interpolatePose(fromPose, toPose, mix) {
+    return {
+      bounce: lerp(fromPose.bounce, toPose.bounce, mix),
+      lean: lerp(fromPose.lean, toPose.lean, mix),
+      leftArm: {
+        x: lerp(fromPose.leftArm.x, toPose.leftArm.x, mix),
+        y: lerp(fromPose.leftArm.y, toPose.leftArm.y, mix)
+      },
+      rightArm: {
+        x: lerp(fromPose.rightArm.x, toPose.rightArm.x, mix),
+        y: lerp(fromPose.rightArm.y, toPose.rightArm.y, mix)
+      },
+      leftLeg: {
+        x: lerp(fromPose.leftLeg.x, toPose.leftLeg.x, mix),
+        y: lerp(fromPose.leftLeg.y, toPose.leftLeg.y, mix)
+      },
+      rightLeg: {
+        x: lerp(fromPose.rightLeg.x, toPose.rightLeg.x, mix),
+        y: lerp(fromPose.rightLeg.y, toPose.rightLeg.y, mix)
+      }
+    };
+  }
+
+  function getAnimationWeight(animationName, mix) {
+    if (transitionDurationMs <= 0) {
+      return animationName === currentAnimation ? 1 : 0;
+    }
+    let weight = 0;
+    if (animationName === transitionFromAnimation) {
+      weight += 1 - mix;
+    }
+    if (animationName === currentAnimation) {
+      weight += mix;
+    }
+    return clamp(weight, 0, 1);
+  }
 
   function updateCanvasSize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -762,9 +810,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     updateCanvasSize();
 
     if (animationDurationMs > 0 && now - animationStartedAt >= animationDurationMs) {
-      currentAnimation = loopAnimation;
-      animationDurationMs = 0;
-      animationStartedAt = now;
+      playAnimation(loopAnimation, { loop: true, transitionMs: 220 });
     }
 
     const width = canvas.clientWidth;
@@ -773,7 +819,25 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const centerY = height * 0.58;
 
     const seconds = now / 1000;
-    const pose = createPose(seconds, currentAnimation);
+    const transitionMix = transitionDurationMs > 0
+      ? clamp((now - transitionStartedAt) / transitionDurationMs, 0, 1)
+      : 1;
+    const easedMix = easeOutQuad(transitionMix);
+
+    const fromPose = createPose(seconds, transitionFromAnimation);
+    const toPose = createPose(seconds, currentAnimation);
+    const pose = transitionDurationMs > 0
+      ? interpolatePose(fromPose, toPose, easedMix)
+      : toPose;
+
+    if (transitionDurationMs > 0 && transitionMix >= 1) {
+      transitionDurationMs = 0;
+      transitionFromAnimation = currentAnimation;
+    }
+
+    const sleepWeight = getAnimationWeight("sleep", easedMix);
+    const talkWeight = getAnimationWeight("talk", easedMix);
+    const sandwichWeight = getAnimationWeight("sandwich", easedMix);
     const dampedBounce = pose.bounce * 0.35;
     const wobbleScale = 0.65;
 
@@ -824,17 +888,10 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
 
     drawHairStyle(hairStyle, colors.hairColor, seconds);
 
-    context.fillStyle = "#241c1b";
-    if (currentAnimation === "sleep") {
-      context.strokeStyle = "#2f2220";
-      context.lineWidth = 2.7;
-      context.beginPath();
-      context.moveTo(-14, -68);
-      context.lineTo(-3.5, -68);
-      context.moveTo(3.5, -68);
-      context.lineTo(14, -68);
-      context.stroke();
-    } else {
+    const openEyesAlpha = 1 - sleepWeight;
+    if (openEyesAlpha > 0.01) {
+      context.save();
+      context.globalAlpha = openEyesAlpha;
       // Bold cartoon eyes.
       context.fillStyle = "#ffffff";
       context.strokeStyle = "#1f1715";
@@ -863,20 +920,30 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.beginPath();
       context.arc(7.4, -68.8, 0.8, 0, Math.PI * 2);
       context.fill();
+      context.restore();
+    }
+
+    if (sleepWeight > 0.01) {
+      context.save();
+      context.globalAlpha = sleepWeight;
+      context.strokeStyle = "#2f2220";
+      context.lineWidth = 2.7;
+      context.beginPath();
+      context.moveTo(-14, -68);
+      context.lineTo(-3.5, -68);
+      context.moveTo(3.5, -68);
+      context.lineTo(14, -68);
+      context.stroke();
+      context.restore();
     }
 
     context.strokeStyle = "#5a3b35";
     context.lineWidth = 2.8;
     context.lineCap = "round";
     context.beginPath();
-    if (currentAnimation === "talk") {
-      const talkOpen = (Math.sin(seconds * 18) + 1) * 0.5;
-      context.moveTo(-7, -58);
-      context.quadraticCurveTo(0, -52 + talkOpen * 3.5, 8, -58);
-    } else {
-      context.moveTo(-7, -58);
-      context.quadraticCurveTo(0, -53, 8, -58);
-    }
+    const talkOpen = talkWeight * ((Math.sin(seconds * 18) + 1) * 0.5);
+    context.moveTo(-7, -58);
+    context.quadraticCurveTo(0, -53 + talkOpen * 3.5, 8, -58);
     context.stroke();
 
     context.fillStyle = colors.shoeColor;
@@ -891,8 +958,11 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.fill();
     context.stroke();
 
-    if (currentAnimation === "sandwich") {
+    if (sandwichWeight > 0.01) {
+      context.save();
+      context.globalAlpha = sandwichWeight;
       drawSandwich(pose.leftArm.x + 7, pose.leftArm.y - 2, -0.22 + Math.sin(seconds * 6) * 0.05);
+      context.restore();
     }
 
     // Arms are rendered last so they always stay in the foreground.
@@ -913,23 +983,37 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
 
     context.restore();
 
-    if (currentAnimation === "talk") {
+    if (talkWeight > 0.01) {
+      context.save();
+      context.globalAlpha = talkWeight;
       drawSpeechBubble(centerX + 24, centerY - 128 + Math.sin(seconds * 5) * 2, Math.sin(seconds * 8));
+      context.restore();
     }
 
-    if (currentAnimation === "sleep") {
+    if (sleepWeight > 0.01) {
+      context.save();
+      context.globalAlpha = sleepWeight;
       context.fillStyle = "rgba(210, 236, 255, 0.86)";
       context.font = "700 18px Arial";
       context.fillText("Z", centerX + 42, centerY - 132);
       context.fillText("Z", centerX + 58, centerY - 152);
+      context.restore();
     }
 
     rafId = window.requestAnimationFrame(drawFrame);
   }
 
   function playAnimation(name, options = {}) {
-    const { durationMs = 0, loop = false } = options;
-    currentAnimation = name || "idle";
+    const { durationMs = 0, loop = false, transitionMs = 220 } = options;
+    const nextAnimation = name || "idle";
+
+    transitionFromAnimation = currentAnimation;
+    currentAnimation = nextAnimation;
+    transitionStartedAt = performance.now();
+    transitionDurationMs = currentAnimation === transitionFromAnimation
+      ? 0
+      : Math.max(0, Number(transitionMs) || 0);
+
     if (loop) {
       loopAnimation = currentAnimation;
     }
