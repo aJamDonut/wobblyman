@@ -55,7 +55,8 @@ export function createGameApp() {
     missionPanelTitle: document.querySelector("#missionPanelTitle"),
     missionsList: document.querySelector("#missionsList"),
     characterPreviewCanvas: document.querySelector("#characterPreviewCanvas"),
-    characterPreviewStatus: document.querySelector("#characterPreviewStatus")
+    characterPreviewStatus: document.querySelector("#characterPreviewStatus"),
+    characterPreviewHairStyle: document.querySelector("#characterPreviewHairStyle")
   };
 
   const popupSystem = createPopupSystem(elements.popupLayer);
@@ -65,8 +66,15 @@ export function createGameApp() {
     statusLabel: elements.characterPreviewStatus
   });
   const previewTestAnimations = ["idle", "wave", "sandwich", "working", "celebrate", "sleep", "run", "talk"];
+  const previewHairStyles = characterPreview.getHairStyles();
   let previewAnimationOverride = null;
   let previewAnimationCycleIndex = -1;
+  let previewHairStyleCycleIndex = Math.max(0, previewHairStyles.indexOf("classic"));
+
+  function syncHairStyleLabel() {
+    const activeHairStyle = previewHairStyles[previewHairStyleCycleIndex] || "classic";
+    elements.characterPreviewHairStyle.textContent = activeHairStyle.toUpperCase();
+  }
 
   function applyPreviewAnimationOverride() {
     if (!previewAnimationOverride) {
@@ -143,6 +151,19 @@ export function createGameApp() {
 
     previewAnimationOverride = previewTestAnimations[previewAnimationCycleIndex];
     applyPreviewAnimationOverride();
+  });
+
+  characterPreview.setHairStyle(previewHairStyles[previewHairStyleCycleIndex]);
+  syncHairStyleLabel();
+
+  elements.characterPreviewHairStyle.addEventListener("click", () => {
+    if (previewHairStyles.length === 0) {
+      return;
+    }
+
+    previewHairStyleCycleIndex = (previewHairStyleCycleIndex + 1) % previewHairStyles.length;
+    characterPreview.setHairStyle(previewHairStyles[previewHairStyleCycleIndex]);
+    syncHairStyleLabel();
   });
 
   function getMissionCategories() {

@@ -111,9 +111,7 @@ button {
 }
 
 .preview-caption {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
   gap: 10px;
   padding: 10px 12px;
   font-family: Arial, sans-serif;
@@ -121,6 +119,13 @@ button {
   color: #8fa0aa;
   border-top: 1px solid #252d33;
   background: #0d1216;
+}
+
+.preview-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .preview-caption b {

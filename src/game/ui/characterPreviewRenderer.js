@@ -6,6 +6,41 @@ const DEFAULT_COLORS = {
   shoeColor: "#1f2328"
 };
 
+const HAIR_STYLES = [
+  "classic",
+  "buzz",
+  "parted",
+  "pompadour",
+  "afro",
+  "mohawk",
+  "spiky",
+  "bob",
+  "ponytail",
+  "wavy",
+  "braids",
+  "quiff",
+  "anime-spikes",
+  "twin-tails",
+  "hime-cut",
+  "side-bangs",
+  "ahoge",
+  "hero-sweep",
+  "neko-fluff",
+  "ribbon-bob",
+  "cyber-visor",
+  "long-flow",
+  "hat-beanie",
+  "hat-cap",
+  "hat-beret",
+  "hat-top",
+  "hat-bucket",
+  "hat-fedora",
+  "hat-crown",
+  "hat-helmet",
+  "hat-chef",
+  "hat-wizard"
+];
+
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
@@ -111,6 +146,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   }
 
   let colors = { ...DEFAULT_COLORS };
+  let hairStyle = "classic";
   let currentAnimation = "idle";
   let loopAnimation = "idle";
   let animationStartedAt = performance.now();
@@ -206,6 +242,522 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.restore();
   }
 
+  function drawHairStyle(styleName, hairColor, seconds) {
+    const strokeColor = blendHexColor(hairColor, -0.45);
+    const baselineY = -75;
+    context.fillStyle = hairColor;
+    context.strokeStyle = strokeColor;
+    context.lineWidth = 2;
+
+    if (styleName === "buzz") {
+      context.beginPath();
+      context.roundRect(-17, -85, 34, 8, 5);
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "parted") {
+      context.beginPath();
+      context.roundRect(-21, -89, 42, 14, 8);
+      context.fill();
+      context.stroke();
+      context.strokeStyle = blendHexColor(hairColor, -0.65);
+      context.lineWidth = 1.4;
+      context.beginPath();
+      context.moveTo(2, -87);
+      context.lineTo(-2, baselineY);
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "pompadour") {
+      context.beginPath();
+      context.ellipse(0, -89, 22, 11, 0, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.roundRect(-20, -85, 40, 10, 6);
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "afro") {
+      const puffs = [
+        [-14, -87, 9], [-2, -92, 10], [11, -87, 9], [-20, -81, 7], [18, -81, 7]
+      ];
+      puffs.forEach(([x, y, r]) => {
+        context.beginPath();
+        context.arc(x, y, r, 0, Math.PI * 2);
+        context.fill();
+        context.stroke();
+      });
+      return;
+    }
+
+    if (styleName === "mohawk") {
+      context.beginPath();
+      context.roundRect(-6, -95, 12, 20, 5);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.roundRect(-16, -82, 32, 7, 4);
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "spiky") {
+      context.beginPath();
+      context.moveTo(-20, -75);
+      context.lineTo(-17, -90);
+      context.lineTo(-10, -80);
+      context.lineTo(-4, -95);
+      context.lineTo(2, -82);
+      context.lineTo(9, -94);
+      context.lineTo(15, -80);
+      context.lineTo(20, -88);
+      context.lineTo(22, -75);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "bob") {
+      context.beginPath();
+      context.roundRect(-23, -90, 46, 16, 9);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.roundRect(-22, -80, 8, 6, 3);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.roundRect(14, -80, 8, 6, 3);
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "ponytail") {
+      context.beginPath();
+      context.roundRect(-20, -88, 40, 13, 8);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.roundRect(16, -81, 7, 8, 4);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.arc(20, -76, 3, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "wavy") {
+      context.beginPath();
+      context.roundRect(-22, -89, 44, 14, 9);
+      context.fill();
+      context.stroke();
+      const flow = Math.sin(seconds * 3.2) * 1.2;
+      context.beginPath();
+      context.moveTo(-18, baselineY);
+      context.quadraticCurveTo(-10, -72 + flow, -2, baselineY);
+      context.quadraticCurveTo(6, -78 + flow, 14, baselineY);
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "braids") {
+      context.beginPath();
+      context.roundRect(-20, -88, 40, 13, 8);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.roundRect(-20, -81, 6, 8, 4);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.roundRect(14, -81, 6, 8, 4);
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "quiff") {
+      context.beginPath();
+      context.moveTo(-20, baselineY);
+      context.quadraticCurveTo(-10, -96, 8, -92);
+      context.quadraticCurveTo(20, -88, 21, baselineY);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "anime-spikes") {
+      context.beginPath();
+      context.moveTo(-22, baselineY);
+      context.lineTo(-18, -92);
+      context.lineTo(-10, -80);
+      context.lineTo(-4, -96);
+      context.lineTo(3, -81);
+      context.lineTo(10, -95);
+      context.lineTo(16, -82);
+      context.lineTo(22, -90);
+      context.lineTo(24, baselineY);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "twin-tails") {
+      context.beginPath();
+      context.roundRect(-21, -89, 42, 14, 8);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.roundRect(-25, -80, 7, 7, 3);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.roundRect(18, -80, 7, 7, 3);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.roundRect(-27, -78, 7, 13, 4);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.roundRect(20, -78, 7, 13, 4);
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "hime-cut") {
+      context.beginPath();
+      context.roundRect(-22, -90, 44, 15, 7);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.roundRect(-24, -87, 8, 13, 4);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.roundRect(16, -87, 8, 13, 4);
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "side-bangs") {
+      context.beginPath();
+      context.roundRect(-21, -89, 42, 14, 8);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(-4, baselineY);
+      context.quadraticCurveTo(2, -86, 7, baselineY);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(-15, baselineY);
+      context.quadraticCurveTo(-8, -85, -2, baselineY);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "ahoge") {
+      context.beginPath();
+      context.roundRect(-20, -88, 40, 13, 8);
+      context.fill();
+      context.stroke();
+      context.strokeStyle = strokeColor;
+      context.lineWidth = 2.6;
+      context.beginPath();
+      context.moveTo(2, -88);
+      context.quadraticCurveTo(7, -104, 11, -95);
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "hero-sweep") {
+      context.beginPath();
+      context.moveTo(-22, baselineY);
+      context.quadraticCurveTo(-8, -99, 18, -86);
+      context.quadraticCurveTo(24, -82, 22, baselineY);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(-10, baselineY);
+      context.quadraticCurveTo(-2, -87, 8, baselineY);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "neko-fluff") {
+      context.beginPath();
+      context.roundRect(-20, -89, 40, 14, 8);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(-15, -86);
+      context.lineTo(-10, -97);
+      context.lineTo(-5, -86);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(5, -86);
+      context.lineTo(10, -97);
+      context.lineTo(15, -86);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "ribbon-bob") {
+      context.beginPath();
+      context.roundRect(-22, -90, 44, 16, 9);
+      context.fill();
+      context.stroke();
+      context.fillStyle = blendHexColor(hairColor, 0.28);
+      context.beginPath();
+      context.moveTo(0, -90);
+      context.lineTo(-7, -97);
+      context.lineTo(-2, -88);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(0, -90);
+      context.lineTo(7, -97);
+      context.lineTo(2, -88);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      context.fillStyle = hairColor;
+      return;
+    }
+
+    if (styleName === "cyber-visor") {
+      context.beginPath();
+      context.roundRect(-21, -89, 42, 14, 8);
+      context.fill();
+      context.stroke();
+      context.fillStyle = blendHexColor(hairColor, 0.2);
+      context.beginPath();
+      context.roundRect(-14, -84, 28, 7, 3);
+      context.fill();
+      context.stroke();
+      context.fillStyle = hairColor;
+      return;
+    }
+
+    if (styleName === "long-flow") {
+      context.beginPath();
+      context.roundRect(-22, -90, 44, 15, 8);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(-20, -80);
+      context.quadraticCurveTo(-24, -72, -18, -65);
+      context.quadraticCurveTo(-12, -70, -14, -79);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(20, -80);
+      context.quadraticCurveTo(24, -72, 18, -65);
+      context.quadraticCurveTo(12, -70, 14, -79);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "hat-beanie") {
+      context.beginPath();
+      context.roundRect(-23, -92, 46, 17, 9);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.roundRect(-24, -80, 48, 6, 3);
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "hat-cap") {
+      context.beginPath();
+      context.roundRect(-21, -90, 42, 15, 8);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(0, -78);
+      context.quadraticCurveTo(12, -74, 20, -78);
+      context.quadraticCurveTo(11, -81, 0, -80);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "hat-beret") {
+      context.beginPath();
+      context.ellipse(-2, -84, 24, 11, -0.16, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.arc(7, -93, 3, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "hat-top") {
+      context.beginPath();
+      context.roundRect(-13, -100, 26, 20, 4);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.ellipse(0, -79, 23, 4, 0, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "hat-bucket") {
+      context.beginPath();
+      context.moveTo(-20, -93);
+      context.lineTo(20, -93);
+      context.lineTo(16, -76);
+      context.lineTo(-16, -76);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.ellipse(0, -76, 21, 4, 0, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "hat-fedora") {
+      context.beginPath();
+      context.roundRect(-16, -95, 32, 16, 5);
+      context.fill();
+      context.stroke();
+      context.fillStyle = blendHexColor(hairColor, -0.2);
+      context.beginPath();
+      context.roundRect(-16, -88, 32, 4, 2);
+      context.fill();
+      context.stroke();
+      context.fillStyle = hairColor;
+      context.beginPath();
+      context.ellipse(0, -79, 25, 4, 0, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "hat-crown") {
+      context.beginPath();
+      context.moveTo(-19, -79);
+      context.lineTo(-14, -95);
+      context.lineTo(-6, -84);
+      context.lineTo(0, -98);
+      context.lineTo(6, -84);
+      context.lineTo(14, -95);
+      context.lineTo(19, -79);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.roundRect(-20, -80, 40, 6, 2);
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "hat-helmet") {
+      context.beginPath();
+      context.ellipse(0, -86, 22, 13, 0, Math.PI, 0);
+      context.lineTo(22, -80);
+      context.quadraticCurveTo(10, -74, 0, -74);
+      context.quadraticCurveTo(-10, -74, -22, -80);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.roundRect(-8, -88, 16, 4, 2);
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "hat-chef") {
+      context.beginPath();
+      context.roundRect(-12, -84, 24, 10, 3);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.arc(-10, -92, 7, 0, Math.PI * 2);
+      context.arc(0, -96, 8, 0, Math.PI * 2);
+      context.arc(10, -92, 7, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "hat-wizard") {
+      context.beginPath();
+      context.moveTo(0, -101);
+      context.lineTo(14, -79);
+      context.lineTo(-14, -79);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.ellipse(0, -79, 23, 4, 0, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+      context.fillStyle = blendHexColor(hairColor, 0.3);
+      context.beginPath();
+      context.arc(6, -92, 1.5, 0, Math.PI * 2);
+      context.arc(1, -88, 1.2, 0, Math.PI * 2);
+      context.fill();
+      context.fillStyle = hairColor;
+      return;
+    }
+
+    // classic
+    context.beginPath();
+    context.roundRect(-20, -88, 40, 13, 8);
+    context.fill();
+    context.stroke();
+    context.beginPath();
+    context.arc(-20, -81, 6, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+    context.beginPath();
+    context.arc(20, -81, 6, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+  }
+
   function drawFrame(now) {
     updateCanvasSize();
 
@@ -268,21 +820,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.fill();
     context.stroke();
 
-    context.fillStyle = colors.hairColor;
-    context.strokeStyle = blendHexColor(colors.hairColor, -0.45);
-    context.lineWidth = 2;
-    context.beginPath();
-    context.roundRect(-20, -86, 40, 15, 8);
-    context.fill();
-    context.stroke();
-    context.beginPath();
-    context.arc(-20, -78, 8, 0, Math.PI * 2);
-    context.fill();
-    context.stroke();
-    context.beginPath();
-    context.arc(20, -78, 8, 0, Math.PI * 2);
-    context.fill();
-    context.stroke();
+    drawHairStyle(hairStyle, colors.hairColor, seconds);
 
     context.fillStyle = "#241c1b";
     if (currentAnimation === "sleep") {
@@ -410,6 +948,17 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     };
   }
 
+  function setHairStyle(styleName) {
+    const nextStyle = String(styleName || "").toLowerCase();
+    if (HAIR_STYLES.includes(nextStyle)) {
+      hairStyle = nextStyle;
+    }
+  }
+
+  function getHairStyles() {
+    return [...HAIR_STYLES];
+  }
+
   function destroy() {
     if (rafId !== null) {
       window.cancelAnimationFrame(rafId);
@@ -424,6 +973,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
 
   return {
     setCharacterProperties,
+    setHairStyle,
+    getHairStyles,
     playAnimation,
     destroy
   };
