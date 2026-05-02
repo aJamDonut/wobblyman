@@ -70,6 +70,33 @@ function createPose(timeSeconds, animationName) {
     pose.bounce = Math.sin(timeSeconds * 7) * 3;
   }
 
+  if (animationName === "run") {
+    const stride = Math.sin(timeSeconds * 11);
+    pose.lean = 0.2;
+    pose.bounce = Math.sin(timeSeconds * 11) * 3;
+    pose.leftArm = { x: -30 + stride * 15, y: -26 - stride * 6 };
+    pose.rightArm = { x: 30 - stride * 15, y: -26 + stride * 6 };
+    pose.leftLeg = { x: -16 - stride * 11, y: 62 + Math.abs(stride) * 8 };
+    pose.rightLeg = { x: 16 + stride * 11, y: 62 + Math.abs(stride) * 8 };
+  }
+
+  if (animationName === "sleep") {
+    const breathing = Math.sin(timeSeconds * 1.8);
+    pose.lean = -0.44;
+    pose.bounce = breathing * 1.2 + 8;
+    pose.leftArm = { x: -22, y: -18 + breathing * 2 };
+    pose.rightArm = { x: 12, y: -10 + breathing * 2 };
+    pose.leftLeg = { x: -10, y: 58 };
+    pose.rightLeg = { x: 8, y: 58 };
+  }
+
+  if (animationName === "talk") {
+    pose.lean = -0.03;
+    pose.bounce = Math.sin(timeSeconds * 4.4) * 1.8;
+    pose.leftArm = { x: -28 + Math.sin(timeSeconds * 8) * 3, y: -22 + Math.cos(timeSeconds * 8) * 2 };
+    pose.rightArm = { x: 24 + Math.sin(timeSeconds * 8 + 0.8) * 4, y: -14 + Math.cos(timeSeconds * 8 + 0.8) * 3 };
+  }
+
   return pose;
 }
 
@@ -136,6 +163,39 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.restore();
   }
 
+  function drawSpeechBubble(x, y, pulse) {
+    const bubbleWidth = 58 + pulse * 2;
+    const bubbleHeight = 34 + pulse;
+
+    context.save();
+    context.translate(x, y);
+
+    context.fillStyle = "rgba(255,255,255,0.96)";
+    context.strokeStyle = "rgba(19,27,35,0.55)";
+    context.lineWidth = 1.5;
+    context.beginPath();
+    context.roundRect(-bubbleWidth * 0.5, -bubbleHeight * 0.5, bubbleWidth, bubbleHeight, 10);
+    context.fill();
+    context.stroke();
+
+    context.beginPath();
+    context.moveTo(-8, bubbleHeight * 0.48);
+    context.lineTo(-2, bubbleHeight * 0.48 + 10);
+    context.lineTo(6, bubbleHeight * 0.48);
+    context.closePath();
+    context.fill();
+    context.stroke();
+
+    context.fillStyle = "#2a3240";
+    context.beginPath();
+    context.arc(-12, 0, 2.2, 0, Math.PI * 2);
+    context.arc(0, 0, 2.2, 0, Math.PI * 2);
+    context.arc(12, 0, 2.2, 0, Math.PI * 2);
+    context.fill();
+
+    context.restore();
+  }
+
   function drawFrame(now) {
     updateCanvasSize();
 
@@ -196,17 +256,34 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.fill();
 
     context.fillStyle = "#2f2220";
-    context.beginPath();
-    context.ellipse(-8, -68, 2.8, 4, 0, 0, Math.PI * 2);
-    context.ellipse(8, -68, 2.8, 4, 0, 0, Math.PI * 2);
-    context.fill();
+    if (currentAnimation === "sleep") {
+      context.strokeStyle = "#2f2220";
+      context.lineWidth = 2;
+      context.beginPath();
+      context.moveTo(-12, -68);
+      context.lineTo(-5, -68);
+      context.moveTo(5, -68);
+      context.lineTo(12, -68);
+      context.stroke();
+    } else {
+      context.beginPath();
+      context.ellipse(-8, -68, 2.8, 4, 0, 0, Math.PI * 2);
+      context.ellipse(8, -68, 2.8, 4, 0, 0, Math.PI * 2);
+      context.fill();
+    }
 
     context.strokeStyle = "#5a3b35";
     context.lineWidth = 2;
     context.lineCap = "round";
     context.beginPath();
-    context.moveTo(-7, -58);
-    context.quadraticCurveTo(0, -53, 8, -58);
+    if (currentAnimation === "talk") {
+      const talkOpen = (Math.sin(seconds * 18) + 1) * 0.5;
+      context.moveTo(-7, -58);
+      context.quadraticCurveTo(0, -52 + talkOpen * 3.5, 8, -58);
+    } else {
+      context.moveTo(-7, -58);
+      context.quadraticCurveTo(0, -53, 8, -58);
+    }
     context.stroke();
 
     context.fillStyle = colors.shoeColor;
@@ -224,6 +301,17 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     drawLimb(22, -28, pose.rightArm.x, pose.rightArm.y, 10, colors.skinColor);
 
     context.restore();
+
+    if (currentAnimation === "talk") {
+      drawSpeechBubble(centerX + 24, centerY - 128 + Math.sin(seconds * 5) * 2, Math.sin(seconds * 8));
+    }
+
+    if (currentAnimation === "sleep") {
+      context.fillStyle = "rgba(210, 236, 255, 0.86)";
+      context.font = "700 18px Arial";
+      context.fillText("Z", centerX + 42, centerY - 132);
+      context.fillText("Z", centerX + 58, centerY - 152);
+    }
 
     rafId = window.requestAnimationFrame(drawFrame);
   }

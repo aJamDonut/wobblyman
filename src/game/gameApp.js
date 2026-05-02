@@ -64,6 +64,18 @@ export function createGameApp() {
     canvas: elements.characterPreviewCanvas,
     statusLabel: elements.characterPreviewStatus
   });
+  const previewTestAnimations = ["idle", "wave", "sandwich", "working", "celebrate", "sleep", "run", "talk"];
+  let previewAnimationOverride = null;
+  let previewAnimationCycleIndex = -1;
+
+  function applyPreviewAnimationOverride() {
+    if (!previewAnimationOverride) {
+      syncCharacterPreview(getSurvivorById(state, state.activeId));
+      return;
+    }
+
+    characterPreview.playAnimation(previewAnimationOverride, { loop: true });
+  }
 
   function getSurvivorPreviewColors(survivor) {
     const hasShirtColor = typeof survivor?.shirtColor === "string" && survivor.shirtColor.trim() !== "";
@@ -90,6 +102,11 @@ export function createGameApp() {
   }
 
   function syncCharacterPreview(activeSurvivor) {
+    if (previewAnimationOverride) {
+      characterPreview.playAnimation(previewAnimationOverride, { loop: true });
+      return;
+    }
+
     if (!activeSurvivor) {
       characterPreview.playAnimation("idle", { loop: true });
       return;
@@ -112,6 +129,21 @@ export function createGameApp() {
       loop: !durationMs
     });
   };
+
+  elements.characterPreviewStatus.addEventListener("click", () => {
+    previewAnimationCycleIndex += 1;
+
+    if (previewAnimationCycleIndex >= previewTestAnimations.length) {
+      previewAnimationCycleIndex = -1;
+      previewAnimationOverride = null;
+      elements.characterPreviewStatus.textContent = "AUTO";
+      syncCharacterPreview(getSurvivorById(state, state.activeId));
+      return;
+    }
+
+    previewAnimationOverride = previewTestAnimations[previewAnimationCycleIndex];
+    applyPreviewAnimationOverride();
+  });
 
   function getMissionCategories() {
     return Object.keys(state.missions || {});

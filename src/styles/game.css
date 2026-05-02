@@ -127,6 +127,15 @@ button {
   font-size: 12px;
   letter-spacing: 0.8px;
   color: #d7e2e8;
+  cursor: pointer;
+  user-select: none;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+}
+
+.preview-caption b:hover {
+  color: #eef9ff;
 }
 
 .profile-body { padding: 15px 12px 13px; }
