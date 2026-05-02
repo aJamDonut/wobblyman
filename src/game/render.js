@@ -1,4 +1,17 @@
 import { formatXp, survivorArtHtml, survivorStatsHtml } from "./helpers.js";
+import { STAT_DISPLAY_TYPES, getStatHiddenKeys, getSurvivorDisplayStats } from "./stats.js";
+
+function toSafeNumber(value, fallback = 0) {
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function chunk(list, size) {
+  const chunks = [];
+  for (let index = 0; index < list.length; index += size) {
+    chunks.push(list.slice(index, index + size));
+  }
+  return chunks;
+}
 
 function splitDisplayName(fullName) {
   const parts = String(fullName || "Unknown").trim().split(/\s+/).filter(Boolean);
@@ -22,14 +35,7 @@ export function renderActive(state, elements, activeSurvivor) {
     elements.activeName.textContent = "No Survivors";
     elements.activeLevel.textContent = "Level -";
     elements.activeStats.innerHTML = "";
-
-    elements.hpText.textContent = "0 / 0";
-    elements.moraleText.textContent = "0 / 0";
-    elements.insanityText.textContent = "0 / 0";
-
-    elements.hpFill.style.width = "0%";
-    elements.moraleFill.style.width = "0%";
-    elements.insanityFill.style.width = "0%";
+    elements.activeStatRows.innerHTML = "<div class=\"stat-empty\">No stat data</div>";
     elements.xpFill.style.width = "0%";
     elements.xpText.textContent = "0XP / 0XP";
     return;
@@ -39,37 +45,82 @@ export function renderActive(state, elements, activeSurvivor) {
   elements.activeLevel.textContent = `Level ${activeSurvivor.level}`;
   elements.activeStats.innerHTML = survivorStatsHtml(activeSurvivor);
 
-  elements.hpText.textContent = `${activeSurvivor.hp} / ${activeSurvivor.maxHp}`;
-  elements.moraleText.textContent = `${activeSurvivor.morale} / ${activeSurvivor.maxMorale}`;
-  elements.insanityText.textContent = `${activeSurvivor.insanity} / ${activeSurvivor.maxInsanity}`;
+  const barRows = getSurvivorDisplayStats(STAT_DISPLAY_TYPES.BAR)
+    .map((definition) => {
+      const current = toSafeNumber(activeSurvivor[definition.key]);
+      const { max } = getStatHiddenKeys(definition.key);
+      const maxValue = Math.max(1, toSafeNumber(activeSurvivor[max], 1));
+      const fillPercent = Math.min(100, (current / maxValue) * 100);
 
-  elements.hpFill.style.width = `${(activeSurvivor.hp / activeSurvivor.maxHp) * 100}%`;
-  elements.moraleFill.style.width = `${(activeSurvivor.morale / activeSurvivor.maxMorale) * 100}%`;
-  elements.insanityFill.style.width = `${(activeSurvivor.insanity / activeSurvivor.maxInsanity) * 100}%`;
+      return `
+        <div class="dynamic-stat dynamic-stat-bar">
+          <div class="icon-big">${definition.icon}</div>
+          <div>
+            <div class="label">${definition.label.toUpperCase()}</div>
+            <div class="bar-wrap"><span class="bar-fill ${definition.toneClass || ""}" style="width:${fillPercent}%"></span></div>
+          </div>
+          <div class="bar-value">${current} / ${maxValue}</div>
+        </div>`;
+    })
+    .join("");
 
-  elements.xpFill.style.width = `${Math.min(100, (activeSurvivor.xp / activeSurvivor.nextXp) * 100)}%`;
-  elements.xpText.textContent = `${formatXp(activeSurvivor.xp)}XP / ${formatXp(activeSurvivor.nextXp)}XP`;
+  const intRows = getSurvivorDisplayStats(STAT_DISPLAY_TYPES.INT)
+    .map((definition) => {
+      const value = toSafeNumber(activeSurvivor[definition.key]);
+      return `<div class="dynamic-int"><span>${definition.icon} ${definition.label}</span><b>${value}</b></div>`;
+    })
+    .join("");
+
+  elements.activeStatRows.innerHTML = `${barRows}<div class="dynamic-int-grid">${intRows}</div>`;
+
+  const xpTotal = Math.max(10, Math.round(17 * Math.pow(1.28, Math.max(0, activeSurvivor.level - 1))));
+  const xpCurrent = toSafeNumber(activeSurvivor.healthXp);
+  elements.xpFill.style.width = `${Math.min(100, (xpCurrent / xpTotal) * 100)}%`;
+  elements.xpText.textContent = `${formatXp(xpCurrent)}XP / ${formatXp(xpTotal)}XP`;
 }
 
 export function renderRoster(state, elements, onSelectSurvivor) {
   elements.roster.innerHTML = "";
 
+  const rosterBarStats = getSurvivorDisplayStats(STAT_DISPLAY_TYPES.BAR).filter((definition) => definition.showInRosterBar);
+  const rosterIntStats = getSurvivorDisplayStats(STAT_DISPLAY_TYPES.INT);
+  const rosterIntRows = chunk(rosterIntStats, 3);
+
   state.survivors.forEach((survivor) => {
     const [firstName, lastName] = splitDisplayName(survivor.name);
+    const intMarkup = rosterIntRows
+      .map(
+        (statRow) =>
+          `<div class="mini-stats">${statRow
+            .map((definition) => `<span>${definition.icon} ${toSafeNumber(survivor[definition.key])}</span>`)
+            .join("")}</div>`
+      )
+      .join("");
+
+    const barMarkup = rosterBarStats
+      .map((definition) => {
+        const { max } = getStatHiddenKeys(definition.key);
+        const current = toSafeNumber(survivor[definition.key]);
+        const maxValue = Math.max(1, toSafeNumber(survivor[max], 1));
+        const fillPercent = Math.min(100, (current / maxValue) * 100);
+        return `<div class="small-bar"><span>${definition.icon}</span><div class="bar-wrap"><span class="bar-fill ${definition.toneClass || ""}" style="width:${fillPercent}%"></span></div></div>`;
+      })
+      .join("");
+
+    const xpTotal = Math.max(10, Math.round(17 * Math.pow(1.28, Math.max(0, survivor.level - 1))));
+    const xpCurrent = toSafeNumber(survivor.healthXp);
+
     const card = document.createElement("div");
     card.className = `survivor-card ${state.activeId === survivor.id ? "active" : ""}`;
     card.innerHTML = `
       <div class="survivor-name">${firstName}<br>${lastName}</div>
       <div class="mini-avatar">${survivorArtHtml(survivor.gender)}</div>
-      <div class="mini-stats"><span>✥ ${survivor.attack}</span><span>🛡 ${survivor.defense}</span></div>
-      <div class="mini-stats"><span>🔧 ${survivor.tools}</span><span>💬 ${survivor.speech}</span><span>🔭 ${survivor.search}</span></div>
+      ${intMarkup}
       <div class="status">${state.running && state.running.survivorId === survivor.id ? "Working" : "Idle"}</div>
       <div class="small-bars">
-        <div class="small-bar"><span>❤</span><div class="bar-wrap"><span class="bar-fill red" style="width:${(survivor.hp / survivor.maxHp) * 100}%"></span></div></div>
-        <div class="small-bar"><span>✊</span><div class="bar-wrap"><span class="bar-fill blue" style="width:${(survivor.morale / survivor.maxMorale) * 100}%"></span></div></div>
-        <div class="small-bar"><span>🧠</span><div class="bar-wrap"><span class="bar-fill purple" style="width:${(survivor.insanity / survivor.maxInsanity) * 100}%"></span></div></div>
+        ${barMarkup}
       </div>
-      <div class="small-xp"><span class="small-xp-text">${formatXp(survivor.xp)}XP</span><span class="xp-fill" style="width:${Math.min(100, (survivor.xp / survivor.nextXp) * 100)}%"></span></div>
+      <div class="small-xp"><span class="small-xp-text">${formatXp(xpCurrent)}XP</span><span class="xp-fill" style="width:${Math.min(100, (xpCurrent / xpTotal) * 100)}%"></span></div>
       <div class="level">LVL ${survivor.level}</div>`;
 
     card.addEventListener("click", () => onSelectSurvivor(survivor.id));

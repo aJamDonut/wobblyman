@@ -1,47 +1,58 @@
+import { createDefaultStatValues, normalizeSurvivorStats } from "./stats.js";
+
+function createSurvivor(base, statOverrides) {
+  return {
+    ...base,
+    ...createDefaultStatValues(statOverrides)
+  };
+}
+
 export function createInitialState() {
   return {
     resources: { sandwich: 0, platter: 0 },
     survivorCapacity: 4,
     activeId: "ritu",
     survivors: [
-      {
+      createSurvivor({
         id: "ritu",
         name: "Ritu Shadowaxe",
         level: 5,
-        hp: 99,
-        maxHp: 100,
+        gender: "female"
+      }, {
+        health: 99,
+        healthMax: 100,
+        healthXp: 250.7,
         morale: 49,
-        maxMorale: 50,
+        moraleMax: 50,
         insanity: 0,
-        maxInsanity: 100,
-        xp: 250.7,
-        nextXp: 324,
+        insanityMax: 100,
         attack: 11,
         defense: 1,
         tools: 9,
         speech: 5,
         search: 5,
-        gender: "female"
-      },
-      {
+        cooking: 104
+      }),
+      createSurvivor({
         id: "abhi",
         name: "Abhishek Ironshield",
         level: 1,
-        hp: 100,
-        maxHp: 100,
+        gender: "male"
+      }, {
+        health: 100,
+        healthMax: 100,
+        healthXp: 2.65,
         morale: 50,
-        maxMorale: 50,
+        moraleMax: 50,
         insanity: 0,
-        maxInsanity: 100,
-        xp: 2.65,
-        nextXp: 17,
+        insanityMax: 100,
         attack: 11,
         defense: 1,
         tools: 5,
         speech: 5,
         search: 5,
-        gender: "male"
-      }
+        cooking: 100
+      })
     ],
     missions: {
       sandwich: { seconds: 5, xp: 0.35, reward: "sandwich" },
@@ -121,24 +132,28 @@ function makeSurvivorId(name, survivors) {
 
 export function createRecruitTemplate(index) {
   const isMale = index % 2 === 0;
-  return {
+  return createSurvivor({
     name: isMale ? "Mason Drift" : "Nyra Vale",
     level: 1,
-    hp: 95,
-    maxHp: 95,
+    gender: isMale ? "male" : "female"
+  }, {
+    health: 95,
+    healthMax: 95,
     morale: 40,
-    maxMorale: 50,
+    moraleMax: 50,
     insanity: 0,
-    maxInsanity: 100,
-    xp: 0,
-    nextXp: 18,
+    insanityMax: 100,
+    cooking: 98,
     attack: 8,
     defense: 2,
     tools: 4,
     speech: 6,
-    search: 6,
-    gender: isMale ? "male" : "female"
-  };
+    search: 6
+  });
+}
+
+export function normalizeStateSurvivors(state) {
+  state.survivors = state.survivors.map((survivor) => normalizeSurvivorStats(survivor));
 }
 
 export function addSurvivor(state, survivorInput) {
@@ -147,7 +162,7 @@ export function addSurvivor(state, survivorInput) {
   }
 
   const recruit = {
-    ...survivorInput,
+    ...normalizeSurvivorStats(survivorInput),
     id: makeSurvivorId(survivorInput.name, state.survivors)
   };
 

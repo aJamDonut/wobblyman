@@ -2,7 +2,7 @@ import { Components } from "./ecs/components.js";
 import { World } from "./ecs/World.js";
 import { GameLoop } from "./engine/GameLoop.js";
 import { clock } from "./helpers.js";
-import { loadPersistedState, savePersistedState } from "./persistence.js";
+import { clearPersistedState, loadPersistedState, savePersistedState } from "./persistence.js";
 import { renderActive, renderResources, renderRoster } from "./render.js";
 import { createMissionTimerPopup } from "./ui/missionTimerPopup.js";
 import { createPopupSystem } from "./ui/popupSystem.js";
@@ -12,6 +12,7 @@ import {
   createRecruitTemplate,
   ensureValidActiveSurvivor,
   getSurvivorById,
+  normalizeStateSurvivors,
   removeSurvivor,
   selectNextSurvivor,
   selectPreviousSurvivor,
@@ -22,6 +23,7 @@ import { survivorRecoverySystem } from "./systems/survivorRecoverySystem.js";
 
 export function createGameApp() {
   const state = loadPersistedState(createInitialState());
+  normalizeStateSurvivors(state);
   const world = new World();
   const gameLoop = new GameLoop();
   let saveTimer = null;
@@ -34,12 +36,7 @@ export function createGameApp() {
     activeName: document.querySelector("#activeName"),
     activeStats: document.querySelector("#activeStats"),
     activeLevel: document.querySelector("#activeLevel"),
-    hpFill: document.querySelector("#hpFill"),
-    hpText: document.querySelector("#hpText"),
-    moraleFill: document.querySelector("#moraleFill"),
-    moraleText: document.querySelector("#moraleText"),
-    insanityFill: document.querySelector("#insanityFill"),
-    insanityText: document.querySelector("#insanityText"),
+    activeStatRows: document.querySelector("#activeStatRows"),
     xpFill: document.querySelector("#xpFill"),
     xpText: document.querySelector("#xpText"),
     roster: document.querySelector("#roster"),
@@ -51,6 +48,7 @@ export function createGameApp() {
     addSurvivorBtn: document.querySelector("#addSurvivorBtn"),
     removeSurvivorBtn: document.querySelector("#removeSurvivorBtn"),
     goMissionsBtn: document.querySelector("#goMissionsBtn"),
+    resetGameBtn: document.querySelector("#resetGameBtn"),
     popupLayer: document.querySelector("#popupLayer")
   };
 
@@ -138,6 +136,32 @@ export function createGameApp() {
     }
 
     savePersistedState(state);
+  }
+
+  function resetStateInPlace(nextState) {
+    Object.keys(state).forEach((key) => {
+      delete state[key];
+    });
+
+    Object.assign(state, nextState);
+  }
+
+  function resetGame() {
+    const missionEntities = world.getEntitiesWith([Components.MissionProgress]);
+    missionEntities.forEach((entityId) => {
+      world.removeEntity(entityId);
+    });
+
+    if (saveTimer !== null) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+    }
+
+    clearPersistedState();
+    resetStateInPlace(createInitialState());
+    normalizeStateSurvivors(state);
+    renderAll();
+    toast("Game reset.");
   }
 
   function showScreen(screenId) {
@@ -254,16 +278,17 @@ export function createGameApp() {
       return;
     }
 
-    activeSurvivor.xp += missionProgress.xp;
+    activeSurvivor.healthXp += missionProgress.xp;
     activeSurvivor.morale = Math.max(0, activeSurvivor.morale - (missionProgress.key === "platter" ? 2 : 1));
     state.resources[missionProgress.reward] += 1;
 
-    while (activeSurvivor.xp >= activeSurvivor.nextXp) {
-      activeSurvivor.xp -= activeSurvivor.nextXp;
+    const getLevelXpTarget = () => Math.max(10, Math.round(17 * Math.pow(1.28, Math.max(0, activeSurvivor.level - 1))));
+
+    while (activeSurvivor.healthXp >= getLevelXpTarget()) {
+      activeSurvivor.healthXp -= getLevelXpTarget();
       activeSurvivor.level += 1;
-      activeSurvivor.nextXp = Math.round(activeSurvivor.nextXp * 1.28);
-      activeSurvivor.maxHp += 5;
-      activeSurvivor.hp = activeSurvivor.maxHp;
+      activeSurvivor.healthMax = Math.min(1000, activeSurvivor.healthMax + 5);
+      activeSurvivor.health = activeSurvivor.healthMax;
     }
 
     state.running = null;
@@ -318,6 +343,10 @@ export function createGameApp() {
 
     renderAll();
     toast(`${result.survivor.name} joined the base.`);
+  });
+
+  elements.resetGameBtn.addEventListener("click", () => {
+    resetGame();
   });
 
   elements.removeSurvivorBtn.addEventListener("click", () => {

@@ -1,3 +1,5 @@
+import { getStatHiddenKeys, survivorStatDefinitions } from "../stats.js";
+
 export function survivorRecoverySystem(world, deltaSeconds, context) {
   const { state, onStateChanged } = context;
   context.elapsedSeconds = (context.elapsedSeconds || 0) + deltaSeconds;
@@ -10,6 +12,8 @@ export function survivorRecoverySystem(world, deltaSeconds, context) {
 
   let changed = false;
 
+  const recoveryDefinitions = survivorStatDefinitions.filter((definition) => definition.recoverPerTick > 0);
+
   state.survivors.forEach((survivor) => {
     const isWorking = state.running && state.running.survivorId === survivor.id;
 
@@ -17,14 +21,17 @@ export function survivorRecoverySystem(world, deltaSeconds, context) {
       return;
     }
 
-    const newHp = Math.min(survivor.maxHp, survivor.hp + 1);
-    const newMorale = Math.min(survivor.maxMorale, survivor.morale + 1);
+    recoveryDefinitions.forEach((definition) => {
+      const { max } = getStatHiddenKeys(definition.key);
+      const current = Number.isFinite(survivor[definition.key]) ? survivor[definition.key] : 0;
+      const maxValue = Number.isFinite(survivor[max]) ? survivor[max] : 0;
+      const nextValue = Math.min(maxValue, current + definition.recoverPerTick);
 
-    if (newHp !== survivor.hp || newMorale !== survivor.morale) {
-      survivor.hp = newHp;
-      survivor.morale = newMorale;
-      changed = true;
-    }
+      if (nextValue !== current) {
+        survivor[definition.key] = nextValue;
+        changed = true;
+      }
+    });
   });
 
   if (changed && onStateChanged) {

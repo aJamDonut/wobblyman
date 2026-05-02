@@ -13,12 +13,12 @@
     <div class="top-link" id="goBase"><span class="chevron"></span>GO BACK</div>
 
     <div class="card profile-panel">
-      <div class="header-strip">SURVIVOR</div>
+      <div class="header-strip">SURsVIVOR</div>
       <div class="profile-body">
         <div class="profile-row">
           <div class="avatar"><div class="survivor-art"><i class="hair"></i><i class="head"></i><i class="torso"></i><i class="arm-l"></i><i class="arm-r"></i><i class="leg-l"></i><i class="leg-r"></i><i class="shoe-l"></i><i class="shoe-r"></i></div></div>
           <div>
-            <div class="name" id="activeName">Ritu Shadowaxe</div>
+            <div class="name" id="activeName">Ristu Shadowaxe</div>
             <div class="stats" id="activeStats"></div>
             <div class="survivor-nav">
               <button id="prevSurvivorBtn" class="survivor-nav-btn">PREV</button>
@@ -28,13 +28,7 @@
           <div class="level-pill" id="activeLevel">Level 5</div>
         </div>
 
-        <div class="bars">
-          <div class="bar-line">
-            <div class="icon-big">❤</div><div><div class="label">HEALTH</div><div class="bar-wrap"><span id="hpFill" class="bar-fill red"></span></div></div><div id="hpText" class="bar-value"></div>
-            <div class="icon-big">✊</div><div><div class="label">MORALE</div><div class="bar-wrap"><span id="moraleFill" class="bar-fill blue"></span></div></div><div id="moraleText" class="bar-value"></div>
-            <div class="icon-big">🧠</div><div><div class="label">INSANITY</div><div class="bar-wrap"><span id="insanityFill" class="bar-fill purple"></span></div></div><div id="insanityText" class="bar-value"></div>
-          </div>
-        </div>
+        <div class="bars" id="activeStatRows"></div>
         <div class="xp"><span id="xpFill" class="xp-fill"></span><span id="xpText" class="xp-text"></span></div>
         <div class="trait"><b>Adrenaline Junky</b> “I want to go where the action is. (I never become Traumatized)”</div>
       </div>
@@ -84,6 +78,7 @@
       <button class="roster-btn" id="addSurvivorBtn">RECRUIT</button>
       <button class="roster-btn" id="removeSurvivorBtn">DISMISS ACTIVE</button>
       <button class="roster-btn" id="goMissionsBtn">OPEN PROFILE</button>
+      <button class="roster-btn" id="resetGameBtn">RESET GAME</button>
     </div>
     <div class="roster" id="roster"></div>
   </section>

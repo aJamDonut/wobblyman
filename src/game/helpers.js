@@ -1,3 +1,5 @@
+import { survivorStatDefinitions } from "./stats.js";
+
 export function formatXp(value) {
   return Number.isInteger(value) ? value : Math.round(value * 100) / 100;
 }
@@ -14,10 +16,8 @@ export function survivorArtHtml(gender = "female") {
 }
 
 export function survivorStatsHtml(survivor) {
-  return `
-    <span class="stat">✥ ${survivor.attack}</span>
-    <span class="stat">🛡 ${survivor.defense}</span>
-    <span class="stat">🔧 ${survivor.tools}</span>
-    <span class="stat">💬 ${survivor.speech}</span>
-    <span class="stat">🔭 ${survivor.search}</span>`;
+  return survivorStatDefinitions
+    .filter((definition) => definition.showInHeader)
+    .map((definition) => `<span class="stat">${definition.icon} ${survivor[definition.key]}</span>`)
+    .join("");
 }
