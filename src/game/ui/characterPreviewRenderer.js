@@ -29,44 +29,44 @@ function blendHexColor(hexColor, amount) {
 
 function createPose(timeSeconds, animationName) {
   const bounce = Math.sin(timeSeconds * 2.1) * 4;
-  const shoulderY = -32;
+  const shoulderY = -30;
 
   const pose = {
     bounce,
     lean: Math.sin(timeSeconds * 1.6) * 0.05,
-    leftArm: { x: -24 + Math.sin(timeSeconds * 2) * 5, y: shoulderY + 22 },
-    rightArm: { x: 24 + Math.sin(timeSeconds * 2 + Math.PI) * 5, y: shoulderY + 22 },
-    leftLeg: { x: -14 + Math.sin(timeSeconds * 1.8) * 2, y: 66 },
-    rightLeg: { x: 14 + Math.sin(timeSeconds * 1.8 + Math.PI) * 2, y: 66 }
+    leftArm: { x: -36 + Math.sin(timeSeconds * 2) * 8, y: shoulderY + 44 },
+    rightArm: { x: 36 + Math.sin(timeSeconds * 2 + Math.PI) * 8, y: shoulderY + 44 },
+    leftLeg: { x: -18 + Math.sin(timeSeconds * 1.8) * 2, y: 78 },
+    rightLeg: { x: 18 + Math.sin(timeSeconds * 1.8 + Math.PI) * 2, y: 78 }
   };
 
   if (animationName === "wave") {
     pose.rightArm = {
-      x: 34 + Math.sin(timeSeconds * 7) * 4,
-      y: -66 + Math.cos(timeSeconds * 7) * 5
+      x: 48 + Math.sin(timeSeconds * 7) * 5,
+      y: -76 + Math.cos(timeSeconds * 7) * 6
     };
     pose.lean = 0.08;
   }
 
   if (animationName === "sandwich") {
     const cycle = (Math.sin(timeSeconds * 8) + 1) * 0.5;
-    pose.leftArm = { x: -8 + cycle * 10, y: -58 + cycle * 8 };
-    pose.rightArm = { x: 28 + Math.sin(timeSeconds * 6) * 3, y: -30 + Math.cos(timeSeconds * 6) * 5 };
+    pose.leftArm = { x: -10 + cycle * 14, y: -52 + cycle * 10 };
+    pose.rightArm = { x: 38 + Math.sin(timeSeconds * 6) * 4, y: -22 + Math.cos(timeSeconds * 6) * 6 };
     pose.bounce = Math.sin(timeSeconds * 6) * 2;
     pose.lean = -0.05;
   }
 
   if (animationName === "celebrate") {
-    pose.leftArm = { x: -34 + Math.sin(timeSeconds * 8) * 5, y: -64 + Math.cos(timeSeconds * 9) * 4 };
-    pose.rightArm = { x: 34 + Math.sin(timeSeconds * 9) * 5, y: -64 + Math.cos(timeSeconds * 8) * 4 };
-    pose.leftLeg = { x: -18, y: 62 + Math.sin(timeSeconds * 9) * 6 };
-    pose.rightLeg = { x: 18, y: 62 + Math.sin(timeSeconds * 9 + Math.PI) * 6 };
+    pose.leftArm = { x: -46 + Math.sin(timeSeconds * 8) * 6, y: -74 + Math.cos(timeSeconds * 9) * 5 };
+    pose.rightArm = { x: 46 + Math.sin(timeSeconds * 9) * 6, y: -74 + Math.cos(timeSeconds * 8) * 5 };
+    pose.leftLeg = { x: -20, y: 78 + Math.sin(timeSeconds * 9) * 2 };
+    pose.rightLeg = { x: 20, y: 78 + Math.sin(timeSeconds * 9 + Math.PI) * 2 };
     pose.bounce = Math.abs(Math.sin(timeSeconds * 10)) * -12;
   }
 
   if (animationName === "working") {
-    pose.leftArm = { x: -22 + Math.sin(timeSeconds * 7) * 7, y: -18 + Math.cos(timeSeconds * 6) * 4 };
-    pose.rightArm = { x: 22 + Math.sin(timeSeconds * 7 + 1.2) * 7, y: -18 + Math.cos(timeSeconds * 6 + 1.2) * 4 };
+    pose.leftArm = { x: -34 + Math.sin(timeSeconds * 7) * 9, y: -10 + Math.cos(timeSeconds * 6) * 5 };
+    pose.rightArm = { x: 34 + Math.sin(timeSeconds * 7 + 1.2) * 9, y: -10 + Math.cos(timeSeconds * 6 + 1.2) * 5 };
     pose.bounce = Math.sin(timeSeconds * 7) * 3;
   }
 
@@ -74,27 +74,27 @@ function createPose(timeSeconds, animationName) {
     const stride = Math.sin(timeSeconds * 11);
     pose.lean = 0.2;
     pose.bounce = Math.sin(timeSeconds * 11) * 3;
-    pose.leftArm = { x: -30 + stride * 15, y: -26 - stride * 6 };
-    pose.rightArm = { x: 30 - stride * 15, y: -26 + stride * 6 };
-    pose.leftLeg = { x: -16 - stride * 11, y: 62 + Math.abs(stride) * 8 };
-    pose.rightLeg = { x: 16 + stride * 11, y: 62 + Math.abs(stride) * 8 };
+    pose.leftArm = { x: -44 + stride * 20, y: -20 - stride * 8 };
+    pose.rightArm = { x: 44 - stride * 20, y: -20 + stride * 8 };
+    pose.leftLeg = { x: -20 - stride * 14, y: 78 + Math.abs(stride) * 3 };
+    pose.rightLeg = { x: 20 + stride * 14, y: 78 + Math.abs(stride) * 3 };
   }
 
   if (animationName === "sleep") {
     const breathing = Math.sin(timeSeconds * 1.8);
     pose.lean = -0.44;
     pose.bounce = breathing * 1.2 + 8;
-    pose.leftArm = { x: -22, y: -18 + breathing * 2 };
-    pose.rightArm = { x: 12, y: -10 + breathing * 2 };
-    pose.leftLeg = { x: -10, y: 58 };
-    pose.rightLeg = { x: 8, y: 58 };
+    pose.leftArm = { x: -34, y: -12 + breathing * 2 };
+    pose.rightArm = { x: 18, y: -4 + breathing * 2 };
+    pose.leftLeg = { x: -14, y: 78 };
+    pose.rightLeg = { x: 12, y: 78 };
   }
 
   if (animationName === "talk") {
     pose.lean = -0.03;
     pose.bounce = Math.sin(timeSeconds * 4.4) * 1.8;
-    pose.leftArm = { x: -28 + Math.sin(timeSeconds * 8) * 3, y: -22 + Math.cos(timeSeconds * 8) * 2 };
-    pose.rightArm = { x: 24 + Math.sin(timeSeconds * 8 + 0.8) * 4, y: -14 + Math.cos(timeSeconds * 8 + 0.8) * 3 };
+    pose.leftArm = { x: -40 + Math.sin(timeSeconds * 8) * 4, y: -14 + Math.cos(timeSeconds * 8) * 2 };
+    pose.rightArm = { x: 36 + Math.sin(timeSeconds * 8 + 0.8) * 5, y: -8 + Math.cos(timeSeconds * 8 + 0.8) * 3 };
   }
 
   return pose;
@@ -240,20 +240,24 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     // Slight skew makes the character feel less flat and more staged.
     context.transform(1, 0, -0.08, 1, 0, 0);
 
-    drawLimb(-12, 28, pose.leftLeg.x, pose.leftLeg.y, 11, colors.pantsColor, 4.2, seconds * 7 + 0.5);
-    drawLimb(12, 28, pose.rightLeg.x, pose.rightLeg.y, 11, colors.pantsColor, 4.2, seconds * 7 + 2.2);
+    const plantedCompensation = pose.bounce * 0.85;
+    const leftLegEndY = pose.leftLeg.y - plantedCompensation;
+    const rightLegEndY = pose.rightLeg.y - plantedCompensation;
+
+    drawLimb(-14, 18, pose.leftLeg.x, leftLegEndY, 11, colors.pantsColor, 4.2, seconds * 7 + 0.5);
+    drawLimb(14, 18, pose.rightLeg.x, rightLegEndY, 11, colors.pantsColor, 4.2, seconds * 7 + 2.2);
 
     context.fillStyle = colors.shirtColor;
     context.strokeStyle = blendHexColor(colors.shirtColor, -0.45);
     context.lineWidth = 2.5;
     context.beginPath();
-    context.roundRect(-30, -48, 60, 80, 21);
+    context.roundRect(-24, -38, 48, 62, 25);
     context.fill();
     context.stroke();
 
     context.fillStyle = blendHexColor(colors.shirtColor, 0.1);
     context.beginPath();
-    context.roundRect(-20, -36, 40, 56, 16);
+    context.roundRect(-16, -30, 32, 44, 16);
     context.fill();
 
     context.fillStyle = colors.skinColor;
@@ -339,11 +343,11 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.strokeStyle = blendHexColor(colors.shoeColor, -0.35);
     context.lineWidth = 1.8;
     context.beginPath();
-    context.ellipse(pose.leftLeg.x - 1, pose.leftLeg.y + 1.5, 9.5, 5, 0, 0, Math.PI * 2);
+    context.ellipse(pose.leftLeg.x - 1, leftLegEndY + 1.5, 9.5, 5, 0, 0, Math.PI * 2);
     context.fill();
     context.stroke();
     context.beginPath();
-    context.ellipse(pose.rightLeg.x + 1, pose.rightLeg.y + 1.5, 9.5, 5, 0, 0, Math.PI * 2);
+    context.ellipse(pose.rightLeg.x + 1, rightLegEndY + 1.5, 9.5, 5, 0, 0, Math.PI * 2);
     context.fill();
     context.stroke();
 
@@ -352,8 +356,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
 
     // Arms are rendered last so they always stay in the foreground.
-    drawLimb(-22, -28, pose.leftArm.x, pose.leftArm.y, 10, colors.skinColor, 4.6, seconds * 9 + 0.8);
-    drawLimb(22, -28, pose.rightArm.x, pose.rightArm.y, 10, colors.skinColor, 4.6, seconds * 9 + 2.7);
+    drawLimb(-18, -28, pose.leftArm.x, pose.leftArm.y, 10, colors.skinColor, 4.6, seconds * 9 + 0.8);
+    drawLimb(18, -28, pose.rightArm.x, pose.rightArm.y, 10, colors.skinColor, 4.6, seconds * 9 + 2.7);
 
     context.fillStyle = "#f7f2e9";
     context.strokeStyle = "#4a3530";
