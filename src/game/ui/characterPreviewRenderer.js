@@ -69,39 +69,39 @@ function createPose(timeSeconds, animationName) {
   const pose = {
     bounce,
     lean: Math.sin(timeSeconds * 1.6) * 0.05,
-    leftArm: { x: -36 + Math.sin(timeSeconds * 2) * 8, y: shoulderY + 44 },
-    rightArm: { x: 36 + Math.sin(timeSeconds * 2 + Math.PI) * 8, y: shoulderY + 44 },
+    leftArm: { x: -36 + Math.sin(timeSeconds * 2) * 4, y: shoulderY + 44 },
+    rightArm: { x: 36 + Math.sin(timeSeconds * 2 + Math.PI) * 4, y: shoulderY + 44 },
     leftLeg: { x: -18 + Math.sin(timeSeconds * 1.8) * 2, y: 78 },
     rightLeg: { x: 18 + Math.sin(timeSeconds * 1.8 + Math.PI) * 2, y: 78 }
   };
 
   if (animationName === "wave") {
     pose.rightArm = {
-      x: 48 + Math.sin(timeSeconds * 7) * 5,
-      y: -76 + Math.cos(timeSeconds * 7) * 6
+      x: 48 + Math.sin(timeSeconds * 7) * 3,
+      y: -76 + Math.cos(timeSeconds * 7) * 3
     };
     pose.lean = 0.08;
   }
 
   if (animationName === "sandwich") {
     const cycle = (Math.sin(timeSeconds * 8) + 1) * 0.5;
-    pose.leftArm = { x: -10 + cycle * 14, y: -52 + cycle * 10 };
-    pose.rightArm = { x: 38 + Math.sin(timeSeconds * 6) * 4, y: -22 + Math.cos(timeSeconds * 6) * 6 };
+    pose.leftArm = { x: -10 + cycle * 9, y: -52 + cycle * 7 };
+    pose.rightArm = { x: 38 + Math.sin(timeSeconds * 6) * 2, y: -22 + Math.cos(timeSeconds * 6) * 3 };
     pose.bounce = Math.sin(timeSeconds * 6) * 2;
     pose.lean = -0.05;
   }
 
   if (animationName === "celebrate") {
-    pose.leftArm = { x: -46 + Math.sin(timeSeconds * 8) * 6, y: -74 + Math.cos(timeSeconds * 9) * 5 };
-    pose.rightArm = { x: 46 + Math.sin(timeSeconds * 9) * 6, y: -74 + Math.cos(timeSeconds * 8) * 5 };
+    pose.leftArm = { x: -46 + Math.sin(timeSeconds * 8) * 3, y: -74 + Math.cos(timeSeconds * 9) * 2.5 };
+    pose.rightArm = { x: 46 + Math.sin(timeSeconds * 9) * 3, y: -74 + Math.cos(timeSeconds * 8) * 2.5 };
     pose.leftLeg = { x: -20, y: 78 + Math.sin(timeSeconds * 9) * 2 };
     pose.rightLeg = { x: 20, y: 78 + Math.sin(timeSeconds * 9 + Math.PI) * 2 };
     pose.bounce = Math.abs(Math.sin(timeSeconds * 10)) * -12;
   }
 
   if (animationName === "working") {
-    pose.leftArm = { x: -34 + Math.sin(timeSeconds * 7) * 9, y: -10 + Math.cos(timeSeconds * 6) * 5 };
-    pose.rightArm = { x: 34 + Math.sin(timeSeconds * 7 + 1.2) * 9, y: -10 + Math.cos(timeSeconds * 6 + 1.2) * 5 };
+    pose.leftArm = { x: -34 + Math.sin(timeSeconds * 7) * 5, y: -10 + Math.cos(timeSeconds * 6) * 3 };
+    pose.rightArm = { x: 34 + Math.sin(timeSeconds * 7 + 1.2) * 5, y: -10 + Math.cos(timeSeconds * 6 + 1.2) * 3 };
     pose.bounce = Math.sin(timeSeconds * 7) * 3;
   }
 
@@ -109,8 +109,8 @@ function createPose(timeSeconds, animationName) {
     const stride = Math.sin(timeSeconds * 11);
     pose.lean = 0.2;
     pose.bounce = Math.sin(timeSeconds * 11) * 3;
-    pose.leftArm = { x: -44 + stride * 20, y: -20 - stride * 8 };
-    pose.rightArm = { x: 44 - stride * 20, y: -20 + stride * 8 };
+    pose.leftArm = { x: -44 + stride * 12, y: -20 - stride * 5 };
+    pose.rightArm = { x: 44 - stride * 12, y: -20 + stride * 5 };
     pose.leftLeg = { x: -20 - stride * 14, y: 78 + Math.abs(stride) * 3 };
     pose.rightLeg = { x: 20 + stride * 14, y: 78 + Math.abs(stride) * 3 };
   }
@@ -128,8 +128,8 @@ function createPose(timeSeconds, animationName) {
   if (animationName === "talk") {
     pose.lean = -0.03;
     pose.bounce = Math.sin(timeSeconds * 4.4) * 1.8;
-    pose.leftArm = { x: -40 + Math.sin(timeSeconds * 8) * 4, y: -14 + Math.cos(timeSeconds * 8) * 2 };
-    pose.rightArm = { x: 36 + Math.sin(timeSeconds * 8 + 0.8) * 5, y: -8 + Math.cos(timeSeconds * 8 + 0.8) * 3 };
+    pose.leftArm = { x: -40 + Math.sin(timeSeconds * 8) * 2.5, y: -14 + Math.cos(timeSeconds * 8) * 1.3 };
+    pose.rightArm = { x: 36 + Math.sin(timeSeconds * 8 + 0.8) * 3, y: -8 + Math.cos(timeSeconds * 8 + 0.8) * 2 };
   }
 
   return pose;
@@ -774,6 +774,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
 
     const seconds = now / 1000;
     const pose = createPose(seconds, currentAnimation);
+    const dampedBounce = pose.bounce * 0.35;
+    const wobbleScale = 0.65;
 
     const gradient = context.createRadialGradient(centerX, centerY - 48, 24, centerX, centerY, Math.max(width, height));
     gradient.addColorStop(0, "rgba(255,255,255,0.13)");
@@ -787,17 +789,17 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.fill();
 
     context.save();
-    context.translate(centerX, centerY + pose.bounce);
+    context.translate(centerX, centerY + dampedBounce);
     context.rotate(pose.lean);
     // Slight skew makes the character feel less flat and more staged.
     context.transform(1, 0, -0.08, 1, 0, 0);
 
-    const plantedCompensation = pose.bounce * 0.85;
+    const plantedCompensation = dampedBounce * 0.85;
     const leftLegEndY = pose.leftLeg.y - plantedCompensation;
     const rightLegEndY = pose.rightLeg.y - plantedCompensation;
 
-    drawLimb(-14, 18, pose.leftLeg.x, leftLegEndY, 11, colors.pantsColor, 4.2, seconds * 7 + 0.5);
-    drawLimb(14, 18, pose.rightLeg.x, rightLegEndY, 11, colors.pantsColor, 4.2, seconds * 7 + 2.2);
+    drawLimb(-14, 18, pose.leftLeg.x, leftLegEndY, 5.5, colors.pantsColor, 4.2 * wobbleScale, seconds * 7 + 0.5);
+    drawLimb(14, 18, pose.rightLeg.x, rightLegEndY, 5.5, colors.pantsColor, 4.2 * wobbleScale, seconds * 7 + 2.2);
 
     context.fillStyle = colors.shirtColor;
     context.strokeStyle = blendHexColor(colors.shirtColor, -0.45);
@@ -894,18 +896,18 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
 
     // Arms are rendered last so they always stay in the foreground.
-    drawLimb(-18, -28, pose.leftArm.x, pose.leftArm.y, 10, colors.skinColor, 4.6, seconds * 9 + 0.8);
-    drawLimb(18, -28, pose.rightArm.x, pose.rightArm.y, 10, colors.skinColor, 4.6, seconds * 9 + 2.7);
+    drawLimb(-18, -28, pose.leftArm.x, pose.leftArm.y, 5, colors.skinColor, 4.6 * wobbleScale, seconds * 9 + 0.8);
+    drawLimb(18, -28, pose.rightArm.x, pose.rightArm.y, 5, colors.skinColor, 4.6 * wobbleScale, seconds * 9 + 2.7);
 
     context.fillStyle = "#f7f2e9";
     context.strokeStyle = "#4a3530";
     context.lineWidth = 1.8;
     context.beginPath();
-    context.ellipse(pose.leftArm.x, pose.leftArm.y, 5.5, 4.6, 0, 0, Math.PI * 2);
+    context.ellipse(pose.leftArm.x, pose.leftArm.y, 8.25, 6.9, 0, 0, Math.PI * 2);
     context.fill();
     context.stroke();
     context.beginPath();
-    context.ellipse(pose.rightArm.x, pose.rightArm.y, 5.5, 4.6, 0, 0, Math.PI * 2);
+    context.ellipse(pose.rightArm.x, pose.rightArm.y, 8.25, 6.9, 0, 0, Math.PI * 2);
     context.fill();
     context.stroke();
 
