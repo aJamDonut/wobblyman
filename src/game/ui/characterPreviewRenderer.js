@@ -1587,7 +1587,16 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.restore();
   }
 
-  function drawHairStyle(styleName, hairColor, seconds, useOutline = true) {
+  function drawHairStyle(
+    styleName,
+    hairColor,
+    seconds,
+    useOutline = true,
+    accessoryOffsetX = 0,
+    accessoryPerspectiveBlend = 0,
+    accessoryOffsetY = 0,
+    accessoryVisibility = 1
+  ) {
     const strokeColor = useOutline ? blendHexColor(hairColor, -0.45) : hairColor;
     const baselineY = -75;
     context.fillStyle = hairColor;
@@ -2141,6 +2150,35 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.ellipse(0, -79, 25, 4, 0, 0, Math.PI * 2);
       context.fill();
       context.stroke();
+      if (hairColor === colors.hairColor && accessoryVisibility > 0.01) {
+        const pinX = -11 + accessoryOffsetX;
+        const pinY = -92;
+        const perspectiveStrength = Math.abs(accessoryPerspectiveBlend);
+        const cardHalfW = lerp(2.8, 2.5, perspectiveStrength);
+        const cardHalfH = lerp(2.8, 3.15, perspectiveStrength);
+        context.save();
+        context.globalAlpha *= accessoryVisibility;
+        context.translate(pinX, pinY);
+        context.rotate(-0.12 + accessoryPerspectiveBlend * 0.1);
+        context.fillStyle = "#f9f2e8";
+        context.beginPath();
+        context.roundRect(-cardHalfW, -cardHalfH, cardHalfW * 2, cardHalfH * 2, 0.7);
+        context.fill();
+        context.strokeStyle = "#6e1512";
+        context.lineWidth = 1;
+        context.beginPath();
+        context.roundRect(-cardHalfW, -cardHalfH, cardHalfW * 2, cardHalfH * 2, 0.7);
+        drawRawStroke();
+        context.fillStyle = "#b4231f";
+        context.beginPath();
+        context.moveTo(0, -cardHalfH * 0.52);
+        context.lineTo(cardHalfW * 0.43, 0);
+        context.lineTo(0, cardHalfH * 0.52);
+        context.lineTo(-cardHalfW * 0.43, 0);
+        context.closePath();
+        context.fill();
+        context.restore();
+      }
       return;
     }
 
@@ -2230,6 +2268,73 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     } finally {
       context.restore();
     }
+  }
+
+  function addFaceAndHairMaskPath(styleName) {
+    context.beginPath();
+    context.arc(0, -66, 24, 0, Math.PI * 2);
+    const resolvedStyle = String(styleName || "classic");
+    const baselineY = -75;
+    context.save();
+    context.translate(0, baselineY);
+    context.scale(HAIR_SIZE_SCALE, HAIR_SIZE_SCALE);
+    context.translate(0, -baselineY);
+
+    if (resolvedStyle === "hat-fedora") {
+      context.roundRect(-16, -95, 32, 16, 5);
+      context.ellipse(0, -79, 25, 4, 0, 0, Math.PI * 2);
+      context.roundRect(-14.8, -95.2, 7.5, 7.5, 1.1);
+      context.restore();
+      return;
+    }
+
+    if (resolvedStyle === "hat-top") {
+      context.roundRect(-13, -100, 26, 20, 4);
+      context.ellipse(0, -79, 23, 4, 0, 0, Math.PI * 2);
+      context.restore();
+      return;
+    }
+
+    if (resolvedStyle === "hat-bucket") {
+      context.moveTo(-20, -93);
+      context.lineTo(20, -93);
+      context.lineTo(16, -76);
+      context.lineTo(-16, -76);
+      context.closePath();
+      context.ellipse(0, -76, 21, 4, 0, 0, Math.PI * 2);
+      context.restore();
+      return;
+    }
+
+    if (resolvedStyle === "hat-cap") {
+      context.roundRect(-21, -90, 42, 15, 8);
+      context.moveTo(0, -78);
+      context.quadraticCurveTo(12, -74, 20, -78);
+      context.quadraticCurveTo(11, -81, 0, -80);
+      context.closePath();
+      context.restore();
+      return;
+    }
+
+    if (resolvedStyle === "hat-wizard") {
+      context.moveTo(0, -101);
+      context.lineTo(14, -79);
+      context.lineTo(-14, -79);
+      context.closePath();
+      context.ellipse(0, -79, 23, 4, 0, 0, Math.PI * 2);
+      context.restore();
+      return;
+    }
+
+    if (resolvedStyle.startsWith("hat-")) {
+      context.ellipse(0, -84, 27, 17, 0, 0, Math.PI * 2);
+      context.ellipse(0, -79, 25, 5, 0, 0, Math.PI * 2);
+      context.restore();
+      return;
+    }
+
+    context.ellipse(0, -84, 27, 17, 0, 0, Math.PI * 2);
+    context.restore();
   }
 
   function drawOpenEyes(styleName) {
@@ -3529,12 +3634,24 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.fill();
     context.restore();
 
-    drawHairStyle(hairStyle, colors.hairColor, seconds);
-
-    // Clone the head shape as a live mask so facial features stay inside the face while rotating.
     context.save();
-    context.beginPath();
-    context.arc(0, -66, 24, 0, Math.PI * 2);
+    addFaceAndHairMaskPath(hairStyle);
+    context.clip();
+    drawHairStyle(
+      hairStyle,
+      colors.hairColor,
+      seconds,
+      true,
+      faceFeatureDriftX,
+      perspectiveBlend,
+      faceFeatureDriftY,
+      faceFeatureVisibility
+    );
+    context.restore();
+
+    // Keep facial features clipped to the same combined face/hair mask used by hat accessories.
+    context.save();
+    addFaceAndHairMaskPath(hairStyle);
     context.clip();
 
     const openEyesAlpha = (1 - sleepWeight) * faceFeatureVisibility;
