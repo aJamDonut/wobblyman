@@ -7,6 +7,101 @@ function createSurvivor(base, statOverrides) {
   };
 }
 
+const SHIRT_COLORS = [
+  "#d94a35",
+  "#5f9ecf",
+  "#c45f86",
+  "#4f8754",
+  "#b86f2f",
+  "#6e63b7",
+  "#2d9a8b",
+  "#a54d63",
+  "#8f6a46",
+  "#3b6ea6",
+];
+
+const HAIR_COLORS = [
+  "#1a1412",
+  "#2a2523",
+  "#3f2a1e",
+  "#5c3d2b",
+  "#6f2d28",
+  "#7a4f2a",
+  "#8b5e3c",
+  "#a67c52",
+  "#bfa079",
+  "#c57b62",
+  "#7f3f63",
+  "#4a3f7a",
+  "#355a7c",
+  "#4d4d4d",
+];
+
+const SKIN_COLORS = [
+  "#e2b48d",
+  "#d8a47e",
+  "#cf8b58",
+  "#b17a52",
+  "#9f6b45",
+  "#8a5a39",
+  "#6f472f",
+  "#5a3a27",
+];
+
+const LEGACY_LIGHT_SKIN_REMAP = {
+  "#f5d6b8": "#d8a47e",
+  "#efc7a5": "#cf8b58",
+};
+
+function sanitizeSkinColor(value) {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  return LEGACY_LIGHT_SKIN_REMAP[normalized] || value;
+}
+
+const PANTS_COLORS = [
+  "#303946",
+  "#4a3f5b",
+  "#3e4a34",
+  "#5a4637",
+  "#364f5c",
+  "#4a4a4a",
+  "#3f3560",
+  "#42553a",
+  "#2f4651",
+  "#5a3d4a",
+];
+
+const SHOE_COLORS = [
+  "#1f2328",
+  "#2b2b2b",
+  "#352d27",
+  "#2c2430",
+  "#2a2f36",
+  "#3a3128",
+  "#343434",
+  "#2d2a25",
+];
+
+function pickPaletteColor(palette, seed) {
+  const safeSeed = Number.isFinite(seed) ? Math.abs(Math.floor(seed)) : 0;
+  return palette[safeSeed % palette.length];
+}
+
+function createPaletteForIndex(index) {
+  const baseSeed = Number.isFinite(index) ? Math.abs(Math.floor(index)) : 0;
+  return {
+    shirtColor: pickPaletteColor(SHIRT_COLORS, baseSeed * 7 + 1),
+    hairColor: pickPaletteColor(HAIR_COLORS, baseSeed * 11 + 3),
+    skinColor: pickPaletteColor(SKIN_COLORS, baseSeed * 5 + 2),
+    pantsColor: pickPaletteColor(PANTS_COLORS, baseSeed * 13 + 4),
+    shoeColor: pickPaletteColor(SHOE_COLORS, baseSeed * 17 + 6),
+  };
+}
+
 function withMissionStatChanges(missionCategories) {
   return Object.fromEntries(
     Object.entries(missionCategories).map(
@@ -49,7 +144,7 @@ export function createInitialState() {
           name: "Ritu Shadowaxe",
           level: 5,
           gender: "female",
-          shirtColor: "#d94a35",
+          ...createPaletteForIndex(0),
         },
         {
           health: 99,
@@ -561,12 +656,13 @@ function makeSurvivorId(name, survivors) {
 
 export function createRecruitTemplate(index) {
   const isMale = index % 2 === 0;
+  const palette = createPaletteForIndex(index + 1);
   return createSurvivor(
     {
       name: isMale ? "Mason Drift" : "Nyra Vale",
       level: 1,
       gender: isMale ? "male" : "female",
-      shirtColor: isMale ? "#5f9ecf" : "#c45f86",
+      ...palette,
     },
     {
       health: 95,
@@ -587,7 +683,10 @@ export function createRecruitTemplate(index) {
 
 export function normalizeStateSurvivors(state) {
   state.survivors = state.survivors.map((survivor) =>
-    normalizeSurvivorStats(survivor),
+    normalizeSurvivorStats({
+      ...survivor,
+      skinColor: sanitizeSkinColor(survivor.skinColor),
+    }),
   );
 }
 

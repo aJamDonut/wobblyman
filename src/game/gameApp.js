@@ -286,14 +286,46 @@ export function createGameApp() {
   }
 
   function getSurvivorPreviewColors(survivor) {
-    const hasShirtColor = typeof survivor?.shirtColor === "string" && survivor.shirtColor.trim() !== "";
-    const defaultShirtColor = survivor?.gender === "male" ? "#5f9ecf" : "#d94a35";
+    const palettes = {
+      shirt: ["#d94a35", "#5f9ecf", "#c45f86", "#4f8754", "#b86f2f", "#6e63b7", "#2d9a8b", "#a54d63", "#8f6a46", "#3b6ea6"],
+      hair: ["#1a1412", "#2a2523", "#3f2a1e", "#5c3d2b", "#6f2d28", "#7a4f2a", "#8b5e3c", "#a67c52", "#bfa079", "#c57b62", "#7f3f63", "#4a3f7a", "#355a7c", "#4d4d4d"],
+      skin: ["#e2b48d", "#d8a47e", "#cf8b58", "#b17a52", "#9f6b45", "#8a5a39", "#6f472f", "#5a3a27"],
+      pants: ["#303946", "#4a3f5b", "#3e4a34", "#5a4637", "#364f5c", "#4a4a4a", "#3f3560", "#42553a", "#2f4651", "#5a3d4a"],
+      shoes: ["#1f2328", "#2b2b2b", "#352d27", "#2c2430", "#2a2f36", "#3a3128", "#343434", "#2d2a25"]
+    };
+
+    const legacyLightSkinRemap = {
+      "#f5d6b8": "#d8a47e",
+      "#efc7a5": "#cf8b58"
+    };
+
+    const seedSource = `${survivor?.id || ""}:${survivor?.name || ""}:${survivor?.gender || ""}`;
+    let seed = 0;
+    for (let index = 0; index < seedSource.length; index += 1) {
+      seed = (seed * 33 + seedSource.charCodeAt(index)) % 2147483647;
+    }
+
+    const pickFromPalette = (palette, offset) => {
+      const paletteIndex = Math.abs(seed + offset) % palette.length;
+      return palette[paletteIndex];
+    };
+
+    const safeColor = (value, fallback) => {
+      return typeof value === "string" && value.trim() !== "" ? value : fallback;
+    };
+
+    const safeSkinColor = (value, fallback) => {
+      const resolved = safeColor(value, fallback);
+      const normalized = String(resolved).trim().toLowerCase();
+      return legacyLightSkinRemap[normalized] || resolved;
+    };
 
     return {
-      shirtColor: hasShirtColor ? survivor.shirtColor : defaultShirtColor,
-      hairColor: survivor?.gender === "male" ? "#2a2523" : "#6f2d28",
-      skinColor: survivor?.gender === "male" ? "#b17a52" : "#cf8b58",
-      pantsColor: survivor?.gender === "male" ? "#303946" : "#4a3f5b"
+      shirtColor: safeColor(survivor?.shirtColor, pickFromPalette(palettes.shirt, 7)),
+      hairColor: safeColor(survivor?.hairColor, pickFromPalette(palettes.hair, 13)),
+      skinColor: safeSkinColor(survivor?.skinColor, pickFromPalette(palettes.skin, 19)),
+      pantsColor: safeColor(survivor?.pantsColor, pickFromPalette(palettes.pants, 23)),
+      shoeColor: safeColor(survivor?.shoeColor, pickFromPalette(palettes.shoes, 29))
     };
   }
 
@@ -356,6 +388,10 @@ export function createGameApp() {
           survivor.name,
           survivor.gender,
           survivor.shirtColor,
+          survivor.hairColor,
+          survivor.skinColor,
+          survivor.pantsColor,
+          survivor.shoeColor,
           missionSurvivorId === survivor.id ? missionKey : "idle"
         ].join("|");
       })
