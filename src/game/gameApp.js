@@ -80,7 +80,7 @@ export function createGameApp() {
   let previewEyeStyleCycleIndex = Math.max(0, previewEyeStyles.indexOf("classic"));
   let previewBodyTypeCycleIndex = Math.max(0, previewBodyTypes.indexOf("classic"));
   let previewPetTypeCycleIndex = Math.max(0, previewPetTypes.indexOf("cat"));
-  let previewPerspectiveTilt = 0;
+  let previewPerspectiveTilt = 100;
 
   function syncHairStyleLabel() {
     const activeHairStyle = previewHairStyles[previewHairStyleCycleIndex] || "classic";

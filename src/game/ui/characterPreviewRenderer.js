@@ -1539,6 +1539,9 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     wobbleScale,
     leftLegRootX,
     rightLegRootX,
+    leftArmRootX,
+    rightArmRootX,
+    perspectiveBlend,
     perspectiveOffsetX = 0
   ) {
     const shadowFill = shadowStyle.fillColor;
@@ -1615,17 +1618,71 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.fill();
     context.stroke();
 
-    drawLimb(-18 + shadowOffsetX, -28 + shadowOffsetY, pose.leftArm.x + shadowOffsetX, pose.leftArm.y + shadowOffsetY, 5, shadowFill, 4.6 * wobbleScale, seconds * 9 + 0.8, shadowStroke, 0, 0, 1, 0, 0.1);
-    drawLimb(18 + shadowOffsetX, -28 + shadowOffsetY, pose.rightArm.x + shadowOffsetX, pose.rightArm.y + shadowOffsetY, 5, shadowFill, 4.6 * wobbleScale, seconds * 9 + 2.7, shadowStroke, 0, 0, 1, 0, 0.1);
+    const drawLeftShadowArm = () => {
+      drawLimb(
+        leftArmRootX + shadowOffsetX,
+        -28 + shadowOffsetY,
+        pose.leftArm.x + shadowOffsetX,
+        pose.leftArm.y + shadowOffsetY,
+        5,
+        shadowFill,
+        4.6 * wobbleScale,
+        seconds * 9 + 0.8,
+        shadowStroke,
+        0,
+        0,
+        1,
+        0,
+        0.1
+      );
+    };
+    const drawRightShadowArm = () => {
+      drawLimb(
+        rightArmRootX + shadowOffsetX,
+        -28 + shadowOffsetY,
+        pose.rightArm.x + shadowOffsetX,
+        pose.rightArm.y + shadowOffsetY,
+        5,
+        shadowFill,
+        4.6 * wobbleScale,
+        seconds * 9 + 2.7,
+        shadowStroke,
+        0,
+        0,
+        1,
+        0,
+        0.1
+      );
+    };
 
-    context.beginPath();
-    context.ellipse(pose.leftArm.x + shadowOffsetX, pose.leftArm.y + shadowOffsetY, 8.25, 6.9, 0, 0, Math.PI * 2);
-    context.fill();
-    context.stroke();
-    context.beginPath();
-    context.ellipse(pose.rightArm.x + shadowOffsetX, pose.rightArm.y + shadowOffsetY, 8.25, 6.9, 0, 0, Math.PI * 2);
-    context.fill();
-    context.stroke();
+    if (perspectiveBlend > 0) {
+      drawRightShadowArm();
+      drawLeftShadowArm();
+    } else {
+      drawLeftShadowArm();
+      drawRightShadowArm();
+    }
+
+    const drawLeftShadowHand = () => {
+      context.beginPath();
+      context.ellipse(pose.leftArm.x + shadowOffsetX, pose.leftArm.y + shadowOffsetY, 8.25, 6.9, 0, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+    };
+    const drawRightShadowHand = () => {
+      context.beginPath();
+      context.ellipse(pose.rightArm.x + shadowOffsetX, pose.rightArm.y + shadowOffsetY, 8.25, 6.9, 0, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+    };
+
+    if (perspectiveBlend > 0) {
+      drawRightShadowHand();
+      drawLeftShadowHand();
+    } else {
+      drawLeftShadowHand();
+      drawRightShadowHand();
+    }
 
     context.restore();
   }
@@ -1765,11 +1822,26 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const rightLegRootShiftX = perspectiveBlend < 0
       ? -5.2 * perspectiveStrength
       : -2.4 * perspectiveStrength;
+    const leftArmShiftX = perspectiveBlend < 0
+      ? 3.1 * perspectiveStrength
+      : 6.2 * perspectiveStrength;
+    const rightArmShiftX = perspectiveBlend < 0
+      ? -6.2 * perspectiveStrength
+      : -3.1 * perspectiveStrength;
+    const leftArmRootShiftX = perspectiveBlend < 0
+      ? 2 * perspectiveStrength
+      : 4.3 * perspectiveStrength;
+    const rightArmRootShiftX = perspectiveBlend < 0
+      ? -4.3 * perspectiveStrength
+      : -2 * perspectiveStrength;
+    const isRightArmFront = perspectiveBlend <= 0;
     const facePerspectiveShiftX = perspectiveBlend * 6.2;
     const shadowPerspectiveShiftX = -perspectiveBlend * 15;
     const dampedBounce = pose.bounce * 0.35;
     const wobbleScale = 0.65;
     const bodyProfile = BODY_TYPE_PROFILES[bodyType] || BODY_TYPE_PROFILES.classic;
+    const faceSkinColor = blendHexColor(colors.skinColor, 0.04);
+    const handOutlineColor = blendHexColor(faceSkinColor, -0.18);
 
     context.clearRect(0, 0, width, height);
 
@@ -1788,6 +1860,14 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       rightLeg: {
         ...pose.rightLeg,
         x: pose.rightLeg.x + rightLegShiftX
+      },
+      leftArm: {
+        ...pose.leftArm,
+        x: pose.leftArm.x + leftArmShiftX
+      },
+      rightArm: {
+        ...pose.rightArm,
+        x: pose.rightArm.x + rightArmShiftX
       }
     };
 
@@ -1796,6 +1876,80 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const rightLegEndY = perspectivePose.rightLeg.y - plantedCompensation;
     const leftLegRootX = -14 + leftLegRootShiftX;
     const rightLegRootX = 14 + rightLegRootShiftX;
+    const leftArmRootX = -18 + leftArmRootShiftX;
+    const rightArmRootX = 18 + rightArmRootShiftX;
+
+    const drawLeftArmAndHand = () => {
+      drawLimb(
+        leftArmRootX,
+        -28,
+        perspectivePose.leftArm.x,
+        perspectivePose.leftArm.y,
+        5,
+        faceSkinColor,
+        4.6 * wobbleScale,
+        seconds * 9 + 0.8,
+        handOutlineColor,
+        0,
+        0,
+        1,
+        0,
+        0.1
+      );
+      const leftHandShadeDriftX = Math.sin(seconds * 2.5 + perspectivePose.leftArm.x * 0.05) * 1.6;
+      const leftHandShadeDriftY = Math.cos(seconds * 2 + perspectivePose.leftArm.y * 0.05) * 1.1;
+      context.strokeStyle = handOutlineColor;
+      context.lineWidth = 1.2;
+      fillShadedEllipse(
+        perspectivePose.leftArm.x,
+        perspectivePose.leftArm.y,
+        8.25,
+        6.9,
+        faceSkinColor,
+        0,
+        leftHandShadeDriftX,
+        leftHandShadeDriftY
+      );
+      context.beginPath();
+      context.ellipse(perspectivePose.leftArm.x, perspectivePose.leftArm.y, 8.25, 6.9, 0, 0, Math.PI * 2);
+      context.stroke();
+    };
+
+    const drawRightArmAndHand = () => {
+      drawLimb(
+        rightArmRootX,
+        -28,
+        perspectivePose.rightArm.x,
+        perspectivePose.rightArm.y,
+        5,
+        faceSkinColor,
+        4.6 * wobbleScale,
+        seconds * 9 + 2.7,
+        handOutlineColor,
+        0,
+        0,
+        1,
+        0,
+        0.1
+      );
+      const rightHandShadeDriftX = Math.sin(seconds * 2.5 + 1.4 + perspectivePose.rightArm.x * 0.05) * 1.6;
+      const rightHandShadeDriftY = Math.cos(seconds * 2 + 1.1 + perspectivePose.rightArm.y * 0.05) * 1.1;
+      context.strokeStyle = handOutlineColor;
+      context.lineWidth = 1.2;
+      fillShadedEllipse(
+        perspectivePose.rightArm.x,
+        perspectivePose.rightArm.y,
+        8.25,
+        6.9,
+        faceSkinColor,
+        0,
+        rightHandShadeDriftX,
+        rightHandShadeDriftY
+      );
+      context.beginPath();
+      context.ellipse(perspectivePose.rightArm.x, perspectivePose.rightArm.y, 8.25, 6.9, 0, 0, Math.PI * 2);
+      context.stroke();
+    };
 
     drawBodyShadowCopy(
       perspectivePose,
@@ -1806,6 +1960,9 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       wobbleScale,
       leftLegRootX,
       rightLegRootX,
+      leftArmRootX,
+      rightArmRootX,
+      perspectiveBlend,
       shadowPerspectiveShiftX
     );
 
@@ -1843,6 +2000,12 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     } else {
       drawLeftLeg();
       drawRightLeg();
+    }
+
+    if (isRightArmFront) {
+      drawLeftArmAndHand();
+    } else {
+      drawRightArmAndHand();
     }
 
     const shirtBase = blendHexColor(colors.shirtColor, 0.08);
@@ -1904,12 +2067,10 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.save();
     context.translate(0, headOffsetY);
 
-    const faceSkinColor = blendHexColor(colors.skinColor, 0.04);
     const headShadeDriftX = Math.sin(seconds * 2.1 + pose.lean * 10) * 2;
     const headShadeDriftY = Math.cos(seconds * 1.7 + pose.bounce * 0.06) * 1.5;
     const faceFeatureDriftX = headShadeDriftX * 0.24 + facePerspectiveShiftX;
     const faceFeatureDriftY = headShadeDriftY * 0.2;
-    const handOutlineColor = blendHexColor(faceSkinColor, -0.18);
 
     context.strokeStyle = "#382d25";
     context.lineWidth = 1.5;
@@ -2012,59 +2173,16 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     if (sandwichWeight > 0.01) {
       context.save();
       context.globalAlpha = sandwichWeight;
-      drawSandwich(pose.leftArm.x + 7, pose.leftArm.y - 2, -0.22 + Math.sin(seconds * 6) * 0.05);
+      drawSandwich(perspectivePose.leftArm.x + 7, perspectivePose.leftArm.y - 2, -0.22 + Math.sin(seconds * 6) * 0.05);
       context.restore();
     }
 
-    // Arms are rendered last so they always stay in the foreground.
-    drawLimb(
-      -18,
-      -28,
-      pose.leftArm.x,
-      pose.leftArm.y,
-      5,
-      faceSkinColor,
-      4.6 * wobbleScale,
-      seconds * 9 + 0.8,
-      handOutlineColor,
-      0,
-      0,
-      1,
-      0,
-      0.1
-    );
-    drawLimb(
-      18,
-      -28,
-      pose.rightArm.x,
-      pose.rightArm.y,
-      5,
-      faceSkinColor,
-      4.6 * wobbleScale,
-      seconds * 9 + 2.7,
-      handOutlineColor,
-      0,
-      0,
-      1,
-      0,
-      0.1
-    );
-
-    // Hands are rendered after arms so they stay visually in front.
-    context.strokeStyle = handOutlineColor;
-    context.lineWidth = 1.2;
-    const leftHandShadeDriftX = Math.sin(seconds * 2.5 + pose.leftArm.x * 0.05) * 1.6;
-    const leftHandShadeDriftY = Math.cos(seconds * 2 + pose.leftArm.y * 0.05) * 1.1;
-    const rightHandShadeDriftX = Math.sin(seconds * 2.5 + 1.4 + pose.rightArm.x * 0.05) * 1.6;
-    const rightHandShadeDriftY = Math.cos(seconds * 2 + 1.1 + pose.rightArm.y * 0.05) * 1.1;
-    fillShadedEllipse(pose.leftArm.x, pose.leftArm.y, 8.25, 6.9, faceSkinColor, 0, leftHandShadeDriftX, leftHandShadeDriftY);
-    context.beginPath();
-    context.ellipse(pose.leftArm.x, pose.leftArm.y, 8.25, 6.9, 0, 0, Math.PI * 2);
-    context.stroke();
-    fillShadedEllipse(pose.rightArm.x, pose.rightArm.y, 8.25, 6.9, faceSkinColor, 0, rightHandShadeDriftX, rightHandShadeDriftY);
-    context.beginPath();
-    context.ellipse(pose.rightArm.x, pose.rightArm.y, 8.25, 6.9, 0, 0, Math.PI * 2);
-    context.stroke();
+    // Draw the arm that's closer to the camera in front of the body.
+    if (isRightArmFront) {
+      drawRightArmAndHand();
+    } else {
+      drawLeftArmAndHand();
+    }
 
     context.restore();
 
