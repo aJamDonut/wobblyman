@@ -49,31 +49,48 @@
             </div>
           </div>
 
-          <div class="tabs">
-            <button class="tab active" data-mission-category="home">
-              HOME
+          <div class="actions-launcher-wrap">
+            <button id="actionsMenuBtn" class="actions-menu-btn" type="button" aria-expanded="false" aria-controls="missionActionsOverlay">
+              Actions
             </button>
-            <button class="tab" data-mission-category="catalog" data-required-flag="hasCatalog">CATALOG</button>
-            <button class="tab" data-mission-category="garage" data-required-flag="hasGarage">GARAGE</button>
-            <button class="tab" data-mission-category="work" data-required-flag="hasJob">WORK</button>
-            <button class="tab" data-mission-category="mall" data-required-flag="hasBike">MALL</button>
-            <button class="tab" data-mission-category="business" data-required-flag="hasBusiness">BUSINESS</button>
-            <!-- <button class="tab">JOURNAL</button> -->
           </div>
 
-          <div class="mission-cash-banner" id="missionsCash">Cash: $0</div>
+          <div id="missionActionsOverlay" class="mission-actions-overlay" aria-hidden="true">
+            <div class="mission-actions-backdrop" data-overlay-close="true"></div>
+            <section class="mission-actions-sheet" role="dialog" aria-modal="false" aria-label="Mission actions">
+              <div class="mission-actions-header">
+                <h2>MISSIONS</h2>
+                <button id="missionActionsCloseBtn" class="mission-actions-close" type="button" aria-label="Close actions menu">Close</button>
+              </div>
 
-          <div class="card mission-panel">
-            <h2 class="section-title" id="missionPanelTitle">HOME</h2>
-            
+              <div class="tabs">
+                <button class="tab active" data-mission-category="home">
+                  HOME
+                </button>
+                <button class="tab" data-mission-category="catalog" data-required-flag="hasCatalog">CATALOG</button>
+                <button class="tab" data-mission-category="garage" data-required-flag="hasGarage">GARAGE</button>
+                <button class="tab" data-mission-category="work" data-required-flag="hasJob">WORK</button>
+                <button class="tab" data-mission-category="mall" data-required-flag="hasBike">MALL</button>
+                <button class="tab" data-mission-category="business" data-required-flag="hasBusiness">BUSINESS</button>
+                <!-- <button class="tab">JOURNAL</button> -->
+              </div>
+
+              <div class="mission-cash-banner" id="missionsCash">Cash: $0</div>
+
+              <div class="card mission-panel">
+                <h2 class="section-title" id="missionPanelTitle">HOME</h2>
+                
+              </div>
+              <div id="missionsList" class="mission-actions-list"></div>
+            </section>
           </div>
-          <div id="missionsList"></div>
         </div>
 
         <aside class="card character-preview-panel">
           <div class="header-strip">LIVE CHARACTER</div>
           <div class="preview-body">
             <canvas id="characterPreviewCanvas" class="character-preview-canvas" aria-label="Character preview"></canvas>
+            <div id="characterPreviewMissionStatus" class="preview-mission-status" aria-live="polite">No mission running</div>
             <div class="preview-caption" id="characterPreviewCaption" hidden aria-hidden="true">
               <div class="preview-row">
                 <span>Animation</span>

@@ -55,11 +55,15 @@ export function createGameApp() {
     openSurvivorsBtn: document.querySelector("#openSurvivorsBtn"),
     resetGameBtn: document.querySelector("#resetGameBtn"),
     popupLayer: document.querySelector("#popupLayer"),
+    actionsMenuBtn: document.querySelector("#actionsMenuBtn"),
+    missionActionsOverlay: document.querySelector("#missionActionsOverlay"),
+    missionActionsCloseBtn: document.querySelector("#missionActionsCloseBtn"),
     missionPanelTitle: document.querySelector("#missionPanelTitle"),
     missionsCash: document.querySelector("#missionsCash"),
     missionsList: document.querySelector("#missionsList"),
     characterPreviewPanel: document.querySelector(".character-preview-panel"),
     characterPreviewCanvas: document.querySelector("#characterPreviewCanvas"),
+    characterPreviewMissionStatus: document.querySelector("#characterPreviewMissionStatus"),
     characterPreviewCaption: document.querySelector("#characterPreviewCaption"),
     characterPreviewStatus: document.querySelector("#characterPreviewStatus"),
     characterPreviewHairStyle: document.querySelector("#characterPreviewHairStyle"),
@@ -122,8 +126,30 @@ export function createGameApp() {
   let previewPerspectiveTilt = 35;
   let previewDevToolsVisible = false;
   let selectedPropAnimation = previewPropAnimations[0] || null;
+  let isMissionActionsOverlayOpen = false;
   const strongholdRenderers = [];
   let strongholdRosterSignature = "";
+
+  function setMissionActionsOverlayOpen(nextOpen) {
+    const shouldOpen = Boolean(nextOpen);
+    isMissionActionsOverlayOpen = shouldOpen;
+
+    if (elements.actionsMenuBtn) {
+      elements.actionsMenuBtn.setAttribute("aria-expanded", String(shouldOpen));
+      elements.actionsMenuBtn.textContent = shouldOpen ? "Close" : "Actions";
+    }
+
+    if (elements.missionActionsOverlay) {
+      elements.missionActionsOverlay.classList.toggle("show", shouldOpen);
+      elements.missionActionsOverlay.setAttribute("aria-hidden", String(!shouldOpen));
+    }
+
+    document.body.classList.toggle("mission-actions-open", shouldOpen);
+  }
+
+  function toggleMissionActionsOverlay() {
+    setMissionActionsOverlayOpen(!isMissionActionsOverlayOpen);
+  }
 
   function syncPreviewDevToolsVisibility() {
     if (!elements.characterPreviewCaption) {
@@ -535,6 +561,33 @@ export function createGameApp() {
 
     characterPreview.playAnimation("idle", { loop: true });
     syncPropAnimationSelectionFromCurrentAnimation();
+  }
+
+  function syncMissionStatusLabel(activeSurvivor) {
+    if (!elements.characterPreviewMissionStatus) {
+      return;
+    }
+
+    if (!state.running) {
+      elements.characterPreviewMissionStatus.textContent = "No mission running";
+      return;
+    }
+
+    const mission = getMission(state.running.categoryKey, state.running.key);
+    const missionTitle = mission?.title || "Mission";
+    const runningSurvivor = getSurvivorById(state, state.running.survivorId);
+
+    if (activeSurvivor && activeSurvivor.id === state.running.survivorId) {
+      elements.characterPreviewMissionStatus.textContent = `Doing: ${missionTitle}`;
+      return;
+    }
+
+    if (runningSurvivor?.name) {
+      elements.characterPreviewMissionStatus.textContent = `${runningSurvivor.name}: ${missionTitle}`;
+      return;
+    }
+
+    elements.characterPreviewMissionStatus.textContent = `Doing: ${missionTitle}`;
   }
 
   // Expose a function-call API for animation triggers during development/testing.
@@ -1037,6 +1090,7 @@ export function createGameApp() {
     updateSurvivorSummary();
     syncActionButtons();
     syncCharacterPreview(activeSurvivor);
+    syncMissionStatusLabel(activeSurvivor);
     renderStrongholdScene();
     queuePersist();
   }
@@ -1092,6 +1146,10 @@ export function createGameApp() {
       screen.classList.remove("active");
     });
     document.querySelector(`#${screenId}`).classList.add("active");
+
+    if (screenId !== "missionsScreen") {
+      setMissionActionsOverlayOpen(false);
+    }
 
     if (elements.openStrongholdBtn && elements.openSurvivorsBtn) {
       elements.openStrongholdBtn.classList.toggle("active", screenId === "strongholdScreen");
@@ -1171,6 +1229,7 @@ export function createGameApp() {
 
     state.running.entityId = missionEntityId;
     characterPreview.playAnimation(getMissionAnimationName(missionKey), { loop: true });
+    setMissionActionsOverlayOpen(false);
 
     renderMissionTimer(categoryKey, missionKey, selectedSeconds);
     renderAll();
@@ -1473,6 +1532,20 @@ export function createGameApp() {
     showScreen("missionsScreen");
   });
 
+  elements.actionsMenuBtn?.addEventListener("click", () => {
+    toggleMissionActionsOverlay();
+  });
+
+  elements.missionActionsCloseBtn?.addEventListener("click", () => {
+    setMissionActionsOverlayOpen(false);
+  });
+
+  elements.missionActionsOverlay?.addEventListener("click", (event) => {
+    if (event.target === elements.missionActionsOverlay || event.target?.dataset.overlayClose === "true") {
+      setMissionActionsOverlayOpen(false);
+    }
+  });
+
   elements.openStrongholdBtn?.addEventListener("click", () => {
     showScreen("strongholdScreen");
     renderStrongholdScene(true);
@@ -1503,6 +1576,11 @@ export function createGameApp() {
   });
 
   window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && isMissionActionsOverlayOpen) {
+      setMissionActionsOverlayOpen(false);
+      return;
+    }
+
     if (event.code === "Numpad9") {
       previewDevToolsVisible = !previewDevToolsVisible;
       syncPreviewDevToolsVisibility();
