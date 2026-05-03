@@ -72,6 +72,8 @@ const EYE_STYLES = [
 const PET_TYPES = ["cat", "dog"];
 
 const HAIR_SIZE_SCALE = 1.3;
+const BODY_SHADOW_OFFSET_X = 11;
+const BODY_SHADOW_OFFSET_Y = -11;
 
 const BODY_TYPE_PROFILES = {
   classic: { torsoWidth: 48, torsoHeight: 62, torsoRadius: 25, torsoYOffset: 0, insetScaleX: 0.67, insetScaleY: 0.71 },
@@ -1489,6 +1491,91 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.restore();
   }
 
+  function drawBodyShadowCopy(pose, leftLegEndY, rightLegEndY, bodyProfile, seconds, wobbleScale) {
+    const shadowFill = "#6f6f6f";
+    const shadowStroke = "#555555";
+
+    context.save();
+
+    const shadowOffsetX = BODY_SHADOW_OFFSET_X;
+    const shadowOffsetY = BODY_SHADOW_OFFSET_Y;
+
+    // Keep foot contacts fixed while offsetting the upper body silhouette.
+    drawLimb(
+      -14 + shadowOffsetX,
+      18 + shadowOffsetY,
+      pose.leftLeg.x,
+      leftLegEndY,
+      5.5,
+      shadowFill,
+      4.2 * wobbleScale,
+      seconds * 7 + 0.5,
+      shadowStroke,
+      0,
+      0,
+      1,
+      0,
+      0.1
+    );
+    drawLimb(
+      14 + shadowOffsetX,
+      18 + shadowOffsetY,
+      pose.rightLeg.x,
+      rightLegEndY,
+      5.5,
+      shadowFill,
+      4.2 * wobbleScale,
+      seconds * 7 + 2.2,
+      shadowStroke,
+      0,
+      0,
+      1,
+      0,
+      0.1
+    );
+
+    const torsoWidth = bodyProfile.torsoWidth;
+    const torsoHeight = bodyProfile.torsoHeight;
+    const torsoY = -38 + bodyProfile.torsoYOffset;
+    const torsoX = -torsoWidth * 0.5;
+
+    context.fillStyle = shadowFill;
+    context.strokeStyle = shadowStroke;
+    context.lineWidth = 1.4;
+    context.beginPath();
+    context.roundRect(torsoX + shadowOffsetX, torsoY + shadowOffsetY, torsoWidth, torsoHeight, bodyProfile.torsoRadius);
+    context.fill();
+    context.stroke();
+
+    context.beginPath();
+    context.arc(shadowOffsetX, -62 + shadowOffsetY, 25.5, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+
+    context.beginPath();
+    context.ellipse(pose.leftLeg.x - 1, leftLegEndY + 1.5, 9.5, 5, 0, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+    context.beginPath();
+    context.ellipse(pose.rightLeg.x + 1, rightLegEndY + 1.5, 9.5, 5, 0, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+
+    drawLimb(-18 + shadowOffsetX, -28 + shadowOffsetY, pose.leftArm.x + shadowOffsetX, pose.leftArm.y + shadowOffsetY, 5, shadowFill, 4.6 * wobbleScale, seconds * 9 + 0.8, shadowStroke, 0, 0, 1, 0, 0.1);
+    drawLimb(18 + shadowOffsetX, -28 + shadowOffsetY, pose.rightArm.x + shadowOffsetX, pose.rightArm.y + shadowOffsetY, 5, shadowFill, 4.6 * wobbleScale, seconds * 9 + 2.7, shadowStroke, 0, 0, 1, 0, 0.1);
+
+    context.beginPath();
+    context.ellipse(pose.leftArm.x + shadowOffsetX, pose.leftArm.y + shadowOffsetY, 8.25, 6.9, 0, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+    context.beginPath();
+    context.ellipse(pose.rightArm.x + shadowOffsetX, pose.rightArm.y + shadowOffsetY, 8.25, 6.9, 0, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+
+    context.restore();
+  }
+
   function drawFrame(now) {
     updateCanvasSize();
 
@@ -1541,6 +1628,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const plantedCompensation = dampedBounce * 0.85;
     const leftLegEndY = pose.leftLeg.y - plantedCompensation;
     const rightLegEndY = pose.rightLeg.y - plantedCompensation;
+
+    drawBodyShadowCopy(pose, leftLegEndY, rightLegEndY, bodyProfile, seconds, wobbleScale);
 
     // Draw outline under character fills/strokes so it reads as a back edge.
     drawCharacterShaderOutline(pose, leftLegEndY, rightLegEndY, bodyProfile);
