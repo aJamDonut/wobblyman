@@ -62,7 +62,13 @@ const DEFAULT_SHADOW_STYLE = {
 
 const PROP_TRANSFORM_DEFAULTS = Object.freeze({
   sandwich: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
-  busk: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
+  busk: {
+      "x": -5,
+      "y": 8,
+      "z": -12,
+      "scale": 1.5,
+      "rotation": -51
+    },
   read: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
   shower: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
   wash: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
@@ -1451,6 +1457,52 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.lineTo(44, yOffset - stringWave * (0.08 + stringIndex * 0.03));
       context.stroke();
     }
+
+    context.restore();
+  }
+
+  function drawBuskMusicNotes(x, y, seconds, intensity = 1) {
+    const notes = [
+      { x: -10, y: -12, size: 1, speed: 0.9, phase: 0.3, sway: 6 },
+      { x: 12, y: -26, size: 0.85, speed: 1.15, phase: 1.1, sway: 5 },
+      { x: 28, y: -10, size: 1.05, speed: 0.78, phase: 2.2, sway: 7 }
+    ];
+
+    context.save();
+    context.translate(x, y);
+    context.strokeStyle = "rgba(58, 44, 33, 0.9)";
+    context.lineCap = "round";
+    context.lineJoin = "round";
+
+    notes.forEach((note) => {
+      const progress = ((seconds * note.speed + note.phase) % 1 + 1) % 1;
+      const rise = progress * 22;
+      const sway = Math.sin(seconds * 5.2 + note.phase) * note.sway;
+      const fade = clamp(1 - progress * 0.9, 0, 1) * clamp(intensity, 0, 1);
+
+      if (fade <= 0.01) {
+        return;
+      }
+
+      context.save();
+      context.globalAlpha = fade;
+      context.translate(note.x + sway, note.y - rise);
+      context.scale(note.size, note.size);
+
+      context.fillStyle = "rgba(86, 64, 47, 0.86)";
+      context.beginPath();
+      context.ellipse(-3, 2.8, 4.2, 3.1, -0.55, 0, Math.PI * 2);
+      context.fill();
+
+      context.lineWidth = 1.7;
+      context.beginPath();
+      context.moveTo(0.6, 2.5);
+      context.lineTo(0.6, -10);
+      context.quadraticCurveTo(4, -11.6, 6.1, -9.2);
+      drawRawStroke();
+
+      context.restore();
+    });
 
     context.restore();
   }
@@ -3905,6 +3957,15 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.scale(buskPlacement.scale, buskPlacement.scale);
       drawGuitar(0, 0, 0, strum);
       context.restore();
+
+      const notePlacement = getPropPlacement(
+        "busk",
+        buskPlacement.x + 18,
+        buskPlacement.y - 22,
+        0,
+        { perspectiveBlend, depthVisibility, baseZ: centerDepth + 12 }
+      );
+      drawBuskMusicNotes(notePlacement.x, notePlacement.y, seconds, buskWeight);
     }
 
     if (showerWeight > 0.01) {
