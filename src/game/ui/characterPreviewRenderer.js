@@ -62,6 +62,7 @@ const DEFAULT_SHADOW_STYLE = {
 
 const PROP_TRANSFORM_DEFAULTS = Object.freeze({
   sandwich: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
+  busk: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
   read: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
   shower: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
   wash: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
@@ -316,6 +317,26 @@ function createPose(timeSeconds, animationName) {
     pose.rightArm = { x: 38 + Math.sin(timeSeconds * 6) * 2, y: -22 + Math.cos(timeSeconds * 6) * 3 };
     pose.bounce = Math.sin(timeSeconds * 6) * 2;
     pose.lean = -0.05;
+  }
+
+  if (animationName === "busk") {
+    const strum = Math.sin(timeSeconds * 10.6);
+    const strumDown = Math.max(0, strum);
+    const fret = Math.sin(timeSeconds * 3.6);
+    pose.lean = -0.1 + strumDown * 0.02;
+    pose.bounce = Math.sin(timeSeconds * 4.4) * 1.5 + strumDown * 0.7;
+    pose.leftArm = {
+      x: -24 + fret * 2.2,
+      y: -26 + Math.sin(timeSeconds * 5) * 1.8,
+      z: -8
+    };
+    pose.rightArm = {
+      x: 26 + strum * 9,
+      y: -18 + Math.abs(strum) * 7,
+      z: 12 + strumDown * 8
+    };
+    pose.leftLeg = { x: -17, y: 79.2 };
+    pose.rightLeg = { x: 17, y: 79.6 };
   }
 
   if (animationName === "read") {
@@ -612,7 +633,7 @@ function createPetPose(timeSeconds, animationName) {
     pose.earPerk = 1;
   }
 
-  if (animationName === "working" || animationName === "sandwich" || animationName === "read") {
+  if (animationName === "working" || animationName === "sandwich" || animationName === "busk" || animationName === "read") {
     pose.bounce = Math.sin(timeSeconds * 6.3) * 1.7;
     pose.lean = Math.sin(timeSeconds * 4.8) * 0.08;
     pose.tailSwing = Math.sin(timeSeconds * 12) * 0.7;
@@ -1387,6 +1408,49 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.moveTo(3, 2);
     context.lineTo(11, 1);
     context.stroke();
+
+    context.restore();
+  }
+
+  function drawGuitar(x, y, tilt = 0, strum = 0) {
+    context.save();
+    context.translate(x, y);
+    context.rotate(tilt);
+
+    const bodyGradient = context.createRadialGradient(-4, 2, 3, -2, 2, 24);
+    bodyGradient.addColorStop(0, "#d99a58");
+    bodyGradient.addColorStop(0.55, "#bb7a3f");
+    bodyGradient.addColorStop(1, "#7f4f27");
+    context.fillStyle = bodyGradient;
+    context.strokeStyle = "#4a2f1f";
+    context.lineWidth = 1.2;
+    context.beginPath();
+    context.ellipse(-6, 2, 18, 15, -0.12, 0, Math.PI * 2);
+    context.ellipse(8, -2, 14, 12, 0.2, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+
+    context.fillStyle = "#3a2318";
+    context.beginPath();
+    context.arc(-1, 1, 4, 0, Math.PI * 2);
+    context.fill();
+
+    context.fillStyle = "#6b4a2f";
+    context.fillRect(18, -4, 22, 6);
+
+    context.fillStyle = "#4f3524";
+    context.fillRect(40, -5, 6, 8);
+
+    context.strokeStyle = "rgba(235, 232, 220, 0.9)";
+    context.lineWidth = 0.8;
+    const stringWave = strum * 0.7;
+    for (let stringIndex = 0; stringIndex < 6; stringIndex += 1) {
+      const yOffset = -3 + stringIndex * 1.2;
+      context.beginPath();
+      context.moveTo(-17, yOffset + stringWave * (0.08 + stringIndex * 0.03));
+      context.lineTo(44, yOffset - stringWave * (0.08 + stringIndex * 0.03));
+      context.stroke();
+    }
 
     context.restore();
   }
@@ -3248,6 +3312,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const sleepWeight = getAnimationWeight("sleep", easedMix);
     const talkWeight = getAnimationWeight("talk", easedMix);
     const sandwichWeight = getAnimationWeight("sandwich", easedMix);
+    const buskWeight = getAnimationWeight("busk", easedMix);
     const readWeight = getAnimationWeight("read", easedMix);
     const showerWeight = getAnimationWeight("shower", easedMix);
     const washWeight = getAnimationWeight("wash", easedMix);
@@ -3821,6 +3886,24 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.rotate(readPlacement.rotation);
       context.scale(readPlacement.scale, readPlacement.scale);
       drawOpenBook(0, 0, 0, pageTurn);
+      context.restore();
+    }
+
+    if (buskWeight > 0.01) {
+      const strum = Math.sin(seconds * 10.6);
+      const buskPlacement = getPropPlacement(
+        "busk",
+        (perspectivePose.leftArm.x + perspectivePose.rightArm.x) * 0.5 + 2,
+        (perspectivePose.leftArm.y + perspectivePose.rightArm.y) * 0.5 + 10,
+        0.36 + Math.sin(seconds * 2.3) * 0.02,
+        { perspectiveBlend, depthVisibility, baseZ: centerDepth }
+      );
+      context.save();
+      context.globalAlpha = buskWeight;
+      context.translate(buskPlacement.x, buskPlacement.y);
+      context.rotate(buskPlacement.rotation);
+      context.scale(buskPlacement.scale, buskPlacement.scale);
+      drawGuitar(0, 0, 0, strum);
       context.restore();
     }
 

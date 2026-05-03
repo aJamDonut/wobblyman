@@ -257,7 +257,7 @@ export function createInitialState() {
           title: "BUSK",
           seconds: 1,
           xp: 0.55,
-          animation: "sandwich",
+          animation: "busk",
           statChange: {
             food: -0.1,
           },

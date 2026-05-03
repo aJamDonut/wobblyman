@@ -102,6 +102,7 @@ export function createGameApp() {
     "idle",
     "wave",
     "sandwich",
+    "busk",
     "read",
     "working",
     "celebrate",
@@ -414,7 +415,8 @@ export function createGameApp() {
       search: "search",
       hunt: "hunt",
       cook: "cook",
-      eat: "sandwich"
+      eat: "sandwich",
+      busk: "busk"
     };
 
     if (missionAnimationMap[missionKey]) {
