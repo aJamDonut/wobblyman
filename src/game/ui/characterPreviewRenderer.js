@@ -601,6 +601,14 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     throw new Error("2D canvas context unavailable.");
   }
 
+  let suppressDecorativeStrokes = true;
+  const drawRawStroke = context.stroke.bind(context);
+  context.stroke = (...args) => {
+    if (!suppressDecorativeStrokes) {
+      drawRawStroke(...args);
+    }
+  };
+
   function drawRoundedClipPath(x, y, width, height, radius) {
     context.beginPath();
     context.roundRect(x, y, width, height, radius);
@@ -749,11 +757,11 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.beginPath();
       context.moveTo(rootX + jitterX * 0.35, rootY + jitterY * 0.35);
       context.quadraticCurveTo(midX, midY, endX - jitterX * 0.25, endY - jitterY * 0.25);
-      context.stroke();
+      drawRawStroke();
     }
 
     const resolvedDetailWidth = Number.isFinite(detailWidth) ? detailWidth : Math.max(1.2, thickness * 0.28);
-    if (resolvedDetailWidth > 0) {
+    if (!suppressDecorativeStrokes && resolvedDetailWidth > 0) {
       context.strokeStyle = detailColor || graphite;
       context.lineWidth = resolvedDetailWidth;
       context.beginPath();
@@ -764,36 +772,38 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         endX,
         endY
       );
-      context.stroke();
+      drawRawStroke();
     }
 
-    context.save();
-    context.globalAlpha = 0.5;
-    context.strokeStyle = blendHexColor(color, -0.3);
-    context.lineWidth = Math.max(0.9, thickness * 0.5);
-    context.beginPath();
-    context.moveTo(rootX + 0.8, rootY + 0.9);
-    context.quadraticCurveTo(
-      (rootX + endX) * 0.5 + Math.sin(phase) * wobble + 0.8,
-      (rootY + endY) * 0.5 + Math.cos(phase * 1.2) * wobble * 0.55 + 0.9,
-      endX + 0.8,
-      endY + 0.9
-    );
-    context.stroke();
+    if (!suppressDecorativeStrokes) {
+      context.save();
+      context.globalAlpha = 0.5;
+      context.strokeStyle = blendHexColor(color, -0.3);
+      context.lineWidth = Math.max(0.9, thickness * 0.5);
+      context.beginPath();
+      context.moveTo(rootX + 0.8, rootY + 0.9);
+      context.quadraticCurveTo(
+        (rootX + endX) * 0.5 + Math.sin(phase) * wobble + 0.8,
+        (rootY + endY) * 0.5 + Math.cos(phase * 1.2) * wobble * 0.55 + 0.9,
+        endX + 0.8,
+        endY + 0.9
+      );
+      drawRawStroke();
 
-    context.globalAlpha = 0.78;
-    context.strokeStyle = blendHexColor(color, 0.36);
-    context.lineWidth = Math.max(0.8, thickness * 0.24);
-    context.beginPath();
-    context.moveTo(rootX - 0.5, rootY - 0.4);
-    context.quadraticCurveTo(
-      (rootX + endX) * 0.5 + Math.sin(phase) * wobble - 0.5,
-      (rootY + endY) * 0.5 + Math.cos(phase * 1.2) * wobble * 0.55 - 0.4,
-      endX - 0.5,
-      endY - 0.4
-    );
-    context.stroke();
-    context.restore();
+      context.globalAlpha = 0.78;
+      context.strokeStyle = blendHexColor(color, 0.36);
+      context.lineWidth = Math.max(0.8, thickness * 0.24);
+      context.beginPath();
+      context.moveTo(rootX - 0.5, rootY - 0.4);
+      context.quadraticCurveTo(
+        (rootX + endX) * 0.5 + Math.sin(phase) * wobble - 0.5,
+        (rootY + endY) * 0.5 + Math.cos(phase * 1.2) * wobble * 0.55 - 0.4,
+        endX - 0.5,
+        endY - 0.4
+      );
+      drawRawStroke();
+      context.restore();
+    }
   }
 
   function drawFlatLimb(rootX, rootY, endX, endY, thickness, color, wobble = 0, phase = 0) {
@@ -808,7 +818,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       endX,
       endY
     );
-    context.stroke();
+    drawRawStroke();
   }
 
   function drawSandwich(x, y, tilt = 0) {
@@ -1081,48 +1091,6 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.stroke();
       context.restore();
     }
-
-    context.restore();
-  }
-
-  function drawCharacterShaderOutline(pose, leftLegEndY, rightLegEndY, bodyProfile, leftLegRootX, rightLegRootX) {
-    const torsoWidth = bodyProfile.torsoWidth;
-    const torsoHeight = bodyProfile.torsoHeight;
-    const torsoY = -38 + bodyProfile.torsoYOffset;
-    const torsoX = -torsoWidth * 0.5;
-    const headCenterY = -62;
-
-    context.save();
-    context.strokeStyle = "rgba(45, 37, 32, 0.86)";
-    context.lineWidth = 1.8;
-    context.lineJoin = "round";
-    context.lineCap = "round";
-
-    for (let pass = 0; pass < 2; pass += 1) {
-      const jitter = pass === 0 ? 0 : 0.75;
-      context.beginPath();
-      context.roundRect(torsoX + jitter, torsoY + jitter, torsoWidth, torsoHeight, bodyProfile.torsoRadius);
-      context.stroke();
-
-      context.beginPath();
-      context.arc(jitter * 0.4, headCenterY + jitter, 25.5, 0, Math.PI * 2);
-      context.stroke();
-    }
-
-    context.beginPath();
-    context.moveTo(leftLegRootX, 18);
-    context.quadraticCurveTo((pose.leftLeg.x + leftLegRootX) * 0.5, (leftLegEndY + 18) * 0.5, pose.leftLeg.x, leftLegEndY);
-    context.moveTo(rightLegRootX, 18);
-    context.quadraticCurveTo((pose.rightLeg.x + rightLegRootX) * 0.5, (rightLegEndY + 18) * 0.5, pose.rightLeg.x, rightLegEndY);
-    context.stroke();
-
-    context.beginPath();
-    context.ellipse(pose.leftLeg.x - 1, leftLegEndY + 1.5, 10.8, 5.8, 0, 0, Math.PI * 2);
-    context.stroke();
-
-    context.beginPath();
-    context.ellipse(pose.rightLeg.x + 1, rightLegEndY + 1.5, 10.8, 5.8, 0, 0, Math.PI * 2);
-    context.stroke();
 
     context.restore();
   }
@@ -2560,9 +2528,6 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       shadowPerspectiveShiftX
     );
 
-    // Draw outline under character fills/strokes so it reads as a back edge.
-    drawCharacterShaderOutline(idleLockedPose, leftLegEndY, rightLegEndY, bodyProfile, leftLegRootX, rightLegRootX);
-
     const drawLeftLeg = () => {
       drawLimb(
         leftLegRootX,
@@ -2643,12 +2608,13 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.stroke();
     context.restore();
 
-    const pantsHalfWidth = torsoWidth * 0.5;
-    const pantsHeight = torsoHeight / 3;
+    const pantsHalfWidth = torsoWidth * 0.5 - 2.5;
+    const pantsHeight = (torsoHeight / 3) * 1.0201;
     const torsoBottomY = torsoY + torsoHeight - 1;
     const pantsDrop = Math.max(6, torsoHeight * 0.115);
-    const pantsTopY = torsoBottomY - pantsHeight + pantsDrop;
-    const pantsCurveY = torsoBottomY + pantsHeight * 0.35 + pantsDrop;
+    const pantsYOffset = 2;
+    const pantsTopY = torsoBottomY - pantsHeight + pantsDrop + pantsYOffset;
+    const pantsCurveY = torsoBottomY + pantsHeight * 0.35 + pantsDrop + pantsYOffset;
     context.fillStyle = blendHexColor(colors.pantsColor, 0.05);
     context.beginPath();
     context.moveTo(-pantsHalfWidth, pantsTopY);
@@ -2717,7 +2683,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const talkOpen = talkWeight * ((Math.sin(seconds * 18) + 1) * 0.5);
     context.moveTo(-7, -58);
     context.quadraticCurveTo(0, -53 + talkOpen * 3.5, 8, -58);
-    context.stroke();
+    drawRawStroke();
     context.restore();
 
     context.restore();
