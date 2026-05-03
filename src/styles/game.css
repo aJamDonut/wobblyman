@@ -182,21 +182,112 @@ button {
   filter: drop-shadow(1px 1px 1px #000);
 }
 
-.survivor-art .head { position:absolute; left:14px; top:3px; width:10px; height:10px; background:#cf8b58; border-radius:50%; }
-.survivor-art .hair { position:absolute; left:12px; top:0; width:14px; height:9px; background:#6f2d28; border-radius:50% 50% 30% 30%; }
-.survivor-art .torso { position:absolute; left:10px; top:14px; width:18px; height:23px; background:#d94a35; clip-path: polygon(26% 0,74% 0,92% 100%,8% 100%); }
-.survivor-art .arm-l { position:absolute; left:5px; top:16px; width:6px; height:24px; background:#c88855; transform: rotate(11deg); border-radius:4px; }
-.survivor-art .arm-r { position:absolute; left:27px; top:16px; width:6px; height:24px; background:#c88855; transform: rotate(-11deg); border-radius:4px; }
-.survivor-art .leg-l { position:absolute; left:11px; top:36px; width:7px; height:21px; background:#d28b57; border-radius:5px; }
-.survivor-art .leg-r { position:absolute; left:20px; top:36px; width:7px; height:21px; background:#d28b57; border-radius:5px; }
-.survivor-art .shoe-l { position:absolute; left:9px; top:55px; width:9px; height:3px; background:#2b2b2b; border-radius:2px; }
-.survivor-art .shoe-r { position:absolute; left:20px; top:55px; width:9px; height:3px; background:#2b2b2b; border-radius:2px; }
 
-.male .head { background:#b17a52; }
-.male .hair { background:#201a17; }
-.male .torso { background:#bfc4c6; clip-path: polygon(10% 0,90% 0,82% 100%,18% 100%); }
-.male .leg-l,.male .leg-r { background:#303946; }
-.male .arm-l,.male .arm-r { background:#a8704d; }
+.survivor-art .head {
+  position:absolute;
+  left:14px;
+  top:3px;
+  width:10px;
+  height:10px;
+  background: #cf8b58;
+  border-radius:50%;
+  box-shadow: inset -1px 0 0 rgba(72, 41, 26, 0.2), inset 1px 1px 0 rgba(255, 231, 206, 0.2);
+}
+.survivor-art .hair {
+  position:absolute;
+  left:12px;
+  top:0;
+  width:14px;
+  height:9px;
+  background: #6f2d28;
+  border-radius:50% 50% 30% 30%;
+  box-shadow: inset -2px 0 0 rgba(34, 13, 12, 0.45);
+}
+.survivor-art .torso {
+  position:absolute;
+  left:10px;
+  top:14px;
+  width:18px;
+  height:23px;
+  background: #d94a35;
+  clip-path: polygon(26% 0,74% 0,92% 100%,8% 100%);
+  box-shadow: inset -2px 0 0 rgba(84, 23, 15, 0.4), inset 1px 1px 0 rgba(255, 206, 196, 0.34);
+}
+.survivor-art .arm-l {
+  position:absolute;
+  left:5px;
+  top:16px;
+  width:6px;
+  height:24px;
+  background: #c88855;
+  transform: rotate(11deg);
+  border-radius:4px;
+  box-shadow: inset -1px 0 0 rgba(101, 62, 38, 0.42), inset 1px 1px 0 rgba(255, 232, 208, 0.28);
+}
+.survivor-art .arm-r {
+  position:absolute;
+  left:27px;
+  top:16px;
+  width:6px;
+  height:24px;
+  background: #c88855;
+  transform: rotate(-11deg);
+  border-radius:4px;
+  box-shadow: inset -1px 0 0 rgba(101, 62, 38, 0.42), inset 1px 1px 0 rgba(255, 232, 208, 0.28);
+}
+.survivor-art .leg-l {
+  position:absolute;
+  left:11px;
+  top:36px;
+  width:7px;
+  height:21px;
+  background: #d28b57;
+  border-radius:5px;
+  box-shadow: inset -1px 0 0 rgba(103, 63, 39, 0.38);
+}
+.survivor-art .leg-r {
+  position:absolute;
+  left:20px;
+  top:36px;
+  width:7px;
+  height:21px;
+  background: #d28b57;
+  border-radius:5px;
+  box-shadow: inset -1px 0 0 rgba(103, 63, 39, 0.38);
+}
+.survivor-art .shoe-l {
+  position:absolute;
+  left:9px;
+  top:55px;
+  width:9px;
+  height:3px;
+  background: #2b2b2b;
+  border-radius:2px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.survivor-art .shoe-r {
+  position:absolute;
+  left:20px;
+  top:55px;
+  width:9px;
+  height:3px;
+  background: #2b2b2b;
+  border-radius:2px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.male .head {
+  background: #b17a52;
+  box-shadow: inset -1px 0 0 rgba(65, 40, 26, 0.22), inset 1px 1px 0 rgba(245, 215, 188, 0.16);
+}
+.male .hair { background: #201a17; box-shadow: inset -2px 0 0 rgba(10, 8, 7, 0.5); }
+.male .torso {
+  background: #bfc4c6;
+  clip-path: polygon(10% 0,90% 0,82% 100%,18% 100%);
+  box-shadow: inset -2px 0 0 rgba(74, 82, 88, 0.45), inset 1px 1px 0 rgba(244, 248, 250, 0.4);
+}
+.male .leg-l,.male .leg-r { background: #303946; box-shadow: inset -1px 0 0 rgba(19, 24, 31, 0.42); }
+.male .arm-l,.male .arm-r { background: #a8704d; box-shadow: inset -1px 0 0 rgba(76, 47, 30, 0.42), inset 1px 1px 0 rgba(243, 213, 192, 0.24); }
 
 h1, h2, h3, p { margin: 0; }
 .name { font-size: 18px; margin-top: 13px; color:#ddd; text-shadow: 1px 1px #000; }

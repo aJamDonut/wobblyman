@@ -251,6 +251,11 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     throw new Error("2D canvas context unavailable.");
   }
 
+  function drawRoundedClipPath(x, y, width, height, radius) {
+    context.beginPath();
+    context.roundRect(x, y, width, height, radius);
+  }
+
   let colors = { ...DEFAULT_COLORS };
   let hairStyle = "classic";
   let bodyType = "classic";
@@ -388,6 +393,34 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       );
       context.stroke();
     }
+
+    context.save();
+    context.globalAlpha = 0.5;
+    context.strokeStyle = blendHexColor(color, -0.3);
+    context.lineWidth = Math.max(0.9, thickness * 0.5);
+    context.beginPath();
+    context.moveTo(rootX + 0.8, rootY + 0.9);
+    context.quadraticCurveTo(
+      (rootX + endX) * 0.5 + Math.sin(phase) * wobble + 0.8,
+      (rootY + endY) * 0.5 + Math.cos(phase * 1.2) * wobble * 0.55 + 0.9,
+      endX + 0.8,
+      endY + 0.9
+    );
+    context.stroke();
+
+    context.globalAlpha = 0.78;
+    context.strokeStyle = blendHexColor(color, 0.36);
+    context.lineWidth = Math.max(0.8, thickness * 0.24);
+    context.beginPath();
+    context.moveTo(rootX - 0.5, rootY - 0.4);
+    context.quadraticCurveTo(
+      (rootX + endX) * 0.5 + Math.sin(phase) * wobble - 0.5,
+      (rootY + endY) * 0.5 + Math.cos(phase * 1.2) * wobble * 0.55 - 0.4,
+      endX - 0.5,
+      endY - 0.4
+    );
+    context.stroke();
+    context.restore();
   }
 
   function drawSandwich(x, y, tilt = 0) {
@@ -1586,6 +1619,90 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.restore();
   }
 
+  function fillShadedRoundedRect(x, y, width, height, radius, baseColor, tilt = 1, driftX = 0, driftY = 0) {
+    context.fillStyle = blendHexColor(baseColor, 0.06);
+    drawRoundedClipPath(x, y, width, height, radius);
+    context.fill();
+
+    context.save();
+    drawRoundedClipPath(x, y, width, height, radius);
+    context.clip();
+    const shadowWidth = width * 0.42;
+    const shadowDriftX = driftX * 0.95;
+    const shadowDriftY = driftY * 0.75;
+    context.fillStyle = blendHexColor(baseColor, -0.26);
+    context.beginPath();
+    context.moveTo(x + width + shadowDriftX, y + shadowDriftY);
+    context.lineTo(x + width + shadowDriftX, y + height + shadowDriftY);
+    context.lineTo(x + width - shadowWidth + shadowDriftX, y + height + shadowDriftY);
+    context.lineTo(x + width - shadowWidth * 0.55 + shadowDriftX, y + shadowDriftY);
+    context.closePath();
+    context.fill();
+
+    context.strokeStyle = blendHexColor(baseColor, 0.34);
+    context.lineWidth = 1;
+    context.beginPath();
+    context.moveTo(x + width * 0.16 - driftX * 0.62, y + 2.6 - driftY * 0.7);
+    context.lineTo(x + width * 0.64 - driftX * 0.62, y + 2.6 - driftY * 0.7);
+    context.stroke();
+    context.restore();
+  }
+
+  function fillShadedCircle(centerX, centerY, radius, baseColor, driftX = 0, driftY = 0) {
+    context.fillStyle = blendHexColor(baseColor, 0.03);
+    context.beginPath();
+    context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    context.fill();
+
+    context.save();
+    context.beginPath();
+    context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    context.clip();
+    context.fillStyle = blendHexColor(baseColor, 0.2);
+    context.beginPath();
+    context.arc(
+      centerX - radius * 0.08 + driftX * 0.92,
+      centerY - radius * 0.08 + driftY * 0.82,
+      radius * 1.02,
+      0,
+      Math.PI * 2
+    );
+    context.fill();
+
+    context.strokeStyle = blendHexColor(baseColor, 0.22);
+    context.lineWidth = 1;
+    context.beginPath();
+    context.moveTo(centerX - radius * 0.56 - driftX * 0.58, centerY - radius * 0.52 - driftY * 0.5);
+    context.lineTo(centerX - radius * 0.08 - driftX * 0.58, centerY - radius * 0.52 - driftY * 0.5);
+    context.stroke();
+    context.restore();
+  }
+
+  function fillShadedEllipse(centerX, centerY, radiusX, radiusY, baseColor, rotation = 0, driftX = 0, driftY = 0) {
+    context.fillStyle = blendHexColor(baseColor, 0.05);
+    context.beginPath();
+    context.ellipse(centerX, centerY, radiusX, radiusY, rotation, 0, Math.PI * 2);
+    context.fill();
+
+    context.save();
+    context.beginPath();
+    context.ellipse(centerX, centerY, radiusX, radiusY, rotation, 0, Math.PI * 2);
+    context.clip();
+    context.fillStyle = blendHexColor(baseColor, -0.2);
+    context.beginPath();
+    context.ellipse(
+      centerX + radiusX * 0.34 + driftX * 0.76,
+      centerY + radiusY * 0.2 + driftY * 0.62,
+      radiusX * 0.74,
+      radiusY * 0.72,
+      rotation,
+      0,
+      Math.PI * 2
+    );
+    context.fill();
+    context.restore();
+  }
+
   function drawFrame(now) {
     updateCanvasSize();
 
@@ -1647,24 +1764,46 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     drawLimb(-14, 18, pose.leftLeg.x, leftLegEndY, 5.5, colors.pantsColor, 4.2 * wobbleScale, seconds * 7 + 0.5);
     drawLimb(14, 18, pose.rightLeg.x, rightLegEndY, 5.5, colors.pantsColor, 4.2 * wobbleScale, seconds * 7 + 2.2);
 
-    context.fillStyle = blendHexColor(colors.shirtColor, 0.25);
+    const shirtBase = blendHexColor(colors.shirtColor, 0.08);
+    const torsoShadeDriftX = Math.sin(seconds * 1.5 + pose.lean * 12) * 2.8;
+    const torsoShadeDriftY = Math.cos(seconds * 1.2 + pose.bounce * 0.08) * 1.8;
     context.strokeStyle = "#372d26";
     context.lineWidth = 1.5;
     const torsoWidth = bodyProfile.torsoWidth;
     const torsoHeight = bodyProfile.torsoHeight;
     const torsoY = -38 + bodyProfile.torsoYOffset;
     const torsoX = -torsoWidth * 0.5;
+    fillShadedRoundedRect(
+      torsoX,
+      torsoY,
+      torsoWidth,
+      torsoHeight,
+      bodyProfile.torsoRadius,
+      shirtBase,
+      1.1,
+      torsoShadeDriftX,
+      torsoShadeDriftY
+    );
     context.beginPath();
     context.roundRect(torsoX, torsoY, torsoWidth, torsoHeight, bodyProfile.torsoRadius);
-    context.fill();
     context.stroke();
 
-    context.fillStyle = blendHexColor(colors.shirtColor, 0.32);
+    context.fillStyle = blendHexColor(colors.shirtColor, 0.2);
     const innerWidth = torsoWidth * bodyProfile.insetScaleX;
     const innerHeight = torsoHeight * bodyProfile.insetScaleY;
     context.beginPath();
     context.roundRect(-innerWidth * 0.5, torsoY + 8, innerWidth, innerHeight, Math.max(12, bodyProfile.torsoRadius * 0.65));
     context.fill();
+
+    context.save();
+    context.globalAlpha = 0.42;
+    context.strokeStyle = blendHexColor(colors.shirtColor, 0.38);
+    context.lineWidth = 1;
+    context.beginPath();
+    context.moveTo(torsoX + torsoWidth * 0.2, torsoY + 8);
+    context.quadraticCurveTo(torsoX + torsoWidth * 0.5, torsoY + 20, torsoX + torsoWidth * 0.8, torsoY + 8);
+    context.stroke();
+    context.restore();
 
     const pantsHalfWidth = torsoWidth * 0.5;
     const pantsHeight = torsoHeight / 3;
@@ -1684,16 +1823,28 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.save();
     context.translate(0, headOffsetY);
 
-    const faceSkinColor = blendHexColor(colors.skinColor, 0.2);
+    const faceSkinColor = blendHexColor(colors.skinColor, 0.07);
+    const headShadeDriftX = Math.sin(seconds * 2.1 + pose.lean * 10) * 2;
+    const headShadeDriftY = Math.cos(seconds * 1.7 + pose.bounce * 0.06) * 1.5;
+    const faceFeatureDriftX = headShadeDriftX * 0.24;
+    const faceFeatureDriftY = headShadeDriftY * 0.2;
     const handOutlineColor = blendHexColor(faceSkinColor, -0.18);
 
-    context.fillStyle = faceSkinColor;
     context.strokeStyle = "#382d25";
     context.lineWidth = 1.5;
+    fillShadedCircle(0, -66, 24, faceSkinColor, headShadeDriftX, headShadeDriftY);
     context.beginPath();
     context.arc(0, -66, 24, 0, Math.PI * 2);
-    context.fill();
     context.stroke();
+
+    context.save();
+    context.globalAlpha = 0.14;
+    context.fillStyle = "rgba(150,60,38,0.2)";
+    context.beginPath();
+    context.ellipse(-10.5 - headShadeDriftX * 0.28, -60 - headShadeDriftY * 0.26, 3.8, 2.1, -0.25, 0, Math.PI * 2);
+    context.ellipse(10.5 - headShadeDriftX * 0.28, -60 - headShadeDriftY * 0.26, 3.8, 2.1, 0.25, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
 
     drawHairStyle(hairStyle, colors.hairColor, seconds);
 
@@ -1701,6 +1852,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     if (openEyesAlpha > 0.01) {
       context.save();
       context.globalAlpha = openEyesAlpha;
+      context.translate(faceFeatureDriftX, faceFeatureDriftY);
       drawOpenEyes(eyeStyle);
       context.restore();
     }
@@ -1708,6 +1860,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     if (sleepWeight > 0.01) {
       context.save();
       context.globalAlpha = sleepWeight;
+      context.translate(faceFeatureDriftX, faceFeatureDriftY);
       context.strokeStyle = "#342a24";
       context.lineWidth = 1.8;
       context.beginPath();
@@ -1722,21 +1875,32 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.strokeStyle = "#3b3029";
     context.lineWidth = 1.8;
     context.lineCap = "round";
+    context.save();
+    context.translate(faceFeatureDriftX, faceFeatureDriftY);
     context.beginPath();
     const talkOpen = talkWeight * ((Math.sin(seconds * 18) + 1) * 0.5);
     context.moveTo(-7, -58);
     context.quadraticCurveTo(0, -53 + talkOpen * 3.5, 8, -58);
     context.stroke();
+    context.restore();
 
     context.restore();
 
-    context.fillStyle = blendHexColor(colors.shoeColor, 0.06);
+    const shoeTone = blendHexColor(colors.shoeColor, -0.02);
     context.strokeStyle = "#2f2622";
     context.lineWidth = 1.2;
+    const leftShoeGradient = context.createLinearGradient(pose.leftLeg.x - 10, leftLegEndY - 2, pose.leftLeg.x + 10, leftLegEndY + 4);
+    leftShoeGradient.addColorStop(0, blendHexColor(shoeTone, 0.18));
+    leftShoeGradient.addColorStop(1, blendHexColor(shoeTone, -0.22));
+    context.fillStyle = leftShoeGradient;
     context.beginPath();
     context.ellipse(pose.leftLeg.x - 1, leftLegEndY + 1.5, 9.5, 5, 0, 0, Math.PI * 2);
     context.fill();
     context.stroke();
+    const rightShoeGradient = context.createLinearGradient(pose.rightLeg.x - 10, rightLegEndY - 2, pose.rightLeg.x + 10, rightLegEndY + 4);
+    rightShoeGradient.addColorStop(0, blendHexColor(shoeTone, 0.18));
+    rightShoeGradient.addColorStop(1, blendHexColor(shoeTone, -0.22));
+    context.fillStyle = rightShoeGradient;
     context.beginPath();
     context.ellipse(pose.rightLeg.x + 1, rightLegEndY + 1.5, 9.5, 5, 0, 0, Math.PI * 2);
     context.fill();
@@ -1784,16 +1948,19 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     );
 
     // Hands are rendered after arms so they stay visually in front.
-    context.fillStyle = faceSkinColor;
     context.strokeStyle = handOutlineColor;
     context.lineWidth = 1.2;
+    const leftHandShadeDriftX = Math.sin(seconds * 2.5 + pose.leftArm.x * 0.05) * 1.6;
+    const leftHandShadeDriftY = Math.cos(seconds * 2 + pose.leftArm.y * 0.05) * 1.1;
+    const rightHandShadeDriftX = Math.sin(seconds * 2.5 + 1.4 + pose.rightArm.x * 0.05) * 1.6;
+    const rightHandShadeDriftY = Math.cos(seconds * 2 + 1.1 + pose.rightArm.y * 0.05) * 1.1;
+    fillShadedEllipse(pose.leftArm.x, pose.leftArm.y, 8.25, 6.9, faceSkinColor, 0, leftHandShadeDriftX, leftHandShadeDriftY);
     context.beginPath();
     context.ellipse(pose.leftArm.x, pose.leftArm.y, 8.25, 6.9, 0, 0, Math.PI * 2);
-    context.fill();
     context.stroke();
+    fillShadedEllipse(pose.rightArm.x, pose.rightArm.y, 8.25, 6.9, faceSkinColor, 0, rightHandShadeDriftX, rightHandShadeDriftY);
     context.beginPath();
     context.ellipse(pose.rightArm.x, pose.rightArm.y, 8.25, 6.9, 0, 0, Math.PI * 2);
-    context.fill();
     context.stroke();
 
     context.restore();
