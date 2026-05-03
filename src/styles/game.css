@@ -244,7 +244,7 @@ button {
 
 .profile-row {
   display: grid;
-  grid-template-columns: 70px 1fr 74px;
+  
   gap: 10px;
   align-items: start;
 }

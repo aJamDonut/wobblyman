@@ -20,17 +20,9 @@
             <div class="header-strip">SURsVIVOR</div>
             <div class="profile-body">
               <div class="profile-row">
-                <div class="avatar">
-                  <div class="survivor-art">
-                    <i class="hair"></i><i class="head"></i><i class="torso"></i
-                    ><i class="arm-l"></i><i class="arm-r"></i><i class="leg-l"></i
-                    ><i class="leg-r"></i><i class="shoe-l"></i
-                    ><i class="shoe-r"></i>
-                  </div>
-                </div>
+                
                 <div>
-                  <div class="name" id="activeName">Ristu Shadowaxe</div>
-                  <div class="survivor-nav">
+                  <div class="survivor-nav" style="display: none; clear:none;">
                     <button id="prevSurvivorBtn" class="survivor-nav-btn">
                       PREV
                     </button>
@@ -38,8 +30,11 @@
                       NEXT
                     </button>
                   </div>
+                  <div class="name" id="activeName">Ristu Shadowaxe</div>
+                  
+                  
                 </div>
-                <div class="level-pill" id="activeLevel">Level 5</div>
+                <div class="level-pill" id="activeLevel" style="display: none">Level 5</div>
               </div>
 
               <div class="bars" id="activeStatRows"></div>
@@ -56,12 +51,12 @@
 
           <div class="tabs">
             <button class="tab active" data-mission-category="missions">
-              MISSIONS
+              HOME
             </button>
-            <button class="tab" data-mission-category="camp">CAMP</button>
-            <button class="tab" data-mission-category="med bay">MED BAY</button>
-            <button class="tab" data-mission-category="library">LIBRARY</button>
-            <button class="tab">JOURNAL</button>
+            <button class="tab" data-mission-category="camp">WORK</button>
+            <button class="tab" data-mission-category="library">MALL</button>
+            <button class="tab" data-mission-category="med bay">BUSINESS</button>
+            <!-- <button class="tab">JOURNAL</button> -->
           </div>
 
           <div class="card mission-panel">
@@ -171,10 +166,8 @@
 
     <section id="baseScreen" class="screen">
       <div class="base-tabs">
-        <button class="base-tab" id="openStrongholdBtn" data-base-screen="strongholdScreen">STRONGHOLD</button>
-        <button class="base-tab active" id="openSurvivorsBtn" data-base-screen="baseScreen">SURVIVORS</button>
-        <button class="base-tab" data-base-action="todo">HOUSE</button>
-        <button class="base-tab" data-base-action="todo">OUTPOSTS</button>
+        <button class="base-tab" id="openStrongholdBtn" data-base-screen="strongholdScreen">Photo</button>
+        <button class="base-tab active" id="openSurvivorsBtn" data-base-screen="baseScreen">Group</button>
       </div>
       <div class="survivor-count">
         <span id="survivorsSummary">Survivors: 2/10</span

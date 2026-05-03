@@ -1032,15 +1032,46 @@ export function createGameApp() {
           ? missionProgress.statChanges
           : mission?.statChange || mission?.statChanges;
 
-    if (!statChanges || typeof statChanges !== "object" || durationSeconds <= 0) {
+    if (durationSeconds <= 0) {
       return;
     }
 
-    const tickMultiplier = durationSeconds / STAT_CHANGE_TICK_SECONDS;
+    const tickCount = Math.max(0, Math.floor(durationSeconds / STAT_CHANGE_TICK_SECONDS));
+    if (tickCount <= 0) {
+      return;
+    }
 
-    Object.entries(statChanges).forEach(([statKey, delta]) => {
-      applyStatDelta(activeSurvivor, statKey, delta * tickMultiplier);
-    });
+    const statEntries =
+      statChanges && typeof statChanges === "object"
+        ? Object.entries(statChanges)
+        : [];
+    const strainFromStatChangesPerTick = statEntries.reduce((sum, [, delta]) => {
+      const amount = Number.isFinite(delta) ? Math.abs(delta) : 0;
+      return sum + amount;
+    }, 0);
+    const strainNeeds = ["food", "sleep", "hygiene", "social", "bladder"];
+
+    for (let tickIndex = 0; tickIndex < tickCount; tickIndex += 1) {
+      statEntries.forEach(([statKey, delta]) => {
+        applyStatDelta(activeSurvivor, statKey, delta);
+      });
+
+      const hasCriticalNeed = strainNeeds.some((statKey) => {
+        const current = Number.isFinite(activeSurvivor[statKey]) ? activeSurvivor[statKey] : 0;
+        const maxKey = `${statKey}Max`;
+        const maxValue = Number.isFinite(activeSurvivor[maxKey]) ? activeSurvivor[maxKey] : 0;
+        if (maxValue <= 0) {
+          return false;
+        }
+
+        return current / maxValue < 0.1;
+      });
+
+      const strainIncrease = strainFromStatChangesPerTick + (hasCriticalNeed ? 0.5 : 0);
+      if (strainIncrease > 0) {
+        applyStatDelta(activeSurvivor, "strain", strainIncrease);
+      }
+    }
   }
 
   function applyMissionCycleRewards(missionProgress) {

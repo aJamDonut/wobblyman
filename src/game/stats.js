@@ -16,7 +16,7 @@ function clamp(value, min, max) {
 }
 
 export const survivorStatDefinitions = [
-    {
+  {
     key: "food",
     label: "Food",
     displayType: STAT_DISPLAY_TYPES.BAR,
@@ -76,6 +76,21 @@ export const survivorStatDefinitions = [
     highest: 1000,
     default: 100,
     icon: "🚽",
+    toneClass: "#f1f1f1",
+    recoverPerTick: 0,
+    showInRosterBar: true,
+    showInHeader: true
+  },
+  
+  {
+    key: "strain",
+    label: "Strain",
+    displayType: STAT_DISPLAY_TYPES.BAR,
+    lowest: 0,
+    highest: 1000,
+    default: 0,
+    defaultMax: 1000,
+    icon: "😵",
     toneClass: "#f1f1f1",
     recoverPerTick: 0,
     showInRosterBar: true,
@@ -163,14 +178,27 @@ export function createDefaultStatValues(overrides = {}) {
   const values = {};
 
   survivorStatDefinitions.forEach((definition) => {
-    const { key, lowest, highest, default: defaultValue } = definition;
+    const {
+      key,
+      lowest,
+      highest,
+      default: defaultValue,
+      defaultMax,
+      displayType
+    } = definition;
     const { max, xp } = getStatHiddenKeys(key);
 
+    const fallbackMax = Number.isFinite(defaultMax) ? defaultMax : defaultValue;
     const rawValue = toNumber(overrides[key], defaultValue);
-    const rawMax = toNumber(overrides[max], rawValue);
+    const rawMax = toNumber(overrides[max], fallbackMax);
     const rawXp = toNumber(overrides[xp], 0);
 
-    values[max] = clamp(rawMax, lowest, highest);
+    const safeMax =
+      displayType === STAT_DISPLAY_TYPES.INT
+        ? Math.max(rawMax, rawValue)
+        : rawMax;
+
+    values[max] = clamp(safeMax, lowest, highest);
     values[key] = clamp(rawValue, lowest, values[max]);
     values[xp] = Math.max(0, rawXp);
   });
@@ -182,7 +210,7 @@ export function normalizeSurvivorStats(survivor) {
   const hydratedOverrides = { ...survivor };
 
   survivorStatDefinitions.forEach((definition) => {
-    const { key } = definition;
+    const { key, defaultMax, lowest, highest, displayType } = definition;
     const { max, xp } = getStatHiddenKeys(key);
     const aliases = getLegacyAliases(key);
 
@@ -192,6 +220,14 @@ export function normalizeSurvivorStats(survivor) {
 
     if (!Number.isFinite(hydratedOverrides[max]) && Number.isFinite(hydratedOverrides[aliases.max])) {
       hydratedOverrides[max] = hydratedOverrides[aliases.max];
+    }
+
+    if (
+      displayType === STAT_DISPLAY_TYPES.BAR
+      && Number.isFinite(defaultMax)
+      && toNumber(hydratedOverrides[max], lowest) <= lowest
+    ) {
+      hydratedOverrides[max] = clamp(defaultMax, lowest, highest);
     }
 
     if (!Number.isFinite(hydratedOverrides[xp])) {
@@ -276,6 +312,9 @@ export function gainStatXp(survivor, statKey, xpAmount) {
     if (displayType === STAT_DISPLAY_TYPES.BAR) {
       survivor[max] = Math.min(highest, Math.max(survivor[max], survivor[key]));
       survivor[key] = Math.min(survivor[key], survivor[max]);
+    } else {
+      // Keep hidden max in sync for persisted INT stats so reload normalization cannot down-clamp.
+      survivor[max] = Math.min(highest, Math.max(toNumber(survivor[max], definition.default), survivor[key]));
     }
 
     levelsGained += 1;
@@ -303,15 +342,25 @@ export function applyStatDelta(survivor, statKey, deltaAmount) {
     return 0;
   }
 
-  const { key, lowest, highest, default: defaultValue, displayType } = definition;
+  const {
+    key,
+    lowest,
+    highest,
+    default: defaultValue,
+    defaultMax,
+    displayType
+  } = definition;
   const { max } = getStatHiddenKeys(key);
 
   if (!Number.isFinite(survivor[key])) {
     survivor[key] = defaultValue;
   }
 
-  if (displayType === STAT_DISPLAY_TYPES.BAR && !Number.isFinite(survivor[max])) {
-    survivor[max] = clamp(defaultValue, lowest, highest);
+  if (displayType === STAT_DISPLAY_TYPES.BAR) {
+    const fallbackMax = Number.isFinite(defaultMax) ? defaultMax : defaultValue;
+    if (!Number.isFinite(survivor[max]) || survivor[max] <= lowest) {
+      survivor[max] = clamp(fallbackMax, lowest, highest);
+    }
   }
 
   const ceiling =
