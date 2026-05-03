@@ -367,13 +367,39 @@ function createPose(timeSeconds, animationName) {
   }
 
   if (animationName === "cook") {
-    const stir = Math.sin(timeSeconds * 7.4);
-    pose.lean = -0.03;
-    pose.bounce = Math.sin(timeSeconds * 5.2) * 1.5;
-    pose.leftArm = { x: -22 + stir * 8, y: -34 + Math.cos(timeSeconds * 7.4) * 4 };
-    pose.rightArm = { x: 30 + stir * 5, y: -30 + Math.sin(timeSeconds * 7.4) * 4 };
-    pose.leftLeg = { x: -18, y: 79.5 + Math.abs(stir) * 0.8 };
-    pose.rightLeg = { x: 18, y: 79.5 + Math.abs(stir) * 0.8 };
+    const chopCycle = (timeSeconds * 1.7) % 1;
+    const impact = chopCycle >= 0.62 && chopCycle < 0.8
+      ? Math.sin(((chopCycle - 0.62) / 0.18) * Math.PI)
+      : 0;
+    const blend = (a, b, t) => a + (b - a) * t;
+
+    let rightArmX = 26;
+    let rightArmY = -34;
+    if (chopCycle < 0.24) {
+      const t = chopCycle / 0.24;
+      rightArmX = blend(28, 22, t);
+      rightArmY = blend(-28, -32, t);
+    } else if (chopCycle < 0.62) {
+      const t = (chopCycle - 0.24) / 0.38;
+      rightArmX = blend(22, 44, t);
+      rightArmY = blend(-32, -88, t);
+    } else if (chopCycle < 0.8) {
+      const t = (chopCycle - 0.62) / 0.18;
+      const slammedT = t * t;
+      rightArmX = blend(44, 18, slammedT);
+      rightArmY = blend(-88, -24, slammedT);
+    } else {
+      const t = (chopCycle - 0.8) / 0.2;
+      rightArmX = blend(18, 26, t);
+      rightArmY = blend(-24, -34, t);
+    }
+
+    pose.lean = 0.02 + (rightArmY < -50 ? 0.1 : 0) - impact * 0.16;
+    pose.bounce = Math.sin(timeSeconds * 3.8) * 0.6 - impact * 2.6;
+    pose.leftArm = { x: -18 + impact * 1.4, y: -26 + impact * 2.2 };
+    pose.rightArm = { x: rightArmX, y: rightArmY };
+    pose.leftLeg = { x: -18, y: 79.5 + impact * 0.7 };
+    pose.rightLeg = { x: 18, y: 79.5 + impact * 0.7 };
   }
 
   return pose;
@@ -969,43 +995,92 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.restore();
   }
 
-  function drawKnifeAndCarrot(x, y, tilt = 0) {
+  function drawKnifeAndCarrot(x, y, tilt = 0, chopCycle = 0, impact = 0) {
     context.save();
     context.translate(x, y);
     context.rotate(tilt);
 
-    context.fillStyle = "#d97a2d";
+    const lift = clamp((chopCycle - 0.24) / 0.38, 0, 1);
+    const drop = clamp((chopCycle - 0.62) / 0.18, 0, 1);
+    const recover = clamp((chopCycle - 0.8) / 0.2, 0, 1);
+
+    const knifeX = 12 - lift * 2.5 - drop * 7 + recover * 3.5;
+    const knifeY = -8 - lift * 44 + drop * 38 - recover * 9;
+    const knifeRotation = -0.68 + lift * 0.54 - drop * 0.9 + recover * 0.34;
+    const split = impact * 6.2;
+
+    context.fillStyle = "#8f6a45";
+    context.strokeStyle = "#4d3a28";
+    context.lineWidth = 1.2;
     context.beginPath();
-    context.moveTo(-22, 12);
-    context.lineTo(3, 6);
-    context.lineTo(3, 18);
+    context.roundRect(-34, 9, 68, 16, 4);
+    context.fill();
+    context.stroke();
+
+    context.fillStyle = "#d97a2d";
+    context.strokeStyle = "#b25f20";
+    context.lineWidth = 1;
+    context.beginPath();
+    context.moveTo(-24 - split, 16);
+    context.lineTo(-4 - split * 0.4, 10);
+    context.lineTo(-4 - split * 0.4, 20);
     context.closePath();
     context.fill();
+    context.stroke();
+
+    context.beginPath();
+    context.moveTo(0 + split * 0.4, 10);
+    context.lineTo(20 + split, 16);
+    context.lineTo(0 + split * 0.4, 20);
+    context.closePath();
+    context.fill();
+    context.stroke();
 
     context.strokeStyle = "#4b7b42";
     context.lineWidth = 1.6;
     context.beginPath();
-    context.moveTo(-22, 12);
-    context.lineTo(-28, 7);
-    context.moveTo(-22, 12);
-    context.lineTo(-28, 14);
+    context.moveTo(-24 - split, 16);
+    context.lineTo(-30 - split, 11);
+    context.moveTo(-24 - split, 16);
+    context.lineTo(-30 - split, 18);
     context.stroke();
+
+    context.save();
+    context.translate(knifeX, knifeY);
+    context.rotate(knifeRotation);
 
     context.fillStyle = "#9e6842";
     context.beginPath();
-    context.roundRect(3, -16, 8, 12, 2.2);
+    context.roundRect(-3.5, -18, 7, 12, 2.2);
     context.fill();
 
     context.fillStyle = "#c5ccd3";
     context.strokeStyle = "#545c64";
     context.lineWidth = 1.3;
     context.beginPath();
-    context.moveTo(11, -13);
-    context.lineTo(28, -8);
-    context.lineTo(11, -3);
+    context.moveTo(3.5, -15);
+    context.lineTo(26, -9.5);
+    context.lineTo(3.5, -4);
     context.closePath();
     context.fill();
     context.stroke();
+    context.restore();
+
+    if (impact > 0.01) {
+      context.save();
+      context.globalAlpha = impact * 0.65;
+      context.strokeStyle = "#f5ebd6";
+      context.lineWidth = 1.1;
+      context.beginPath();
+      context.moveTo(-2, 12);
+      context.lineTo(-6, 7);
+      context.moveTo(-1, 12);
+      context.lineTo(1, 6);
+      context.moveTo(0, 12);
+      context.lineTo(8, 8);
+      context.stroke();
+      context.restore();
+    }
 
     context.restore();
   }
@@ -2795,18 +2870,22 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
 
     if (cookWeight > 0.01) {
+      const cookCycle = (seconds * 1.7) % 1;
+      const chopImpact = cookCycle >= 0.62 && cookCycle < 0.8
+        ? Math.sin(((cookCycle - 0.62) / 0.18) * Math.PI)
+        : 0;
       const cookPlacement = getPropPlacement(
         "cook",
         (perspectivePose.leftArm.x + perspectivePose.rightArm.x) * 0.5,
-        (perspectivePose.leftArm.y + perspectivePose.rightArm.y) * 0.5 - 6,
-        -0.12 + Math.sin(seconds * 7.4) * 0.05
+        (perspectivePose.leftArm.y + perspectivePose.rightArm.y) * 0.5 + 8,
+        -0.08 - chopImpact * 0.06
       );
       context.save();
       context.globalAlpha = cookWeight;
       context.translate(cookPlacement.x, cookPlacement.y);
       context.rotate(cookPlacement.rotation);
       context.scale(cookPlacement.scale, cookPlacement.scale);
-      drawKnifeAndCarrot(0, 0, 0);
+      drawKnifeAndCarrot(0, 0, 0, cookCycle, chopImpact);
       context.restore();
     }
 
