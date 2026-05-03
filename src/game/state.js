@@ -207,6 +207,7 @@ export function createInitialState() {
           title: "WORKOUT",
           seconds: 1,
           xp: 0.35,
+          requiredFlags: ["hasWorkout"],
           statXp: { physical: 2 },
           statChange: {
             sleep: -0.1,
@@ -218,10 +219,12 @@ export function createInitialState() {
           title: "READ",
           seconds: 10,
           xp: 0.5,
+          requiredFlags: ["hasBooks"],
           statXp: { sleep: 3, knowledge: 1 },
         },
         shower: {
           title: "SHOWER",
+          requiredFlags: ["hasShower"],
           seconds: 16,
           xp: 0.55,
           statChange: {
@@ -237,6 +240,7 @@ export function createInitialState() {
           statChange: {
             food: 0.5,
           },
+          cashCost: 3,
         },
         sleep: {
           title: "SLEEP",
@@ -246,6 +250,30 @@ export function createInitialState() {
         }
       },
       catalog: {
+        buyBooks: {
+          title: "BUY BOOKS",
+          seconds: 10,
+          xp: 0.35,
+          oneTime: true,
+          cashCost: 15,
+          popupTitle: "Books Purchased",
+          popupText: "You bought books. Reading is now available at home.",
+          popupIcon: "📚",
+          flags: [{ flagName: "hasBooks", newValue: true }],
+          hideFlags: ["hasBooks"]
+        },
+        buyWorkoutGear: {
+          title: "BUY WORKOUT GEAR",
+          seconds: 10,
+          xp: 0.35,
+          oneTime: true,
+          cashCost: 20,
+          popupTitle: "Workout Gear Purchased",
+          popupText: "You bought workout gear. Workout is now available at home.",
+          popupIcon: "🏋️",
+          flags: [{ flagName: "hasWorkout", newValue: true }],
+          hideFlags: ["hasWorkout"]
+        },
         phone: {
           title: "BUY PHONE",
           seconds: 10,
