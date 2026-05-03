@@ -36,7 +36,6 @@ export function createGameApp() {
     baseScreen: document.querySelector("#baseScreen"),
     goBase: document.querySelector("#goBase"),
     activeName: document.querySelector("#activeName"),
-    activeStats: document.querySelector("#activeStats"),
     activeLevel: document.querySelector("#activeLevel"),
     activeStatRows: document.querySelector("#activeStatRows"),
     xpFill: document.querySelector("#xpFill"),

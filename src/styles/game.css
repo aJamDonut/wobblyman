@@ -202,9 +202,6 @@ h1, h2, h3, p { margin: 0; }
 .name { font-size: 18px; margin-top: 13px; color:#ddd; text-shadow: 1px 1px #000; }
 .level-pill { justify-self: end; background: #111317; border-radius: 7px; padding: 2px 9px; font-family: Arial, sans-serif; font-weight: 700; font-size: 12px; margin-top: 14px; }
 
-.stats { display: flex; gap: 6px; margin-top: 5px; font-family: Arial, sans-serif; font-weight: 700; font-size: 13px; }
-.stat { display: inline-flex; align-items: center; gap: 3px; background: #111317; border-radius: 7px; padding: 1px 6px; }
-
 .survivor-nav { margin-top: 8px; display: flex; gap: 6px; }
 .survivor-nav-btn {
   background: #111317;

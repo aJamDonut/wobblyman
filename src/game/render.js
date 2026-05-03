@@ -1,4 +1,4 @@
-import { formatXp, survivorArtHtml, survivorStatsHtml } from "./helpers.js";
+import { formatXp, survivorArtHtml } from "./helpers.js";
 import { STAT_DISPLAY_TYPES, getStatHiddenKeys, getStatXpTarget, getSurvivorDisplayStats } from "./stats.js";
 
 function toSafeNumber(value, fallback = 0) {
@@ -34,7 +34,6 @@ export function renderActive(state, elements, activeSurvivor) {
   if (!activeSurvivor) {
     elements.activeName.textContent = "No Survivors";
     elements.activeLevel.textContent = "Level -";
-    elements.activeStats.innerHTML = "";
     elements.activeStatRows.innerHTML = "<div class=\"stat-empty\">No stat data</div>";
     elements.xpFill.style.width = "0%";
     elements.xpText.textContent = "0XP / 0XP";
@@ -43,7 +42,6 @@ export function renderActive(state, elements, activeSurvivor) {
 
   elements.activeName.textContent = activeSurvivor.name;
   elements.activeLevel.textContent = `Level ${activeSurvivor.level}`;
-  elements.activeStats.innerHTML = survivorStatsHtml(activeSurvivor);
 
   const barRows = getSurvivorDisplayStats(STAT_DISPLAY_TYPES.BAR)
     .map((definition) => {

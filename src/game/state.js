@@ -27,8 +27,6 @@ export function createInitialState() {
         moraleMax: 50,
         insanity: 0,
         insanityMax: 100,
-        attack: 1,
-        defense: 1,
         tools: 1,
         speech: 1,
         search: 1,

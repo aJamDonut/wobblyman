@@ -1,5 +1,3 @@
-import { survivorStatDefinitions } from "./stats.js";
-
 export function formatXp(value) {
   return Number.isInteger(value) ? value : Math.round(value * 100) / 100;
 }
@@ -13,11 +11,4 @@ export function clock(seconds) {
 export function survivorArtHtml(gender = "female") {
   const maleClass = gender === "male" ? "male" : "";
   return `<div class="survivor-art ${maleClass}"><i class="hair"></i><i class="head"></i><i class="torso"></i><i class="arm-l"></i><i class="arm-r"></i><i class="leg-l"></i><i class="leg-r"></i><i class="shoe-l"></i><i class="shoe-r"></i></div>`;
-}
-
-export function survivorStatsHtml(survivor) {
-  return survivorStatDefinitions
-    .filter((definition) => definition.showInHeader)
-    .map((definition) => `<span class="stat">${definition.icon} ${survivor[definition.key]}</span>`)
-    .join("");
 }

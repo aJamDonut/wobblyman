@@ -16,29 +16,18 @@ function clamp(value, min, max) {
 }
 
 export const survivorStatDefinitions = [
-  {
-    key: "health",
-    label: "Health",
+    {
+    key: "food",
+    label: "Food",
     displayType: STAT_DISPLAY_TYPES.BAR,
     lowest: 0,
     highest: 1000,
     default: 100,
-    icon: "❤",
-    toneClass: "red",
+    icon: "🍔",
+    toneClass: "#f1f1f1",
     recoverPerTick: 1,
-    showInRosterBar: true
-  },
-  {
-    key: "morale",
-    label: "Morale",
-    displayType: STAT_DISPLAY_TYPES.BAR,
-    lowest: 0,
-    highest: 1000,
-    default: 100,
-    icon: "✊",
-    toneClass: "blue",
-    recoverPerTick: 1,
-    showInRosterBar: true
+    showInRosterBar: true,
+    showInHeader: true
   },
   {
     key: "sleep",
@@ -47,22 +36,50 @@ export const survivorStatDefinitions = [
     lowest: 0,
     highest: 1000,
     default: 100,
-    icon: "✊",
+    icon: "😴",
     toneClass: "#f1f1f1",
     recoverPerTick: 1,
     showInRosterBar: true,
     showInHeader: true
   },
   {
-    key: "insanity",
-    label: "Insanity",
+    key: "hygiene",
+    label: "Hygiene",
     displayType: STAT_DISPLAY_TYPES.BAR,
     lowest: 0,
     highest: 1000,
-    default: 0,
-    icon: "🧠",
-    toneClass: "purple",
-    showInRosterBar: true
+    default: 100,
+    icon: "🧼",
+    toneClass: "#f1f1f1",
+    recoverPerTick: 1,
+    showInRosterBar: true,
+    showInHeader: true
+  },
+  {
+    key: "social",
+    label: "Social",
+    displayType: STAT_DISPLAY_TYPES.BAR,
+    lowest: 0,
+    highest: 1000,
+    default: 100,
+    icon: "🤝",
+    toneClass: "#f1f1f1",
+    recoverPerTick: 1,
+    showInRosterBar: true,
+    showInHeader: true
+  },
+  {
+    key: "bladder",
+    label: "Bladder",
+    displayType: STAT_DISPLAY_TYPES.BAR,
+    lowest: 0,
+    highest: 1000,
+    default: 100,
+    icon: "🚽",
+    toneClass: "#f1f1f1",
+    recoverPerTick: 1,
+    showInRosterBar: true,
+    showInHeader: true
   },
   {
     key: "cooking",
@@ -71,37 +88,47 @@ export const survivorStatDefinitions = [
     lowest: 0,
     highest: 1000,
     default: 1,
-    icon: "🍳",
+    icon: "🍕",
     showInHeader: true
   },
   {
-    key: "attack",
-    label: "Attack",
+    key: "business",
+    label: "Business",
     displayType: STAT_DISPLAY_TYPES.INT,
     lowest: 0,
     highest: 1000,
     default: 1,
-    icon: "✥",
+    icon: "💼",
     showInHeader: true
   },
   {
-    key: "defense",
-    label: "Defense",
+    key: "music",
+    label: "Music",
     displayType: STAT_DISPLAY_TYPES.INT,
     lowest: 0,
     highest: 1000,
     default: 1,
-    icon: "🛡",
+    icon: "🎵",
     showInHeader: true
   },
   {
-    key: "tools",
-    label: "Tools",
+    key: "art",
+    label: "Art",
     displayType: STAT_DISPLAY_TYPES.INT,
     lowest: 0,
     highest: 1000,
     default: 1,
-    icon: "🔧",
+    icon: "🎨",
+    showInHeader: true
+  },
+  {
+    key: "knowledge",
+    label: "Knowledge",
+    displayType: STAT_DISPLAY_TYPES.INT,
+    lowest: 0,
+    highest: 1000,
+    default: 1,
+    icon: "📚",
     showInHeader: true
   },
   {
@@ -111,17 +138,7 @@ export const survivorStatDefinitions = [
     lowest: 0,
     highest: 1000,
     default: 1,
-    icon: "💬",
-    showInHeader: true
-  },
-  {
-    key: "search",
-    label: "Search",
-    displayType: STAT_DISPLAY_TYPES.INT,
-    lowest: 0,
-    highest: 1000,
-    default: 1,
-    icon: "🔭",
+    icon: "🗣️",
     showInHeader: true
   }
 ];
