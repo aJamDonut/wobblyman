@@ -20,6 +20,27 @@ function sanitizeResources(defaultResources, persistedResources) {
   };
 }
 
+function sanitizeFlags(defaultFlags, persistedFlags) {
+  const safeDefaults = isObject(defaultFlags) ? { ...defaultFlags } : {};
+  if (!isObject(persistedFlags)) {
+    return safeDefaults;
+  }
+
+  const sanitized = { ...safeDefaults };
+  Object.entries(persistedFlags).forEach(([flagName, flagValue]) => {
+    if (typeof flagName !== "string" || flagName.trim() === "") {
+      return;
+    }
+
+    const valueType = typeof flagValue;
+    if (valueType === "boolean" || valueType === "string" || valueType === "number") {
+      sanitized[flagName] = flagValue;
+    }
+  });
+
+  return sanitized;
+}
+
 export function loadPersistedState(initialState) {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -39,6 +60,7 @@ export function loadPersistedState(initialState) {
     }
 
     state.resources = sanitizeResources(initialState.resources, persisted.resources);
+    state.flags = sanitizeFlags(initialState.flags, persisted.flags);
 
     if (typeof persisted.activeId === "string" || persisted.activeId === null) {
       state.activeId = persisted.activeId;
@@ -65,6 +87,7 @@ export function savePersistedState(state) {
   const payload = {
     survivors: state.survivors,
     resources: state.resources,
+    flags: state.flags,
     activeId: state.activeId,
     survivorCapacity: state.survivorCapacity,
     selectedMissionCategory: state.selectedMissionCategory

@@ -634,6 +634,7 @@ export function createInitialState() {
         },
       },
     }), missionEconomyConfig),
+    flags: {},
     selectedMissionCategory: "missions",
     running: null,
   };

@@ -646,8 +646,76 @@ export function createGameApp() {
     pastePropSettingsFromPayload();
   });
 
+  function getFlagValue(flagName) {
+    if (typeof flagName !== "string") {
+      return undefined;
+    }
+
+    return state.flags?.[flagName];
+  }
+
+  function isFlagTruthy(flagName) {
+    return Boolean(getFlagValue(flagName));
+  }
+
+  function hasRequiredFlags(requiredFlags) {
+    if (!Array.isArray(requiredFlags) || requiredFlags.length === 0) {
+      return true;
+    }
+
+    return requiredFlags.every((flagName) => {
+      if (typeof flagName !== "string" || flagName.trim() === "") {
+        return false;
+      }
+
+      return isFlagTruthy(flagName);
+    });
+  }
+
+  function isCategoryVisibleByTabFlag(categoryKey) {
+    const categoryTab = document.querySelector(`.tab[data-mission-category="${categoryKey}"]`);
+    if (!categoryTab) {
+      return true;
+    }
+
+    const requiredFlag = categoryTab.dataset.requiredFlag;
+    return !requiredFlag || isFlagTruthy(requiredFlag);
+  }
+
+  function canSetFlagValue(value) {
+    const valueType = typeof value;
+    return valueType === "boolean" || valueType === "string" || valueType === "number";
+  }
+
+  function applyMissionFlags(mission) {
+    const missionFlags = Array.isArray(mission?.flags) ? mission.flags : [];
+    if (missionFlags.length === 0) {
+      return;
+    }
+
+    if (!state.flags || typeof state.flags !== "object" || Array.isArray(state.flags)) {
+      state.flags = {};
+    }
+
+    missionFlags.forEach((flagChange) => {
+      if (!flagChange || typeof flagChange !== "object") {
+        return;
+      }
+
+      const flagName = typeof flagChange.flagName === "string" ? flagChange.flagName.trim() : "";
+      if (!flagName || !canSetFlagValue(flagChange.newValue)) {
+        return;
+      }
+
+      state.flags[flagName] = flagChange.newValue;
+    });
+  }
+
   function getMissionCategories() {
-    return Object.keys(state.missions || {});
+    const runningCategory = state.running?.categoryKey || null;
+    return Object.keys(state.missions || {}).filter(
+      (categoryKey) => categoryKey === runningCategory || isCategoryVisibleByTabFlag(categoryKey)
+    );
   }
 
   function ensureValidMissionCategory() {
@@ -725,6 +793,18 @@ export function createGameApp() {
   function renderMissionTabs() {
     const activeCategory = state.running?.categoryKey || state.selectedMissionCategory;
     document.querySelectorAll(".tab[data-mission-category]").forEach((tab) => {
+      const requiredFlag = tab.dataset.requiredFlag;
+      const isVisible =
+        tab.dataset.missionCategory === activeCategory ||
+        !requiredFlag ||
+        isFlagTruthy(requiredFlag);
+      tab.hidden = !isVisible;
+
+      if (!isVisible) {
+        tab.classList.remove("active");
+        return;
+      }
+
       const isActive = tab.dataset.missionCategory === activeCategory;
       tab.classList.toggle("active", isActive);
     });
@@ -737,9 +817,9 @@ export function createGameApp() {
     const runningMissionKey = state.running?.key || null;
     const categoryKey = runningCategoryKey || state.selectedMissionCategory;
     const missionCollection = getMissionCollection(categoryKey);
-    const missionEntries = Object.entries(missionCollection).filter(([missionKey]) => {
+    const missionEntries = Object.entries(missionCollection).filter(([missionKey, mission]) => {
       if (!runningMissionKey) {
-        return true;
+        return hasRequiredFlags(mission?.requiredFlags);
       }
 
       return missionKey === runningMissionKey;
@@ -952,6 +1032,12 @@ export function createGameApp() {
       return;
     }
 
+    if (!hasRequiredFlags(mission.requiredFlags)) {
+      toast(`${mission.title} is locked.`);
+      renderAll();
+      return;
+    }
+
     const cashCost = getMissionCashCost(mission);
     if (cashCost > getAvailableCash()) {
       toast(`Need $${cashCost} cash to start ${mission.title}.`);
@@ -1034,6 +1120,12 @@ export function createGameApp() {
       return;
     }
 
+    if (!hasRequiredFlags(mission.requiredFlags)) {
+      toast(`${mission.title} is locked.`);
+      renderAll();
+      return;
+    }
+
     const cashCost = getMissionCashCost(mission);
     if (cashCost > getAvailableCash()) {
       toast(`Need $${cashCost} cash to start ${mission.title}.`);
@@ -1066,10 +1158,11 @@ export function createGameApp() {
   function completeMission(missionProgress) {
     state.running = null;
     characterPreview.playAnimation("celebrate", { durationMs: 900 });
+    const mission = getMission(missionProgress.categoryKey, missionProgress.key);
+    applyMissionFlags(mission);
 
     renderAll();
 
-    const mission = getMission(missionProgress.categoryKey, missionProgress.key);
     const cycles = missionProgress.cyclesCompleted || 0;
     if (cycles > 0) {
       toast(`Completed ${mission?.title || "mission"}: ${cycles} cycle${cycles === 1 ? "" : "s"}.`);
@@ -1299,7 +1392,16 @@ export function createGameApp() {
 
   document.querySelectorAll(".tab[data-mission-category]").forEach((tab) => {
     tab.addEventListener("click", () => {
-      state.selectedMissionCategory = tab.dataset.missionCategory;
+      if (tab.hidden) {
+        return;
+      }
+
+      const nextCategory = tab.dataset.missionCategory;
+      if (!getMissionCategories().includes(nextCategory)) {
+        return;
+      }
+
+      state.selectedMissionCategory = nextCategory;
       renderAll();
     });
   });
