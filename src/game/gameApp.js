@@ -58,7 +58,9 @@ export function createGameApp() {
     characterPreviewHairStyle: document.querySelector("#characterPreviewHairStyle"),
     characterPreviewEyeStyle: document.querySelector("#characterPreviewEyeStyle"),
     characterPreviewBodyType: document.querySelector("#characterPreviewBodyType"),
-    characterPreviewPet: document.querySelector("#characterPreviewPet")
+    characterPreviewPet: document.querySelector("#characterPreviewPet"),
+    characterPreviewPerspective: document.querySelector("#characterPreviewPerspective"),
+    characterPreviewPerspectiveValue: document.querySelector("#characterPreviewPerspectiveValue")
   };
 
   const popupSystem = createPopupSystem(elements.popupLayer);
@@ -78,6 +80,7 @@ export function createGameApp() {
   let previewEyeStyleCycleIndex = Math.max(0, previewEyeStyles.indexOf("classic"));
   let previewBodyTypeCycleIndex = Math.max(0, previewBodyTypes.indexOf("classic"));
   let previewPetTypeCycleIndex = Math.max(0, previewPetTypes.indexOf("cat"));
+  let previewPerspectiveTilt = 0;
 
   function syncHairStyleLabel() {
     const activeHairStyle = previewHairStyles[previewHairStyleCycleIndex] || "classic";
@@ -97,6 +100,10 @@ export function createGameApp() {
   function syncPetTypeLabel() {
     const activePetType = previewPetTypes[previewPetTypeCycleIndex] || "cat";
     elements.characterPreviewPet.textContent = activePetType.toUpperCase();
+  }
+
+  function syncPerspectiveLabel() {
+    elements.characterPreviewPerspectiveValue.textContent = String(Math.round(previewPerspectiveTilt));
   }
 
   function applyPreviewAnimationOverride() {
@@ -184,6 +191,8 @@ export function createGameApp() {
   syncBodyTypeLabel();
   characterPreview.setPetType(previewPetTypes[previewPetTypeCycleIndex]);
   syncPetTypeLabel();
+  characterPreview.setPerspectiveTilt(previewPerspectiveTilt);
+  syncPerspectiveLabel();
 
   elements.characterPreviewHairStyle.addEventListener("click", () => {
     if (previewHairStyles.length === 0) {
@@ -223,6 +232,13 @@ export function createGameApp() {
     previewPetTypeCycleIndex = (previewPetTypeCycleIndex + 1) % previewPetTypes.length;
     characterPreview.setPetType(previewPetTypes[previewPetTypeCycleIndex]);
     syncPetTypeLabel();
+  });
+
+  elements.characterPreviewPerspective.addEventListener("input", () => {
+    const nextTilt = Number(elements.characterPreviewPerspective.value);
+    previewPerspectiveTilt = Number.isFinite(nextTilt) ? Math.max(-100, Math.min(100, nextTilt)) : 0;
+    characterPreview.setPerspectiveTilt(previewPerspectiveTilt);
+    syncPerspectiveLabel();
   });
 
   function getMissionCategories() {

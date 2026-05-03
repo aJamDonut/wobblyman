@@ -130,6 +130,30 @@ button {
   gap: 10px;
 }
 
+.preview-row-slider {
+  align-items: center;
+}
+
+.preview-slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 148px;
+}
+
+.preview-slider {
+  width: 108px;
+  accent-color: #487eb0;
+}
+
+.preview-slider-value {
+  min-width: 28px;
+  text-align: right;
+  font-size: 11px;
+  color: #d7e2e8;
+  font-family: Arial, sans-serif;
+}
+
 .preview-caption b {
   font-size: 12px;
   letter-spacing: 0.8px;
@@ -818,6 +842,14 @@ button {
 .preview-caption b {
   color: #2d2721;
   text-decoration-style: wavy;
+}
+
+.preview-slider {
+  accent-color: #467fb2;
+}
+
+.preview-slider-value {
+  color: #4b3e34;
 }
 
 .bar-wrap,
