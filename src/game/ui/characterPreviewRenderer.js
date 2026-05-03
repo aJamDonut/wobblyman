@@ -2737,7 +2737,10 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     perspectiveBlend,
     depthVisibility,
     punchWeight = 0,
-    legBendDirection = 1
+    legBendDirection = 1,
+    legWobbleAmplitude = 4.2 * wobbleScale,
+    headOffsetX = 0,
+    headOffsetExtraY = 0
   ) {
     const torsoWidth = bodyProfile.torsoWidth;
     const torsoHeight = bodyProfile.torsoHeight;
@@ -2816,7 +2819,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         legPose.leftLeg.x,
         leftLegEndY,
         legOutlineThickness,
-        4.2 * wobbleScale,
+        legWobbleAmplitude,
         seconds * 7 + 0.5,
         legBendDirection
       );
@@ -2828,7 +2831,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         legPose.rightLeg.x,
         rightLegEndY,
         legOutlineThickness,
-        4.2 * wobbleScale,
+        legWobbleAmplitude,
         seconds * 7 + 2.2,
         legBendDirection
       );
@@ -2880,7 +2883,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     drawRawStroke();
 
     context.beginPath();
-    context.arc(0, -66 + headOffsetY, 25.5, 0, Math.PI * 2);
+    context.arc(headOffsetX, -66 + headOffsetY + headOffsetExtraY, 25.5, 0, Math.PI * 2);
     drawRawStroke();
 
     const leftOutlineHand = getOutlineHandShape(armPose.leftArm.z, 0);
@@ -2954,7 +2957,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
 
     context.save();
-    context.translate(0, headOffsetY);
+    context.translate(headOffsetX, headOffsetY + headOffsetExtraY);
     context.translate(0, -66);
     context.scale(1.08, 1.08);
     context.translate(0, 66);
@@ -2965,7 +2968,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.restore();
 
     context.beginPath();
-    context.ellipse(0, -86 + headOffsetY, 22.5, 11, 0, 0, Math.PI * 2);
+    context.ellipse(headOffsetX, -86 + headOffsetY + headOffsetExtraY, 22.5, 11, 0, 0, Math.PI * 2);
     drawRawStroke();
 
     context.restore();
@@ -3137,6 +3140,15 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const dampedBounce = pose.bounce * 0.35 * (1 - idleWeight) + idleBodyBob;
     const renderedLean = lerp(pose.lean, 0, idleWeight) + idleBodyLean;
     const wobbleScale = 0.65;
+    const legWobbleAmplitude = 2 * wobbleScale;
+    const idleHeadOffsetX = (
+      Math.sin(seconds * 1.15 + 0.2) * 1.3
+      + Math.sin(seconds * 2.2 + 2.5) * 0.45
+    ) * idleWeight;
+    const idleHeadOffsetY = (
+      Math.sin(seconds * 1.7 + 0.9) * 1.25
+      + Math.sin(seconds * 0.75 + 1.8) * 0.55
+    ) * idleWeight;
     const bodyProfile = BODY_TYPE_PROFILES[bodyType] || BODY_TYPE_PROFILES.classic;
     const faceSkinColor = blendHexColor(colors.skinColor, 0.04);
     const handOutlineColor = blendHexColor(faceSkinColor, -0.18);
@@ -3183,7 +3195,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       }
     };
 
-    const plantedCompensation = dampedBounce * 0.85;
+    const plantedCompensation = dampedBounce * lerp(0.85, 1, idleWeight);
     const leftLegEndY = idleLockedPose.leftLeg.y - plantedCompensation;
     const rightLegEndY = idleLockedPose.rightLeg.y - plantedCompensation;
     const leftLegRootX = -14 * sideSwapScale;
@@ -3366,7 +3378,10 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         perspectiveBlend,
         depthVisibility,
         punchWeight,
-        legBendDirection
+        legBendDirection,
+        legWobbleAmplitude,
+        idleHeadOffsetX,
+        idleHeadOffsetY
       );
     }
 
@@ -3378,14 +3393,14 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         leftLegEndY,
         5.5,
         colors.pantsColor,
-        4.2 * wobbleScale,
+        legWobbleAmplitude,
         seconds * 7 + 0.5,
         "#332923",
         0.1,
         null,
         3,
         1,
-        1,
+        0.55,
         legBendDirection
       );
     };
@@ -3397,14 +3412,14 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         rightLegEndY,
         5.5,
         colors.pantsColor,
-        4.2 * wobbleScale,
+        legWobbleAmplitude,
         seconds * 7 + 2.2,
         "#332923",
         0.1,
         null,
         3,
         1,
-        1,
+        0.55,
         legBendDirection
       );
     };
@@ -3480,14 +3495,6 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.fill();
 
     const headOffsetY = 4;
-    const idleHeadOffsetX = (
-      Math.sin(seconds * 1.15 + 0.2) * 1.3
-      + Math.sin(seconds * 2.2 + 2.5) * 0.45
-    ) * idleWeight;
-    const idleHeadOffsetY = (
-      Math.sin(seconds * 1.7 + 0.9) * 1.25
-      + Math.sin(seconds * 0.75 + 1.8) * 0.55
-    ) * idleWeight;
     context.save();
     context.translate(idleHeadOffsetX, headOffsetY + idleHeadOffsetY);
 
