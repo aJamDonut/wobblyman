@@ -912,6 +912,44 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
+  function getLimbJointPoint(
+    rootX,
+    rootY,
+    endX,
+    endY,
+    wobble,
+    phase,
+    bendDirection,
+    options = {}
+  ) {
+    const {
+      gaitScale = 0.42,
+      perspectiveScale = 0.72,
+      forwardScale = 0.04,
+      phaseScale = 0.55,
+      jointSeed = 0.45,
+      jitterX = 0,
+      jitterY = 0
+    } = options;
+
+    const dx = endX - rootX;
+    const dy = endY - rootY;
+    const distance = Math.max(1, Math.hypot(dx, dy));
+    const nx = -dy / distance;
+    const ny = dx / distance;
+    const forwardBend = Math.sin(phase * phaseScale + jointSeed) * (distance * forwardScale);
+    const gaitBend = wobble * gaitScale + forwardBend;
+    const perspectiveBend = wobble * perspectiveScale * clamp(bendDirection, -1, 1);
+    const bendAmount = gaitBend + perspectiveBend;
+    const jointBaseX = rootX + dx * 0.5;
+    const jointBaseY = rootY + dy * 0.5;
+
+    return {
+      x: jointBaseX + nx * bendAmount + jitterX,
+      y: jointBaseY + ny * bendAmount + jitterY
+    };
+  }
+
   function drawLimb(
     rootX,
     rootY,
@@ -929,27 +967,6 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     jitterScale = 1,
     bendDirection = 1
   ) {
-    const getJointPoint = (jointSeed = 0, passIndex = 0) => {
-      const dx = endX - rootX;
-      const dy = endY - rootY;
-      const distance = Math.max(1, Math.hypot(dx, dy));
-      const nx = -dy / distance;
-      const ny = dx / distance;
-      const forwardBend = Math.sin(phase * 0.55 + jointSeed) * (distance * 0.04);
-      // Keep an intrinsic gait bend so knees do not snap straight while perspective side crosses.
-      const gaitBend = wobble * 0.42 + forwardBend;
-      const perspectiveBend = wobble * 0.72 * clamp(bendDirection, -1, 1);
-      const bendAmount = gaitBend + perspectiveBend;
-      const jointBaseX = rootX + dx * 0.5;
-      const jointBaseY = rootY + dy * 0.5;
-      const passJitterX = sketchNoise(phase + passIndex * 0.59 + jointSeed, 0.5 * motionScale);
-      const passJitterY = sketchNoise(phase + passIndex * 0.59 + jointSeed + 2.6, 0.45 * motionScale);
-      return {
-        x: jointBaseX + nx * bendAmount + passJitterX,
-        y: jointBaseY + ny * bendAmount + passJitterY
-      };
-    };
-
     const graphite = "#332923";
     const motionScale = Math.max(0, jitterScale);
     const fillTone = blendHexColor(color, fillShift);
@@ -963,7 +980,13 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       const passSeed = phase + pass * 0.73;
       const jitterX = sketchNoise(passSeed, 0.9 * motionScale);
       const jitterY = sketchNoise(passSeed + 2.4, 0.8 * motionScale);
-      const joint = getJointPoint(0.45, pass);
+      const passJitterX = sketchNoise(phase + pass * 0.59 + 0.45, 0.5 * motionScale);
+      const passJitterY = sketchNoise(phase + pass * 0.59 + 0.45 + 2.6, 0.45 * motionScale);
+      const joint = getLimbJointPoint(rootX, rootY, endX, endY, wobble, phase, bendDirection, {
+        jointSeed: 0.45,
+        jitterX: passJitterX,
+        jitterY: passJitterY
+      });
       const upperMidX = (rootX + joint.x) * 0.5 + jitterX * 0.35;
       const upperMidY = (rootY + joint.y) * 0.5 + jitterY * 0.35;
       const lowerMidX = (joint.x + endX) * 0.5 - jitterX * 0.3;
@@ -977,7 +1000,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
 
     const resolvedDetailWidth = Number.isFinite(detailWidth) ? detailWidth : Math.max(1.2, thickness * 0.28);
     if (!suppressDecorativeStrokes && resolvedDetailWidth > 0) {
-      const detailJoint = getJointPoint(1.2, 0);
+      const detailJoint = getLimbJointPoint(rootX, rootY, endX, endY, wobble, phase, bendDirection, { jointSeed: 1.2 });
       context.strokeStyle = detailColor || graphite;
       context.lineWidth = resolvedDetailWidth;
       context.beginPath();
@@ -988,8 +1011,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
 
     if (!suppressDecorativeStrokes) {
-      const shadowJoint = getJointPoint(2, 0);
-      const highlightJoint = getJointPoint(2.7, 0);
+      const shadowJoint = getLimbJointPoint(rootX, rootY, endX, endY, wobble, phase, bendDirection, { jointSeed: 2 });
+      const highlightJoint = getLimbJointPoint(rootX, rootY, endX, endY, wobble, phase, bendDirection, { jointSeed: 2.7 });
       context.save();
       context.globalAlpha = 0.5;
       context.strokeStyle = blendHexColor(color, -0.3);
@@ -1033,24 +1056,17 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   }
 
   function drawFlatLimb(rootX, rootY, endX, endY, thickness, color, wobble = 0, phase = 0, bendDirection = 1) {
-    const dx = endX - rootX;
-    const dy = endY - rootY;
-    const distance = Math.max(1, Math.hypot(dx, dy));
-    const nx = -dy / distance;
-    const ny = dx / distance;
-    const gaitBend = wobble * 0.44 + Math.sin(phase * 0.55) * (distance * 0.03);
-    const perspectiveBend = wobble * 0.74 * clamp(bendDirection, -1, 1);
-    const bendAmount = gaitBend + perspectiveBend;
-    const jointX = rootX + dx * 0.5 + nx * bendAmount;
-    const jointY = rootY + dy * 0.5 + ny * bendAmount;
+    const joint = getLimbJointPoint(rootX, rootY, endX, endY, wobble, phase, bendDirection, {
+      jointSeed: 0.45
+    });
 
     context.strokeStyle = color;
     context.lineWidth = Math.max(0.8, thickness);
     context.lineCap = "round";
     context.beginPath();
     context.moveTo(rootX, rootY);
-    context.quadraticCurveTo((rootX + jointX) * 0.5, (rootY + jointY) * 0.5, jointX, jointY);
-    context.quadraticCurveTo((jointX + endX) * 0.5, (jointY + endY) * 0.5, endX, endY);
+    context.quadraticCurveTo((rootX + joint.x) * 0.5, (rootY + joint.y) * 0.5, joint.x, joint.y);
+    context.quadraticCurveTo((joint.x + endX) * 0.5, (joint.y + endY) * 0.5, endX, endY);
     drawRawStroke();
   }
 
@@ -2495,20 +2511,13 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.lineJoin = "round";
 
     const drawOutlineLimb = (rootX, rootY, endX, endY, wobble, phase, bendDirection = 1) => {
-      const dx = endX - rootX;
-      const dy = endY - rootY;
-      const distance = Math.max(1, Math.hypot(dx, dy));
-      const nx = -dy / distance;
-      const ny = dx / distance;
-      const gaitBend = wobble * 0.44 + Math.sin(phase * 0.55) * (distance * 0.03);
-      const perspectiveBend = wobble * 0.72 * clamp(bendDirection, -1, 1);
-      const bendAmount = gaitBend + perspectiveBend;
-      const jointX = rootX + dx * 0.5 + nx * bendAmount;
-      const jointY = rootY + dy * 0.5 + ny * bendAmount;
+      const joint = getLimbJointPoint(rootX, rootY, endX, endY, wobble, phase, bendDirection, {
+        jointSeed: 0.45
+      });
       context.beginPath();
       context.moveTo(rootX, rootY);
-      context.quadraticCurveTo((rootX + jointX) * 0.5, (rootY + jointY) * 0.5, jointX, jointY);
-      context.quadraticCurveTo((jointX + endX) * 0.5, (jointY + endY) * 0.5, endX, endY);
+      context.quadraticCurveTo((rootX + joint.x) * 0.5, (rootY + joint.y) * 0.5, joint.x, joint.y);
+      context.quadraticCurveTo((joint.x + endX) * 0.5, (joint.y + endY) * 0.5, endX, endY);
       drawRawStroke();
     };
 
