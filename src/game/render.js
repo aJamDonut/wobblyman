@@ -24,6 +24,13 @@ function splitDisplayName(fullName) {
   return [first, second];
 }
 
+function shouldShowIntStat(survivor, definition) {
+  const value = toSafeNumber(survivor?.[definition.key]);
+  const { xp } = getStatHiddenKeys(definition.key);
+  const xpCurrent = toSafeNumber(survivor?.[xp]);
+  return value !== 1 || xpCurrent > 0;
+}
+
 export function renderResources(state, elements) {
   elements.resources.innerHTML = `
     <div class="res">💵 ${state.resources.cash}</div>
@@ -72,6 +79,7 @@ export function renderActive(state, elements, activeSurvivor) {
     .join("");
 
   const intRows = getSurvivorDisplayStats(STAT_DISPLAY_TYPES.INT)
+    .filter((definition) => shouldShowIntStat(activeSurvivor, definition))
     .map((definition) => {
       const value = toSafeNumber(activeSurvivor[definition.key]);
       const { xp } = getStatHiddenKeys(definition.key);
@@ -95,7 +103,8 @@ export function renderActive(state, elements, activeSurvivor) {
     })
     .join("");
 
-  elements.activeStatRows.innerHTML = `${barRows}<div class="dynamic-int-grid">${intRows}</div>`;
+  const intGridMarkup = intRows ? `<div class="dynamic-int-grid">${intRows}</div>` : "";
+  elements.activeStatRows.innerHTML = `${barRows}${intGridMarkup}`;
 
   const xpTotal = Math.max(10, Math.round(17 * Math.pow(1.28, Math.max(0, activeSurvivor.level - 1))));
   const xpCurrent = toSafeNumber(activeSurvivor.healthXp);
@@ -107,11 +116,12 @@ export function renderRoster(state, elements, onSelectSurvivor) {
   elements.roster.innerHTML = "";
 
   const rosterBarStats = getSurvivorDisplayStats(STAT_DISPLAY_TYPES.BAR).filter((definition) => definition.showInRosterBar);
-  const rosterIntStats = getSurvivorDisplayStats(STAT_DISPLAY_TYPES.INT);
-  const rosterIntRows = chunk(rosterIntStats, 3);
-
   state.survivors.forEach((survivor) => {
     const [firstName, lastName] = splitDisplayName(survivor.name);
+    const rosterIntStats = getSurvivorDisplayStats(STAT_DISPLAY_TYPES.INT).filter((definition) =>
+      shouldShowIntStat(survivor, definition)
+    );
+    const rosterIntRows = chunk(rosterIntStats, 3);
     const intMarkup = rosterIntRows
       .map(
         (statRow) =>
