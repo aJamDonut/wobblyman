@@ -130,8 +130,13 @@ export function createGameApp() {
   const strongholdRenderers = [];
   let strongholdRosterSignature = "";
 
+  function isMobileActionsPopupMode() {
+    return mobilePreviewQuery.matches;
+  }
+
   function setMissionActionsOverlayOpen(nextOpen) {
-    const shouldOpen = Boolean(nextOpen);
+    const usesPopup = isMobileActionsPopupMode();
+    const shouldOpen = usesPopup && Boolean(nextOpen);
     isMissionActionsOverlayOpen = shouldOpen;
 
     if (elements.actionsMenuBtn) {
@@ -141,13 +146,17 @@ export function createGameApp() {
 
     if (elements.missionActionsOverlay) {
       elements.missionActionsOverlay.classList.toggle("show", shouldOpen);
-      elements.missionActionsOverlay.setAttribute("aria-hidden", String(!shouldOpen));
+      elements.missionActionsOverlay.setAttribute("aria-hidden", String(usesPopup ? !shouldOpen : false));
     }
 
     document.body.classList.toggle("mission-actions-open", shouldOpen);
   }
 
   function toggleMissionActionsOverlay() {
+    if (!isMobileActionsPopupMode()) {
+      return;
+    }
+
     setMissionActionsOverlayOpen(!isMissionActionsOverlayOpen);
   }
 
@@ -569,7 +578,7 @@ export function createGameApp() {
     }
 
     if (!state.running) {
-      elements.characterPreviewMissionStatus.textContent = "No mission running";
+      elements.characterPreviewMissionStatus.textContent = "Idle";
       return;
     }
 
@@ -644,6 +653,14 @@ export function createGameApp() {
   } else if (typeof mobilePreviewQuery.addListener === "function") {
     mobilePreviewQuery.addListener(syncMobilePreviewPlacement);
   }
+
+  if (typeof mobilePreviewQuery.addEventListener === "function") {
+    mobilePreviewQuery.addEventListener("change", () => setMissionActionsOverlayOpen(false));
+  } else if (typeof mobilePreviewQuery.addListener === "function") {
+    mobilePreviewQuery.addListener(() => setMissionActionsOverlayOpen(false));
+  }
+
+  setMissionActionsOverlayOpen(false);
 
   previewPropAnimations.forEach((animationName) => {
     const option = document.createElement("option");
@@ -1537,10 +1554,18 @@ export function createGameApp() {
   });
 
   elements.missionActionsCloseBtn?.addEventListener("click", () => {
+    if (!isMobileActionsPopupMode()) {
+      return;
+    }
+
     setMissionActionsOverlayOpen(false);
   });
 
   elements.missionActionsOverlay?.addEventListener("click", (event) => {
+    if (!isMobileActionsPopupMode()) {
+      return;
+    }
+
     if (event.target === elements.missionActionsOverlay || event.target?.dataset.overlayClose === "true") {
       setMissionActionsOverlayOpen(false);
     }
@@ -1576,7 +1601,7 @@ export function createGameApp() {
   });
 
   window.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && isMissionActionsOverlayOpen) {
+    if (isMobileActionsPopupMode() && event.key === "Escape" && isMissionActionsOverlayOpen) {
       setMissionActionsOverlayOpen(false);
       return;
     }

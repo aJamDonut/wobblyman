@@ -1370,3 +1370,44 @@ button {
     transform: none;
   }
 }
+
+@media (min-width: 641px) {
+  .actions-launcher-wrap {
+    display: none;
+  }
+
+  .mission-actions-overlay {
+    position: static;
+    inset: auto;
+    z-index: auto;
+    pointer-events: auto;
+  }
+
+  .mission-actions-backdrop {
+    display: none;
+  }
+
+  .mission-actions-sheet {
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    max-height: none;
+    overflow: visible;
+    transform: none;
+    transition: none;
+    margin-top: 10px;
+    padding: 12px 0 0;
+    border-top: 0;
+    box-shadow: none;
+    background: none;
+  }
+
+  .mission-actions-close {
+    display: none;
+  }
+
+  body.mission-actions-open {
+    overflow: auto;
+  }
+}
