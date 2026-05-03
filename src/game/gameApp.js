@@ -413,16 +413,14 @@ export function createGameApp() {
       dig: "dig",
       search: "search",
       hunt: "hunt",
-      cook: "cook"
+      cook: "cook",
+      eat: "sandwich"
     };
 
     if (missionAnimationMap[missionKey]) {
       return missionAnimationMap[missionKey];
     }
-
-    if (missionKey === "sandwich") {
-      return "sandwich";
-    }
+    
 
     if (missionKey === "platter") {
       return "working";
@@ -976,19 +974,43 @@ export function createGameApp() {
     const runningProgress = getRunningMissionProgress();
 
     elements.missionPanelTitle.textContent = categoryTitle;
-    elements.missionsList.innerHTML = "";
+    const missionNodesByKey = new Map();
+    elements.missionsList.querySelectorAll(".mission").forEach((missionElement) => {
+      const missionCategory = missionElement.dataset.missionCategory;
+      const missionKey = missionElement.dataset.mission;
+      if (!missionCategory || !missionKey) {
+        return;
+      }
+
+      missionNodesByKey.set(`${missionCategory}::${missionKey}`, missionElement);
+    });
+
+    const emptyState = elements.missionsList.querySelector(".mission-empty");
 
     if (missionEntries.length === 0) {
-      elements.missionsList.innerHTML = '<div class="card mission-empty">No missions in this category yet.</div>';
+      missionNodesByKey.forEach((missionElement) => missionElement.remove());
+
+      if (!emptyState) {
+        const emptyElement = document.createElement("div");
+        emptyElement.className = "card mission-empty";
+        emptyElement.textContent = "No missions in this category yet.";
+        elements.missionsList.appendChild(emptyElement);
+      }
       return;
     }
 
+    if (emptyState) {
+      emptyState.remove();
+    }
+
+    const orderedMissionElements = [];
     missionEntries.forEach(([missionKey, mission]) => {
-      const missionElement = document.createElement("div");
+      const missionNodeKey = `${categoryKey}::${missionKey}`;
+      const existingMissionElement = missionNodesByKey.get(missionNodeKey);
+      const missionElement = existingMissionElement || document.createElement("div");
       missionElement.className = "card mission";
       missionElement.dataset.missionCategory = categoryKey;
       missionElement.dataset.mission = missionKey;
-      const oneTimeMission = isOneTimeMission(mission);
 
       const timerSeconds =
         runningProgress && runningProgress.categoryKey === categoryKey && runningProgress.key === missionKey
@@ -1024,7 +1046,8 @@ export function createGameApp() {
         ? `<div class="timer">⏱ ${clock(timerSeconds)}</div>`
         : "";
 
-      missionElement.innerHTML = `
+      if (!existingMissionElement) {
+        missionElement.innerHTML = `
         <div>
           <h2>${mission.title}</h2>
           ${rewardRowMarkup}
@@ -1032,16 +1055,41 @@ export function createGameApp() {
         </div>
         <div class="start-block"><button class="start-btn">START</button>${timerMarkup}</div>`;
 
-      missionElement.querySelector(".start-btn").addEventListener("click", () => {
-        if (state.running?.categoryKey === categoryKey && state.running?.key === missionKey) {
-          cancelMission();
-          return;
+        missionElement.querySelector(".start-btn").addEventListener("click", () => {
+          if (state.running?.categoryKey === categoryKey && state.running?.key === missionKey) {
+            cancelMission();
+            return;
+          }
+
+          startMission(categoryKey, missionKey);
+        });
+      } else if (shouldShowMissionTimer(mission)) {
+        const timerElement = missionElement.querySelector(".timer");
+        if (timerElement) {
+          timerElement.textContent = `⏱ ${clock(timerSeconds)}`;
         }
+      }
 
-        startMission(categoryKey, missionKey);
-      });
+      orderedMissionElements.push(missionElement);
+    });
 
-      elements.missionsList.appendChild(missionElement);
+    const desiredMissionNodeKeys = new Set(
+      missionEntries.map(([missionKey]) => `${categoryKey}::${missionKey}`)
+    );
+
+    missionNodesByKey.forEach((missionElement, missionNodeKey) => {
+      if (!desiredMissionNodeKeys.has(missionNodeKey)) {
+        missionElement.remove();
+      }
+    });
+
+    let nextSibling = elements.missionsList.firstChild;
+    orderedMissionElements.forEach((missionElement) => {
+      if (missionElement !== nextSibling) {
+        elements.missionsList.insertBefore(missionElement, nextSibling);
+      }
+
+      nextSibling = missionElement.nextSibling;
     });
   }
 
