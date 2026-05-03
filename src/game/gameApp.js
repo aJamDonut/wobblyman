@@ -1275,19 +1275,19 @@ export function createGameApp() {
     state.running = null;
     characterPreview.playAnimation("idle", { loop: true });
     renderAll();
-    toast("Mission canceled.");
+    toast("Stopping action.");
   }
 
   async function startMission(categoryKey, missionKey) {
     if (state.running) {
-      toast("A survivor is already on a mission.");
+      toast("Already started.");
       return;
     }
 
     const mission = getMission(categoryKey, missionKey);
     const activeSurvivor = getSurvivorById(state, state.activeId);
     if (!mission || !activeSurvivor) {
-      toast("No survivor selected.");
+      toast("No character selected.");
       return;
     }
 

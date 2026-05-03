@@ -238,18 +238,46 @@ export function createInitialState() {
           xp: 0.55,
           animation: "sandwich",
           statChange: {
-            food: 0.5,
+            food: 1.0,
           },
           cashCost: 3,
+        },
+        busk: {
+          title: "BUSK",
+          seconds: 5,
+          xp: 0.55,
+          animation: "sandwich",
+          statChange: {
+            food: -0.1,
+          },
+          cashPayout: 1,
         },
         sleep: {
           title: "SLEEP",
           seconds: 10,
           xp: 0.5,
           statXp: { sleep: 3, knowledge: 1 },
+          statChange: {
+            food: -0.1,
+            sleep: +1.0,
+            hygiene: -0.5,
+            social: -0.1
+          },
         }
       },
       catalog: {
+        buyShower: {
+          title: "BUY SHOWER",
+          seconds: 10,
+          xp: 0.35,
+          oneTime: true,
+          cashCost: 25,
+          popupTitle: "Shower Installed",
+          popupText: "You installed a shower. Shower is now available at home.",
+          popupIcon: "🚿",
+          flags: [{ flagName: "hasShower", newValue: true }],
+          hideFlags: ["hasShower"]
+        },
         buyBooks: {
           title: "BUY BOOKS",
           seconds: 10,
@@ -319,6 +347,20 @@ export function createInitialState() {
           xp: 0.5,
           statXp: { knowledge: 2, food: 1 },
           cashPayout: 10,
+          statChange: {
+            sleep: -0.5,
+            food: -1
+          },
+        },
+        socialize: {
+          title: "Socialize",
+          seconds: 5,
+          xp: 0.5,
+          statXp: { speech: 1 },
+          cashPayout: 1,
+          statChange: {
+            social: +0.1,
+          },
         }
       },
       mall: {
