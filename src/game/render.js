@@ -13,6 +13,11 @@ function chunk(list, size) {
   return chunks;
 }
 
+function splitInHalf(list) {
+  const midpoint = Math.ceil(list.length / 2);
+  return [list.slice(0, midpoint), list.slice(midpoint)];
+}
+
 function splitDisplayName(fullName) {
   const parts = String(fullName || "Unknown").trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) {
@@ -59,8 +64,10 @@ export function renderActive(state, elements, activeSurvivor) {
   elements.activeName.textContent = activeSurvivor.name;
   elements.activeLevel.textContent = `Level ${activeSurvivor.level}`;
 
-  const barRows = getSurvivorDisplayStats(STAT_DISPLAY_TYPES.BAR)
-    .map((definition) => {
+  const barStats = getSurvivorDisplayStats(STAT_DISPLAY_TYPES.BAR);
+  const [leftBarStats, rightBarStats] = splitInHalf(barStats);
+
+  const renderBarStat = (definition) => {
       const current = toSafeNumber(activeSurvivor[definition.key]);
       const { max } = getStatHiddenKeys(definition.key);
       const maxValue = Math.max(1, toSafeNumber(activeSurvivor[max], 1));
@@ -75,8 +82,13 @@ export function renderActive(state, elements, activeSurvivor) {
           </div>
           <!-- <div class="bar-value">${current} / ${maxValue}</div>-->
         </div>`;
-    })
-    .join("");
+    };
+
+  const barRows = `
+    <div class="dynamic-stat-columns">
+      <div class="dynamic-stat-column">${leftBarStats.map(renderBarStat).join("")}</div>
+      <div class="dynamic-stat-column">${rightBarStats.map(renderBarStat).join("")}</div>
+    </div>`;
 
   const intRows = getSurvivorDisplayStats(STAT_DISPLAY_TYPES.INT)
     .filter((definition) => shouldShowIntStat(activeSurvivor, definition))
