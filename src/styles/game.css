@@ -221,6 +221,11 @@ button {
   background: #1e2a31;
 }
 
+.preview-holder-btn {
+  min-width: 132px;
+  flex: 0 0 auto;
+}
+
 .preview-prop-payload {
   width: 100%;
   min-height: 84px;

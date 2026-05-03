@@ -64,7 +64,7 @@ const EYE_STYLES = [
   "spark",
   "sunglasses",
   "eyeglasses",
-  "round-glasses",
+  "-glasses",
   "aviators",
   "monocle"
 ];
@@ -619,6 +619,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   let bodyType = "classic";
   let eyeStyle = "classic";
   let petType = "cat";
+  let holderVisible = true;
   let perspectiveTilt = 0;
   let shadowStyle = { ...DEFAULT_SHADOW_STYLE };
   let propTransforms = Object.fromEntries(
@@ -969,7 +970,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.beginPath();
     context.arc(0, 0, 8, 0, Math.PI * 2);
     context.fill();
-    context.stroke();
+    drawRawStroke();
 
     context.strokeStyle = "#725639";
     context.lineWidth = 3;
@@ -977,7 +978,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.beginPath();
     context.moveTo(5.8, 5.8);
     context.lineTo(14, 14);
-    context.stroke();
+    drawRawStroke();
 
     context.restore();
   }
@@ -1906,21 +1907,21 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.beginPath();
       context.roundRect(-15.5, -71.2, 12.8, 8.6, 2.6);
       context.fill();
-      context.stroke();
+      drawRawStroke();
       context.beginPath();
       context.roundRect(2.7, -71.2, 12.8, 8.6, 2.6);
       context.fill();
-      context.stroke();
+      drawRawStroke();
       context.beginPath();
       context.moveTo(-2.7, -67.2);
       context.lineTo(2.7, -67.2);
-      context.stroke();
+      drawRawStroke();
       context.beginPath();
       context.moveTo(-15.5, -67.4);
       context.lineTo(-18.4, -66.2);
       context.moveTo(15.5, -67.4);
       context.lineTo(18.4, -66.2);
-      context.stroke();
+      drawRawStroke();
       context.fillStyle = "rgba(255,255,255,0.22)";
       context.beginPath();
       context.roundRect(-14.2, -70.3, 4.2, 1.4, 0.6);
@@ -1938,17 +1939,17 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.roundRect(-15.4, -71, 12.6, 9.2, 2.2);
       context.roundRect(2.8, -71, 12.6, 9.2, 2.2);
       context.fill();
-      context.stroke();
+      drawRawStroke();
       context.beginPath();
       context.moveTo(-2.8, -66.5);
       context.lineTo(2.8, -66.5);
-      context.stroke();
+      drawRawStroke();
       context.beginPath();
       context.moveTo(-15.4, -66.8);
       context.lineTo(-18.8, -65.8);
       context.moveTo(15.4, -66.8);
       context.lineTo(18.8, -65.8);
-      context.stroke();
+      drawRawStroke();
 
       context.fillStyle = "#2e2520";
       context.beginPath();
@@ -1975,15 +1976,15 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.beginPath();
       context.arc(-8.8, -67.2, 5.9, 0, Math.PI * 2);
       context.fill();
-      context.stroke();
+      drawRawStroke();
       context.beginPath();
       context.arc(8.8, -67.2, 5.9, 0, Math.PI * 2);
       context.fill();
-      context.stroke();
+      drawRawStroke();
       context.beginPath();
       context.moveTo(-2.9, -67.2);
       context.lineTo(2.9, -67.2);
-      context.stroke();
+      drawRawStroke();
 
       context.fillStyle = "#2e2520";
       context.beginPath();
@@ -2007,7 +2008,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.quadraticCurveTo(-14.6, -62.8, -14.6, -71.8);
       context.closePath();
       context.fill();
-      context.stroke();
+      drawRawStroke();
       context.beginPath();
       context.moveTo(3.4, -71.8);
       context.quadraticCurveTo(8.8, -74.2, 14.6, -71.8);
@@ -2015,11 +2016,11 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.quadraticCurveTo(3.4, -62.8, 3.4, -71.8);
       context.closePath();
       context.fill();
-      context.stroke();
+      drawRawStroke();
       context.beginPath();
       context.moveTo(-3.2, -67.4);
       context.lineTo(3.2, -67.4);
-      context.stroke();
+      drawRawStroke();
       context.fillStyle = "rgba(255,255,255,0.2)";
       context.beginPath();
       context.moveTo(-12.6, -70.2);
@@ -2044,12 +2045,12 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.beginPath();
       context.arc(8.8, -67.2, 6.2, 0, Math.PI * 2);
       context.fill();
-      context.stroke();
+      drawRawStroke();
       context.beginPath();
       context.moveTo(13.5, -62.8);
       context.lineTo(17.2, -56.8);
       context.lineTo(14.6, -50.8);
-      context.stroke();
+      drawRawStroke();
 
       context.fillStyle = "#2e2520";
       context.beginPath();
@@ -2622,19 +2623,21 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       shadowPerspectiveShiftX
     );
 
-    drawOutlineHolder(
-      idleLockedPose,
-      perspectivePose,
-      leftLegEndY,
-      rightLegEndY,
-      bodyProfile,
-      leftLegRootX,
-      rightLegRootX,
-      leftArmRootX,
-      rightArmRootX,
-      seconds,
-      wobbleScale
-    );
+    if (holderVisible) {
+      drawOutlineHolder(
+        idleLockedPose,
+        perspectivePose,
+        leftLegEndY,
+        rightLegEndY,
+        bodyProfile,
+        leftLegRootX,
+        rightLegRootX,
+        leftArmRootX,
+        rightArmRootX,
+        seconds,
+        wobbleScale
+      );
+    }
 
     const drawLeftLeg = () => {
       drawLimb(
@@ -3223,6 +3226,19 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
   }
 
+  function setHolderVisibility(value) {
+    holderVisible = Boolean(value);
+  }
+
+  function getHolderVisibility() {
+    return holderVisible;
+  }
+
+  function toggleHolderVisibility() {
+    holderVisible = !holderVisible;
+    return holderVisible;
+  }
+
   function getShadowProperties() {
     return { ...shadowStyle };
   }
@@ -3364,6 +3380,9 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     setBodyType,
     setEyeStyle,
     setPetType,
+    setHolderVisibility,
+    getHolderVisibility,
+    toggleHolderVisibility,
     setPerspectiveTilt,
     setShadowProperties,
     getHairStyles,

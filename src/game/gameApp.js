@@ -59,6 +59,7 @@ export function createGameApp() {
     characterPreviewEyeStyle: document.querySelector("#characterPreviewEyeStyle"),
     characterPreviewBodyType: document.querySelector("#characterPreviewBodyType"),
     characterPreviewPet: document.querySelector("#characterPreviewPet"),
+    characterPreviewHolderToggle: document.querySelector("#characterPreviewHolderToggle"),
     characterPreviewPerspective: document.querySelector("#characterPreviewPerspective"),
     characterPreviewPerspectiveValue: document.querySelector("#characterPreviewPerspectiveValue"),
     characterPreviewPropAnimation: document.querySelector("#characterPreviewPropAnimation"),
@@ -111,7 +112,7 @@ export function createGameApp() {
   let previewAnimationOverride = null;
   let previewAnimationCycleIndex = -1;
   let previewHairStyleCycleIndex = Math.max(0, previewHairStyles.indexOf("hat-fedora"));
-  let previewEyeStyleCycleIndex = Math.max(0, previewEyeStyles.indexOf("round-glasses"));
+  let previewEyeStyleCycleIndex = Math.max(0, previewEyeStyles.indexOf("classic"));
   let previewBodyTypeCycleIndex = Math.max(0, previewBodyTypes.indexOf("classic"));
   let previewPetTypeCycleIndex = Math.max(0, previewPetTypes.indexOf("cat"));
   let previewPerspectiveTilt = 100;
@@ -260,6 +261,16 @@ export function createGameApp() {
     elements.characterPreviewPerspectiveValue.textContent = String(Math.round(previewPerspectiveTilt));
   }
 
+  function syncHolderToggleLabel() {
+    if (!elements.characterPreviewHolderToggle) {
+      return;
+    }
+
+    const isVisible = characterPreview.getHolderVisibility();
+    elements.characterPreviewHolderToggle.textContent = isVisible ? "HOLDER: ON" : "HOLDER: OFF";
+    elements.characterPreviewHolderToggle.setAttribute("aria-pressed", String(isVisible));
+  }
+
   function applyPreviewAnimationOverride() {
     if (!previewAnimationOverride) {
       syncCharacterPreview(getSurvivorById(state, state.activeId));
@@ -378,6 +389,7 @@ export function createGameApp() {
   syncBodyTypeLabel();
   characterPreview.setPetType(previewPetTypes[previewPetTypeCycleIndex]);
   syncPetTypeLabel();
+  syncHolderToggleLabel();
   characterPreview.setPerspectiveTilt(previewPerspectiveTilt);
   syncPerspectiveLabel();
 
@@ -432,6 +444,14 @@ export function createGameApp() {
     characterPreview.setPetType(previewPetTypes[previewPetTypeCycleIndex]);
     syncPetTypeLabel();
   });
+
+  if (elements.characterPreviewHolderToggle) {
+    elements.characterPreviewHolderToggle.addEventListener("click", () => {
+      const isVisible = characterPreview.toggleHolderVisibility();
+      syncHolderToggleLabel();
+      toast(isVisible ? "Holder shown." : "Holder hidden.");
+    });
+  }
 
   elements.characterPreviewPerspective.addEventListener("input", () => {
     const nextTilt = Number(elements.characterPreviewPerspective.value);
