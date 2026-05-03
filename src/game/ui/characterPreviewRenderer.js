@@ -146,6 +146,97 @@ function sketchNoise(seed, amplitude = 1) {
   return Math.sin(seed * 12.9898) * amplitude;
 }
 
+function getCyclePhaseWeight(phase, center, phaseCount) {
+  const wrappedDistance = Math.min(
+    Math.abs(phase - center),
+    phaseCount - Math.abs(phase - center)
+  );
+  return clamp(1 - wrappedDistance, 0, 1);
+}
+
+function easeInOut(t) {
+  const clamped = clamp(t, 0, 1);
+  return clamped * clamped * (3 - 2 * clamped);
+}
+
+function sampleWalkLegProfile(phase) {
+  const normalized = ((phase % 1) + 1) % 1;
+
+  let position = -0.9;
+  let lift = 0;
+  let up = 0;
+  let forward = 0;
+  let down = 0;
+  let planted = 0;
+  let back = 0;
+
+  if (normalized < 0.2) {
+    // leg up
+    const t = easeInOut(normalized / 0.2);
+    position = -0.9 + (0.55 - -0.9) * t;
+    lift = t;
+    up = 1;
+  } else if (normalized < 0.45) {
+    // leg forward while lifted
+    const t = easeInOut((normalized - 0.2) / 0.25);
+    position = 0.55 + (1 - 0.55) * t;
+    lift = 1;
+    forward = 1;
+  } else if (normalized < 0.62) {
+    // leg down toward contact
+    const t = easeInOut((normalized - 0.45) / 0.17);
+    position = 1 + (0.72 - 1) * t;
+    lift = 1 - t;
+    down = 1;
+  } else if (normalized < 0.8) {
+    // planted support
+    const t = easeInOut((normalized - 0.62) / 0.18);
+    position = 0.72 + (0.25 - 0.72) * t;
+    planted = 1;
+  } else {
+    // push back while grounded
+    const t = easeInOut((normalized - 0.8) / 0.2);
+    position = 0.25 + (-0.9 - 0.25) * t;
+    planted = 1;
+    back = 1;
+  }
+
+  return {
+    position,
+    lift,
+    up,
+    forward,
+    down,
+    planted,
+    back
+  };
+}
+
+function createWalkCycleParts(timeSeconds, pace = 1.85) {
+  const cycle = ((timeSeconds * pace) % 1 + 1) % 1;
+  const cycleRadians = cycle * Math.PI * 2;
+  const leftLeg = sampleWalkLegProfile(cycle);
+  const rightLeg = sampleWalkLegProfile(cycle + 0.5);
+  const leftStep = leftLeg.position;
+  const rightStep = rightLeg.position;
+  const phase = cycle * 4;
+
+  return {
+    cycle,
+    cycleRadians,
+    leftLeg,
+    rightLeg,
+    leftStep,
+    rightStep,
+    leftPlant: leftLeg.planted,
+    leftStride: clamp(leftLeg.up + leftLeg.forward + leftLeg.down, 0, 1),
+    rightPlant: rightLeg.planted,
+    rightStride: clamp(rightLeg.up + rightLeg.forward + rightLeg.down, 0, 1),
+    leftPhaseWeight: getCyclePhaseWeight(phase, 0, 4),
+    rightPhaseWeight: getCyclePhaseWeight(phase, 2, 4)
+  };
+}
+
 function normalizePropTransformValue(value, fallback) {
   const numericValue = Number(value);
   return Number.isFinite(numericValue) ? numericValue : fallback;
@@ -269,6 +360,43 @@ function createPose(timeSeconds, animationName) {
     pose.rightArm = { x: 44 - stride * 12, y: -20 + stride * 5 };
     pose.leftLeg = { x: -20 - stride * 14, y: 78 + Math.abs(stride) * 3 };
     pose.rightLeg = { x: 20 + stride * 14, y: 78 + Math.abs(stride) * 3 };
+  }
+
+  if (animationName === "walk") {
+    // Step order: left plant -> left stride -> right plant -> right stride.
+    const walk = createWalkCycleParts(timeSeconds);
+    const leftLeg = walk.leftLeg;
+    const rightLeg = walk.rightLeg;
+    const leftForward = Math.max(0, leftLeg.position);
+    const leftBackward = Math.max(0, -leftLeg.position);
+    const rightForward = Math.max(0, rightLeg.position);
+    const rightBackward = Math.max(0, -rightLeg.position);
+    const support = Math.min(1, leftLeg.planted + rightLeg.planted);
+    const highStepLift = leftLeg.lift + rightLeg.lift;
+    const landingPulse = (leftLeg.down + rightLeg.down) * 0.7;
+
+    pose.lean = 0.055 + (rightForward - leftForward) * 0.05;
+    pose.bounce = 1.8 + support * 2.2 + landingPulse - highStepLift * 4.8;
+    pose.leftArm = {
+      x: -34 - rightLeg.position * 11,
+      y: -17 + leftLeg.planted * 1.2,
+      z: -24 * rightForward + 18 * rightBackward
+    };
+    pose.rightArm = {
+      x: 34 - leftLeg.position * 11,
+      y: -17 + rightLeg.planted * 1.2,
+      z: -24 * leftForward + 18 * leftBackward
+    };
+    pose.leftLeg = {
+      x: -18 + leftLeg.position * 20,
+      y: 80 - leftLeg.lift * 18 + leftLeg.down * 3 + leftLeg.planted * 2,
+      z: 52 * leftForward - 24 * leftBackward
+    };
+    pose.rightLeg = {
+      x: 18 + rightLeg.position * 20,
+      y: 80 - rightLeg.lift * 18 + rightLeg.down * 3 + rightLeg.planted * 2,
+      z: 52 * rightForward - 24 * rightBackward
+    };
   }
 
   if (animationName === "sleep") {
@@ -459,6 +587,17 @@ function createPetPose(timeSeconds, animationName) {
     pose.leftPawLift = (sprint + 1) * 0.5;
     pose.rightPawLift = (Math.sin(timeSeconds * 11.5 + Math.PI) + 1) * 0.5;
     pose.earPerk = 0.9;
+  }
+
+  if (animationName === "walk") {
+    const walk = createWalkCycleParts(timeSeconds, 2.05);
+    pose.bounce = 0.9 + (walk.leftPlant + walk.rightPlant) * 0.8;
+    pose.lean = 0.04 + (walk.rightStride - walk.leftStride) * 0.03;
+    pose.headTilt = 0.04 * walk.leftStep;
+    pose.tailSwing = Math.sin(walk.cycleRadians * 1.5) * 0.45;
+    pose.leftPawLift = 0.2 + walk.leftStride * 0.62;
+    pose.rightPawLift = 0.2 + walk.rightStride * 0.62;
+    pose.earPerk = 0.74;
   }
 
   if (animationName === "sleep") {

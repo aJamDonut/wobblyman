@@ -92,6 +92,7 @@ export function createGameApp() {
     "celebrate",
     "sleep",
     "run",
+    "walk",
     "talk",
     "jump",
     "dance",
