@@ -101,6 +101,9 @@ const PROP_TRANSFORM_DEFAULTS = Object.freeze({
 
 
 const DEG_TO_RAD = Math.PI / 180;
+const FACE_FEATURE_FULLY_VISIBLE_ANGLE = 69;
+const FACE_FEATURE_FULLY_HIDDEN_ANGLE = 110;
+const FACE_FEATURE_ORBIT_RADIUS = 24;
 
 const BODY_TYPE_PROFILES = {
   classic: { torsoWidth: 48, torsoHeight: 62, torsoRadius: 25, torsoYOffset: 0, insetScaleX: 0.67, insetScaleY: 0.71 },
@@ -2471,10 +2474,16 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const perspectiveBlend = clamp(Math.sin(resolvedPerspectiveRadians), -1, 1);
     const yawCos = Math.cos(resolvedPerspectiveRadians);
     const sideSwapScale = Math.sign(yawCos || 1) * Math.pow(Math.abs(yawCos), 1.22);
-    const faceFeatureVisibility = clamp((Math.cos(resolvedPerspectiveRadians) - 0.14) / 0.22, 0, 1);
+    const frontFacingAngleDistance = Math.min(resolvedPerspectiveAngle, 360 - resolvedPerspectiveAngle);
+    const faceFeatureVisibility = clamp(
+      1 - (frontFacingAngleDistance - FACE_FEATURE_FULLY_VISIBLE_ANGLE)
+        / (FACE_FEATURE_FULLY_HIDDEN_ANGLE - FACE_FEATURE_FULLY_VISIBLE_ANGLE),
+      0,
+      1
+    );
     const perspectiveStrength = Math.abs(perspectiveBlend);
     const isRightArmFront = perspectiveBlend <= 0;
-    const facePerspectiveShiftX = perspectiveBlend * 6.2;
+    const facePerspectiveShiftX = perspectiveBlend * FACE_FEATURE_ORBIT_RADIUS;
     const shadowPerspectiveShiftX = -perspectiveBlend * 15;
     const dampedBounce = pose.bounce * 0.35 * (1 - idleWeight);
     const renderedLean = lerp(pose.lean, 0, idleWeight);
@@ -2758,6 +2767,12 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
 
     drawHairStyle(hairStyle, colors.hairColor, seconds);
 
+    // Clone the head shape as a live mask so facial features stay inside the face while rotating.
+    context.save();
+    context.beginPath();
+    context.arc(0, -66, 24, 0, Math.PI * 2);
+    context.clip();
+
     const openEyesAlpha = (1 - sleepWeight) * faceFeatureVisibility;
     if (openEyesAlpha > 0.01) {
       context.save();
@@ -2797,6 +2812,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       drawRawStroke();
       context.restore();
     }
+
+    context.restore();
 
     context.restore();
 

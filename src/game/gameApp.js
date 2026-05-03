@@ -115,7 +115,7 @@ export function createGameApp() {
   let previewEyeStyleCycleIndex = Math.max(0, previewEyeStyles.indexOf("classic"));
   let previewBodyTypeCycleIndex = Math.max(0, previewBodyTypes.indexOf("classic"));
   let previewPetTypeCycleIndex = Math.max(0, previewPetTypes.indexOf("cat"));
-  let previewPerspectiveTilt = 0;
+  let previewPerspectiveTilt = 35;
   let selectedPropAnimation = previewPropAnimations[0] || null;
 
   function formatPropValue(value, digits = 0) {
