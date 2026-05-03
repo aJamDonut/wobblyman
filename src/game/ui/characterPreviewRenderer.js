@@ -1663,7 +1663,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.arc(
       centerX - radius * 0.08 + driftX * 0.92,
       centerY - radius * 0.08 + driftY * 0.82,
-      radius * 1.02,
+      radius * 0.95,
       0,
       Math.PI * 2
     );
@@ -1823,7 +1823,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.save();
     context.translate(0, headOffsetY);
 
-    const faceSkinColor = blendHexColor(colors.skinColor, 0.07);
+    const faceSkinColor = blendHexColor(colors.skinColor, 0.04);
     const headShadeDriftX = Math.sin(seconds * 2.1 + pose.lean * 10) * 2;
     const headShadeDriftY = Math.cos(seconds * 1.7 + pose.bounce * 0.06) * 1.5;
     const faceFeatureDriftX = headShadeDriftX * 0.24;
