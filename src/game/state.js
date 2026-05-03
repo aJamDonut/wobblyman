@@ -132,9 +132,62 @@ function withMissionStatChanges(missionCategories) {
   );
 }
 
+function withMissionEconomy(missionCategories, missionEconomyConfig = {}) {
+  return Object.fromEntries(
+    Object.entries(missionCategories).map(([categoryKey, missionCollection]) => {
+      const categoryEconomy = missionEconomyConfig[categoryKey] || {};
+      const mappedMissions = Object.fromEntries(
+        Object.entries(missionCollection).map(([missionKey, mission]) => {
+          const missionEconomy = categoryEconomy[missionKey] || {};
+          const cashCost = Number.isFinite(missionEconomy.cashCost)
+            ? Math.max(0, missionEconomy.cashCost)
+            : 0;
+          const cashPayout = Number.isFinite(missionEconomy.cashPayout)
+            ? Math.max(0, missionEconomy.cashPayout)
+            : 0;
+
+          return [
+            missionKey,
+            {
+              ...mission,
+              cashCost,
+              cashPayout,
+            },
+          ];
+        }),
+      );
+
+      return [categoryKey, mappedMissions];
+    }),
+  );
+}
+
 export function createInitialState() {
+  const missionEconomyConfig = {
+    missions: {
+      dig: { cashPayout: 3 },
+      search: { cashPayout: 4 },
+      platter: { cashCost: 8, cashPayout: 11 },
+      brewCoffee: { cashPayout: 2 },
+    },
+    work: {
+      salvageSort: { cashPayout: 5 },
+      campConcert: { cashCost: 10, cashPayout: 16 },
+      woodChop: { cashPayout: 2 },
+    },
+    mall: {
+      medWorkshop: { cashCost: 14, cashPayout: 24 },
+      recordVitals: { cashPayout: 3 },
+    },
+    business: {
+      codeLedger: { cashPayout: 8 },
+      archiveRestoration: { cashCost: 18, cashPayout: 30 },
+      archives: { cashPayout: 6 },
+    },
+  };
+
   return {
-    resources: { sandwich: 0, platter: 0 },
+    resources: { sandwich: 0, platter: 0, cash: 25 },
     survivorCapacity: 100,
     activeId: "ritu",
     survivors: [
@@ -161,8 +214,8 @@ export function createInitialState() {
         },
       ),
     ],
-    missions: withMissionStatChanges({
-      missions: {
+    missions: withMissionEconomy(withMissionStatChanges({
+      home: {
         workout: {
           title: "WORKOUT",
           rewardLabel: "Workout",
@@ -338,7 +391,7 @@ export function createInitialState() {
           reward: "sandwich",
         },
       },
-      camp: {
+      work: {
         foraging: {
           title: "FORAGE SUPPLIES",
           rewardLabel: "Sandwich",
@@ -421,7 +474,7 @@ export function createInitialState() {
           reward: "sandwich",
         },
       },
-      "med bay": {
+      mall: {
         triage: {
           title: "TRIAGE DUTY",
           rewardLabel: "Sandwich",
@@ -496,7 +549,7 @@ export function createInitialState() {
           reward: "sandwich",
         },
       },
-      library: {
+      business: {
         archives: {
           title: "CATALOG ARCHIVES",
           rewardLabel: "Sandwich Platter",
@@ -580,7 +633,7 @@ export function createInitialState() {
           reward: "sandwich",
         },
       },
-    }),
+    }), missionEconomyConfig),
     selectedMissionCategory: "missions",
     running: null,
   };

@@ -3,7 +3,7 @@ import { World } from "./ecs/World.js";
 import { GameLoop } from "./engine/GameLoop.js";
 import { clock } from "./helpers.js";
 import { clearPersistedState, loadPersistedState, savePersistedState } from "./persistence.js";
-import { renderActive, renderResources, renderRoster } from "./render.js";
+import { renderActive, renderMissionsCash, renderResources, renderRoster } from "./render.js";
 import { createMissionTimerPopup } from "./ui/missionTimerPopup.js";
 import { createCharacterPreviewRenderer } from "./ui/characterPreviewRenderer.js";
 import { createPopupSystem } from "./ui/popupSystem.js";
@@ -57,6 +57,7 @@ export function createGameApp() {
     resetGameBtn: document.querySelector("#resetGameBtn"),
     popupLayer: document.querySelector("#popupLayer"),
     missionPanelTitle: document.querySelector("#missionPanelTitle"),
+    missionsCash: document.querySelector("#missionsCash"),
     missionsList: document.querySelector("#missionsList"),
     characterPreviewCanvas: document.querySelector("#characterPreviewCanvas"),
     characterPreviewStatus: document.querySelector("#characterPreviewStatus"),
@@ -670,6 +671,26 @@ export function createGameApp() {
     return getMissionCollection(categoryKey)[missionKey] || null;
   }
 
+  function getMissionCashCost(mission) {
+    if (!mission || !Number.isFinite(mission.cashCost)) {
+      return 0;
+    }
+
+    return Math.max(0, Math.floor(mission.cashCost));
+  }
+
+  function getMissionCashPayout(mission) {
+    if (!mission || !Number.isFinite(mission.cashPayout)) {
+      return 0;
+    }
+
+    return Math.max(0, Math.floor(mission.cashPayout));
+  }
+
+  function getAvailableCash() {
+    return Math.max(0, Math.floor(Number(state.resources.cash) || 0));
+  }
+
   function findMissionRoot(categoryKey, missionKey) {
     return [...elements.missionsList.querySelectorAll(".mission")].find(
       (missionElement) =>
@@ -746,6 +767,14 @@ export function createGameApp() {
           : mission.seconds;
 
       const riskMarkup = mission.riskLabel ? `<div class="low">${mission.riskLabel}</div>` : "";
+      const cashCost = getMissionCashCost(mission);
+      const cashPayout = getMissionCashPayout(mission);
+      const missionEconomyMarkup =
+        cashCost > 0 || cashPayout > 0
+          ? `<div class="mission-economy-row">${
+              cashCost > 0 ? `<span class="mission-cash-chip mission-cash-cost">COST $${cashCost}</span>` : ""
+            }${cashPayout > 0 ? `<span class="mission-cash-chip mission-cash-payout">PAYOUT $${cashPayout}</span>` : ""}</div>`
+          : "";
 
       missionElement.innerHTML = `
         <div>
@@ -758,6 +787,7 @@ export function createGameApp() {
             </div>
             <div class="reward xp-chip"><span class="xp-dot">XP</span>${mission.xpLabel}</div>
           </div>
+          ${missionEconomyMarkup}
         </div>
         <div class="start-block"><button class="start-btn">START</button><div class="timer">⏱ ${clock(timerSeconds)}</div></div>`;
 
@@ -789,11 +819,14 @@ export function createGameApp() {
     const hasSurvivor = Boolean(getSurvivorById(state, state.activeId));
     const runningMissionCategory = state.running?.categoryKey || null;
     const runningMissionKey = state.running?.key || null;
+    const availableCash = getAvailableCash();
 
     elements.missionsList.querySelectorAll(".mission").forEach((missionElement) => {
       const missionCategory = missionElement.dataset.missionCategory;
       const missionKey = missionElement.dataset.mission;
       const button = missionElement.querySelector(".start-btn");
+      const mission = getMission(missionCategory, missionKey);
+      const cashCost = getMissionCashCost(mission);
 
       if (!hasSurvivor) {
         button.disabled = true;
@@ -802,8 +835,8 @@ export function createGameApp() {
       }
 
       if (!runningMissionKey) {
-        button.disabled = false;
-        button.textContent = "START";
+        button.disabled = cashCost > availableCash;
+        button.textContent = cashCost > availableCash ? "NO CASH" : "START";
         return;
       }
 
@@ -829,6 +862,7 @@ export function createGameApp() {
     ensureValidActiveSurvivor(state);
     const activeSurvivor = getSurvivorById(state, state.activeId);
     renderResources(state, elements);
+    renderMissionsCash(state, elements);
     renderActive(state, elements, activeSurvivor);
     renderMissionTabs();
     renderMissionsList();
@@ -918,6 +952,17 @@ export function createGameApp() {
       return;
     }
 
+    const cashCost = getMissionCashCost(mission);
+    if (cashCost > getAvailableCash()) {
+      toast(`Need $${cashCost} cash to start ${mission.title}.`);
+      renderAll();
+      return;
+    }
+
+    if (cashCost > 0) {
+      state.resources.cash = Math.max(0, getAvailableCash() - cashCost);
+    }
+
     const cycleSeconds = Math.max(1, Math.floor(mission.seconds || 1));
     const selectedSeconds = Math.max(cycleSeconds, Math.floor(totalSeconds));
 
@@ -933,6 +978,8 @@ export function createGameApp() {
         statChange: mission.statChange || mission.statChanges || null,
         reward: mission.reward,
         rewardLabel: mission.rewardLabel,
+        cashCost,
+        cashPayout: getMissionCashPayout(mission),
         cycleSeconds,
         cycleRemainingSeconds: cycleSeconds,
         cyclesCompleted: 0,
@@ -984,6 +1031,13 @@ export function createGameApp() {
     const activeSurvivor = getSurvivorById(state, state.activeId);
     if (!mission || !activeSurvivor) {
       toast("No survivor selected.");
+      return;
+    }
+
+    const cashCost = getMissionCashCost(mission);
+    if (cashCost > getAvailableCash()) {
+      toast(`Need $${cashCost} cash to start ${mission.title}.`);
+      renderAll();
       return;
     }
 
@@ -1096,7 +1150,15 @@ export function createGameApp() {
     }
 
     activeSurvivor.morale = Math.max(0, activeSurvivor.morale - (missionProgress.key === "platter" ? 2 : 1));
-    state.resources[missionProgress.reward] += 1;
+    const rewardResource = missionProgress.reward;
+    if (typeof rewardResource === "string" && Number.isFinite(state.resources[rewardResource])) {
+      state.resources[rewardResource] += 1;
+    }
+
+    const missionCashPayout = Math.max(0, Math.floor(Number(missionProgress.cashPayout) || 0));
+    if (missionCashPayout > 0) {
+      state.resources.cash = getAvailableCash() + missionCashPayout;
+    }
 
     if (missionProgress.key === "sandwich") {
       characterPreview.playAnimation("celebrate", { durationMs: 550 });

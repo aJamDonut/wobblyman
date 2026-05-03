@@ -15,7 +15,8 @@ function sanitizeResources(defaultResources, persistedResources) {
 
   return {
     sandwich: Number.isFinite(persistedResources.sandwich) ? persistedResources.sandwich : defaultResources.sandwich,
-    platter: Number.isFinite(persistedResources.platter) ? persistedResources.platter : defaultResources.platter
+    platter: Number.isFinite(persistedResources.platter) ? persistedResources.platter : defaultResources.platter,
+    cash: Number.isFinite(persistedResources.cash) ? persistedResources.cash : defaultResources.cash
   };
 }
 

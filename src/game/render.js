@@ -26,8 +26,17 @@ function splitDisplayName(fullName) {
 
 export function renderResources(state, elements) {
   elements.resources.innerHTML = `
+    <div class="res">💵 ${state.resources.cash}</div>
     <div class="res">🥪 ${state.resources.sandwich}</div>
     <div class="res">🍱 ${state.resources.platter}</div>`;
+}
+
+export function renderMissionsCash(state, elements) {
+  if (!elements.missionsCash) {
+    return;
+  }
+
+  elements.missionsCash.textContent = `Cash: $${Math.floor(Number(state.resources.cash) || 0)}`;
 }
 
 export function renderActive(state, elements, activeSurvivor) {
