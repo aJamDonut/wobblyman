@@ -62,6 +62,13 @@ const DEFAULT_SHADOW_STYLE = {
 
 const PROP_TRANSFORM_DEFAULTS = Object.freeze({
   sandwich: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
+  phoneTalk: {
+      "x": -8,
+      "y": 18,
+      "z": 47,
+      "scale": 0.8,
+      "rotation": 31
+    },
   busk: {
       "x": -5,
       "y": 8,
@@ -443,6 +450,24 @@ function createPose(timeSeconds, animationName) {
     pose.rightArm = { x: 36 + Math.sin(timeSeconds * 8 + 0.8) * 3, y: -8 + Math.cos(timeSeconds * 8 + 0.8) * 2 };
   }
 
+  if (animationName === "phoneTalk") {
+    const callRhythm = Math.sin(timeSeconds * 6.8);
+    pose.lean = -0.05 + Math.sin(timeSeconds * 1.9) * 0.01;
+    pose.bounce = Math.sin(timeSeconds * 4.1) * 1.3;
+    pose.leftArm = {
+      x: -34 + Math.sin(timeSeconds * 5.1) * 4.5,
+      y: -16 + Math.cos(timeSeconds * 5.1) * 2.1,
+      z: -4
+    };
+    pose.rightArm = {
+      x: 26 + callRhythm * 1.8,
+      y: -58 + Math.cos(timeSeconds * 6.8) * 1.6,
+      z: 28
+    };
+    pose.leftLeg = { x: -18, y: 79.2 };
+    pose.rightLeg = { x: 18, y: 79.4 };
+  }
+
   if (animationName === "jump") {
     const lift = Math.max(0, Math.sin(timeSeconds * 7.2));
     pose.bounce = -18 * lift;
@@ -673,6 +698,7 @@ function createPetPose(timeSeconds, animationName) {
     || animationName === "sandwich"
     || animationName === "busk"
     || animationName === "read"
+    || animationName === "phoneTalk"
     || animationName === "buying"
   ) {
     pose.bounce = Math.sin(timeSeconds * 6.3) * 1.7;
@@ -1571,6 +1597,54 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.arc(0, 0, 2.2, 0, Math.PI * 2);
     context.arc(12, 0, 2.2, 0, Math.PI * 2);
     context.fill();
+
+    context.restore();
+  }
+
+  function drawPhoneHandset(x, y, tilt = 0, pulse = 0) {
+    context.save();
+    context.translate(x, y);
+    context.rotate(tilt);
+
+    const shellGradient = context.createLinearGradient(-7, -20, 7, 18);
+    shellGradient.addColorStop(0, "#6f7e92");
+    shellGradient.addColorStop(0.55, "#3e4d61");
+    shellGradient.addColorStop(1, "#2a3442");
+
+    context.fillStyle = shellGradient;
+    context.strokeStyle = "#1f2832";
+    context.lineWidth = 1.1;
+    context.beginPath();
+    context.roundRect(-6.8, -18.5, 13.6, 37, 4.2);
+    context.fill();
+    context.stroke();
+
+    context.fillStyle = "#b7e6ff";
+    context.beginPath();
+    context.roundRect(-4.4, -13.6, 8.8, 12.4, 1.8);
+    context.fill();
+
+    context.fillStyle = "#223040";
+    context.beginPath();
+    context.roundRect(-2.2, 2.4, 4.4, 8.3, 1.4);
+    context.fill();
+
+    context.fillStyle = "rgba(255, 255, 255, 0.3)";
+    context.beginPath();
+    context.roundRect(-5.2, -16.2, 2.1, 14.5, 1.1);
+    context.fill();
+
+    if (pulse > 0.01) {
+      context.save();
+      context.globalAlpha = clamp(pulse, 0, 1) * 0.8;
+      context.strokeStyle = "rgba(120, 201, 255, 0.8)";
+      context.lineWidth = 1.4;
+      context.beginPath();
+      context.arc(0, -16, 8, -2.5, -0.6);
+      context.arc(0, -16, 11.4, -2.5, -0.6);
+      drawRawStroke();
+      context.restore();
+    }
 
     context.restore();
   }
@@ -3507,6 +3581,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
 
     const sleepWeight = getAnimationWeight("sleep", easedMix);
     const talkWeight = getAnimationWeight("talk", easedMix);
+    const phoneTalkWeight = getAnimationWeight("phoneTalk", easedMix);
     const sandwichWeight = getAnimationWeight("sandwich", easedMix);
     const buskWeight = getAnimationWeight("busk", easedMix);
     const readWeight = getAnimationWeight("read", easedMix);
@@ -3520,6 +3595,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const pushupsWeight = getAnimationWeight("pushups", easedMix);
     const punchWeight = getAnimationWeight("punch", easedMix);
     const idleWeight = getAnimationWeight("idle", easedMix);
+    const speakingWeight = clamp(talkWeight + phoneTalkWeight, 0, 1);
     const animatedTiltMix = clamp(pose.perspectiveTiltMix || 0, 0, 1);
     const basePerspectiveAngle = normalizeAngleDegrees(perspectiveAngle);
     const animatedPerspectiveOffset = clamp(pose.perspectiveTilt || 0, -100, 100) * 0.9;
@@ -3999,7 +4075,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.globalAlpha = faceFeatureVisibility;
       context.translate(faceFeatureDriftX, faceFeatureDriftY);
       context.beginPath();
-      const talkOpen = talkWeight * ((Math.sin(seconds * 18) + 1) * 0.5);
+      const talkOpen = speakingWeight * ((Math.sin(seconds * 18) + 1) * 0.5);
       context.moveTo(-7, -58);
       context.quadraticCurveTo(0, -53 + talkOpen * 3.5, 8, -58);
       drawRawStroke();
@@ -4260,6 +4336,24 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       drawBuyingMoneySymbols(symbolPlacement.x, symbolPlacement.y, seconds, buyingWeight);
     }
 
+    if (phoneTalkWeight > 0.01) {
+      const ringPulse = (Math.sin(seconds * 8.5) + 1) * 0.5;
+      const phonePlacement = getPropPlacement(
+        "phoneTalk",
+        perspectivePose.rightArm.x + 0.6,
+        perspectivePose.rightArm.y - 2.5,
+        -0.6 + Math.sin(seconds * 6.8) * 0.04,
+        { perspectiveBlend, depthVisibility, baseZ: rightArmDepth + 18 }
+      );
+      context.save();
+      context.globalAlpha = phoneTalkWeight;
+      context.translate(phonePlacement.x, phonePlacement.y);
+      context.rotate(phonePlacement.rotation);
+      context.scale(phonePlacement.scale, phonePlacement.scale);
+      drawPhoneHandset(0, 0, 0, ringPulse);
+      context.restore();
+    }
+
     if (pushupsWeight > 0.01) {
       const leftCurl = (Math.sin(seconds * 3.2) + 1) * 0.5;
       const rightCurl = (Math.sin(seconds * 3.2 + Math.PI) + 1) * 0.5;
@@ -4304,9 +4398,9 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       drawPet(petAnchorX, petAnchorY, seconds, petPose);
     }
 
-    if (talkWeight > 0.01) {
+    if (speakingWeight > 0.01) {
       context.save();
-      context.globalAlpha = talkWeight;
+      context.globalAlpha = speakingWeight;
       drawSpeechBubble(centerX + 24, centerY - 128 + Math.sin(seconds * 5) * 2, Math.sin(seconds * 8));
       context.restore();
     }

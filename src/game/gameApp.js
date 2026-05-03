@@ -109,6 +109,7 @@ export function createGameApp() {
     "celebrate",
     "sleep",
     "talk",
+    "phoneTalk",
     "shower",
     "wash",
     "dig",
@@ -405,7 +406,18 @@ export function createGameApp() {
     };
   }
 
-  function getMissionAnimationName(missionKey) {
+  function getMissionAnimationName(categoryKey, missionKey) {
+    const mission = getMission(categoryKey, missionKey);
+    const configuredAnimation = String(mission?.animation || "").trim();
+    if (configuredAnimation) {
+      return configuredAnimation;
+    }
+
+    const normalizedCategory = String(categoryKey || "").toLowerCase();
+    if (normalizedCategory === "phone") {
+      return "phoneTalk";
+    }
+
     const normalizedKey = String(missionKey || "").toLowerCase();
     if (normalizedKey.startsWith("buy") || normalizedKey === "phone") {
       return "buying";
@@ -425,12 +437,12 @@ export function createGameApp() {
       busk: "busk"
     };
 
-    if (missionAnimationMap[missionKey]) {
-      return missionAnimationMap[missionKey];
+    if (missionAnimationMap[normalizedKey]) {
+      return missionAnimationMap[normalizedKey];
     }
     
 
-    if (missionKey === "platter") {
+    if (normalizedKey === "platter") {
       return "working";
     }
 
@@ -573,7 +585,10 @@ export function createGameApp() {
     characterPreview.setCharacterProperties(getSurvivorPreviewColors(activeSurvivor));
 
     if (state.running && state.running.survivorId === activeSurvivor.id) {
-      characterPreview.playAnimation(getMissionAnimationName(state.running.key), { loop: true });
+      characterPreview.playAnimation(
+        getMissionAnimationName(state.running.categoryKey, state.running.key),
+        { loop: true }
+      );
       syncPropAnimationSelectionFromCurrentAnimation();
       return;
     }
@@ -1318,7 +1333,7 @@ export function createGameApp() {
     });
 
     state.running.entityId = missionEntityId;
-    characterPreview.playAnimation(getMissionAnimationName(missionKey), { loop: true });
+    characterPreview.playAnimation(getMissionAnimationName(categoryKey, missionKey), { loop: true });
     setMissionActionsOverlayOpen(false);
 
     renderMissionTimer(categoryKey, missionKey, selectedSeconds);
