@@ -55,6 +55,20 @@ const BODY_TYPES = [
   "lanky"
 ];
 
+const EYE_STYLES = [
+  "classic",
+  "sharp",
+  "sleepy",
+  "round",
+  "narrow",
+  "spark",
+  "sunglasses",
+  "eyeglasses",
+  "round-glasses",
+  "aviators",
+  "monocle"
+];
+
 const HAIR_SIZE_SCALE = 1.3;
 
 const BODY_TYPE_PROFILES = {
@@ -177,6 +191,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   let colors = { ...DEFAULT_COLORS };
   let hairStyle = "classic";
   let bodyType = "classic";
+  let eyeStyle = "classic";
   let currentAnimation = "idle";
   let transitionFromAnimation = "idle";
   let transitionStartedAt = performance.now();
@@ -1050,6 +1065,360 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
   }
 
+  function drawOpenEyes(styleName) {
+    context.save();
+    context.strokeStyle = "#362d27";
+    context.lineWidth = 1.5;
+    context.fillStyle = "#fffdf3";
+
+    if (styleName === "sharp") {
+      context.beginPath();
+      context.moveTo(-14, -67);
+      context.quadraticCurveTo(-8.8, -74.8, -3.5, -67.4);
+      context.quadraticCurveTo(-8.8, -63.2, -14, -67);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(3.5, -67.4);
+      context.quadraticCurveTo(8.8, -74.8, 14, -67);
+      context.quadraticCurveTo(8.8, -63.2, 3.5, -67.4);
+      context.closePath();
+      context.fill();
+      context.stroke();
+
+      context.fillStyle = "#2e2520";
+      context.beginPath();
+      context.ellipse(-8.8, -67, 2.4, 3, 0, 0, Math.PI * 2);
+      context.fill();
+      context.beginPath();
+      context.ellipse(8.8, -67, 2.4, 3, 0, 0, Math.PI * 2);
+      context.fill();
+      context.restore();
+      return;
+    }
+
+    if (styleName === "sleepy") {
+      context.beginPath();
+      context.ellipse(-8.8, -67, 5.2, 4.8, 0, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.ellipse(8.8, -67, 5.2, 4.8, 0, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+
+      context.strokeStyle = "#3a302a";
+      context.lineWidth = 1.4;
+      context.beginPath();
+      context.moveTo(-14, -70.2);
+      context.quadraticCurveTo(-8.8, -72.8, -3.6, -70);
+      context.moveTo(3.6, -70);
+      context.quadraticCurveTo(8.8, -72.8, 14, -70.2);
+      context.stroke();
+
+      context.fillStyle = "#2e2520";
+      context.beginPath();
+      context.ellipse(-8.8, -66.5, 1.9, 1.8, 0, 0, Math.PI * 2);
+      context.fill();
+      context.beginPath();
+      context.ellipse(8.8, -66.5, 1.9, 1.8, 0, 0, Math.PI * 2);
+      context.fill();
+      context.restore();
+      return;
+    }
+
+    if (styleName === "round") {
+      context.beginPath();
+      context.ellipse(-8.8, -68, 6.1, 7.5, 0, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.ellipse(8.8, -68, 6.1, 7.5, 0, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+
+      context.fillStyle = "#2e2520";
+      context.beginPath();
+      context.arc(-8.6, -67.2, 2.6, 0, Math.PI * 2);
+      context.fill();
+      context.beginPath();
+      context.arc(8.6, -67.2, 2.6, 0, Math.PI * 2);
+      context.fill();
+      context.fillStyle = "rgba(255,255,255,0.72)";
+      context.beginPath();
+      context.arc(-9.7, -69.3, 1, 0, Math.PI * 2);
+      context.fill();
+      context.beginPath();
+      context.arc(7.5, -69.3, 1, 0, Math.PI * 2);
+      context.fill();
+      context.restore();
+      return;
+    }
+
+    if (styleName === "narrow") {
+      context.beginPath();
+      context.roundRect(-14.6, -69.5, 11.6, 4.8, 2.4);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.roundRect(3, -69.5, 11.6, 4.8, 2.4);
+      context.fill();
+      context.stroke();
+
+      context.fillStyle = "#2e2520";
+      context.beginPath();
+      context.ellipse(-8.8, -67.2, 2.5, 1.2, 0, 0, Math.PI * 2);
+      context.fill();
+      context.beginPath();
+      context.ellipse(8.8, -67.2, 2.5, 1.2, 0, 0, Math.PI * 2);
+      context.fill();
+      context.restore();
+      return;
+    }
+
+    if (styleName === "spark") {
+      context.beginPath();
+      context.ellipse(-8.8, -68, 5.6, 7, 0, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.ellipse(8.8, -68, 5.6, 7, 0, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+
+      context.fillStyle = "#2e2520";
+      context.beginPath();
+      context.arc(-8.6, -67.3, 2.4, 0, Math.PI * 2);
+      context.fill();
+      context.beginPath();
+      context.arc(8.6, -67.3, 2.4, 0, Math.PI * 2);
+      context.fill();
+
+      context.fillStyle = "rgba(255,255,255,0.82)";
+      context.beginPath();
+      context.moveTo(-10.2, -71.4);
+      context.lineTo(-9.4, -69.3);
+      context.lineTo(-7.2, -68.8);
+      context.lineTo(-9, -67.6);
+      context.lineTo(-8.7, -65.6);
+      context.lineTo(-10.1, -67);
+      context.lineTo(-12, -66.6);
+      context.lineTo(-11, -68.2);
+      context.lineTo(-12.2, -69.8);
+      context.closePath();
+      context.fill();
+      context.beginPath();
+      context.moveTo(7.2, -71.4);
+      context.lineTo(8, -69.3);
+      context.lineTo(10.2, -68.8);
+      context.lineTo(8.4, -67.6);
+      context.lineTo(8.7, -65.6);
+      context.lineTo(7.3, -67);
+      context.lineTo(5.4, -66.6);
+      context.lineTo(6.4, -68.2);
+      context.lineTo(5.2, -69.8);
+      context.closePath();
+      context.fill();
+      context.restore();
+      return;
+    }
+
+    if (styleName === "sunglasses") {
+      context.fillStyle = "#2a2524";
+      context.strokeStyle = "#161212";
+      context.lineWidth = 1.8;
+      context.beginPath();
+      context.roundRect(-15.5, -71.2, 12.8, 8.6, 2.6);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.roundRect(2.7, -71.2, 12.8, 8.6, 2.6);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(-2.7, -67.2);
+      context.lineTo(2.7, -67.2);
+      context.stroke();
+      context.beginPath();
+      context.moveTo(-15.5, -67.4);
+      context.lineTo(-18.4, -66.2);
+      context.moveTo(15.5, -67.4);
+      context.lineTo(18.4, -66.2);
+      context.stroke();
+      context.fillStyle = "rgba(255,255,255,0.22)";
+      context.beginPath();
+      context.roundRect(-14.2, -70.3, 4.2, 1.4, 0.6);
+      context.roundRect(4, -70.3, 4.2, 1.4, 0.6);
+      context.fill();
+      context.restore();
+      return;
+    }
+
+    if (styleName === "eyeglasses") {
+      context.fillStyle = "#fffdf3";
+      context.strokeStyle = "#2b2420";
+      context.lineWidth = 1.4;
+      context.beginPath();
+      context.roundRect(-15.4, -71, 12.6, 9.2, 2.2);
+      context.roundRect(2.8, -71, 12.6, 9.2, 2.2);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(-2.8, -66.5);
+      context.lineTo(2.8, -66.5);
+      context.stroke();
+      context.beginPath();
+      context.moveTo(-15.4, -66.8);
+      context.lineTo(-18.8, -65.8);
+      context.moveTo(15.4, -66.8);
+      context.lineTo(18.8, -65.8);
+      context.stroke();
+
+      context.fillStyle = "#2e2520";
+      context.beginPath();
+      context.arc(-8.8, -66.8, 2.1, 0, Math.PI * 2);
+      context.fill();
+      context.beginPath();
+      context.arc(8.8, -66.8, 2.1, 0, Math.PI * 2);
+      context.fill();
+      context.fillStyle = "rgba(255,255,255,0.6)";
+      context.beginPath();
+      context.arc(-9.6, -68.1, 0.7, 0, Math.PI * 2);
+      context.fill();
+      context.beginPath();
+      context.arc(7.9, -68.1, 0.7, 0, Math.PI * 2);
+      context.fill();
+      context.restore();
+      return;
+    }
+
+    if (styleName === "round-glasses") {
+      context.fillStyle = "rgba(255,253,243,0.9)";
+      context.strokeStyle = "#2a2320";
+      context.lineWidth = 1.5;
+      context.beginPath();
+      context.arc(-8.8, -67.2, 5.9, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.arc(8.8, -67.2, 5.9, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(-2.9, -67.2);
+      context.lineTo(2.9, -67.2);
+      context.stroke();
+
+      context.fillStyle = "#2e2520";
+      context.beginPath();
+      context.arc(-8.7, -67, 2, 0, Math.PI * 2);
+      context.fill();
+      context.beginPath();
+      context.arc(8.7, -67, 2, 0, Math.PI * 2);
+      context.fill();
+      context.restore();
+      return;
+    }
+
+    if (styleName === "aviators") {
+      context.fillStyle = "rgba(68, 78, 92, 0.9)";
+      context.strokeStyle = "#2d2722";
+      context.lineWidth = 1.4;
+      context.beginPath();
+      context.moveTo(-14.6, -71.8);
+      context.quadraticCurveTo(-8.8, -74.2, -3.4, -71.8);
+      context.quadraticCurveTo(-3.4, -62.8, -8.8, -61.8);
+      context.quadraticCurveTo(-14.6, -62.8, -14.6, -71.8);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(3.4, -71.8);
+      context.quadraticCurveTo(8.8, -74.2, 14.6, -71.8);
+      context.quadraticCurveTo(14.6, -62.8, 8.8, -61.8);
+      context.quadraticCurveTo(3.4, -62.8, 3.4, -71.8);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(-3.2, -67.4);
+      context.lineTo(3.2, -67.4);
+      context.stroke();
+      context.fillStyle = "rgba(255,255,255,0.2)";
+      context.beginPath();
+      context.moveTo(-12.6, -70.2);
+      context.lineTo(-9.2, -69.6);
+      context.lineTo(-10.9, -65.8);
+      context.closePath();
+      context.fill();
+      context.beginPath();
+      context.moveTo(12.6, -70.2);
+      context.lineTo(9.2, -69.6);
+      context.lineTo(10.9, -65.8);
+      context.closePath();
+      context.fill();
+      context.restore();
+      return;
+    }
+
+    if (styleName === "monocle") {
+      context.fillStyle = "#fffdf3";
+      context.strokeStyle = "#6f5a2d";
+      context.lineWidth = 1.5;
+      context.beginPath();
+      context.arc(8.8, -67.2, 6.2, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(13.5, -62.8);
+      context.lineTo(17.2, -56.8);
+      context.lineTo(14.6, -50.8);
+      context.stroke();
+
+      context.fillStyle = "#2e2520";
+      context.beginPath();
+      context.ellipse(-8.8, -67.8, 4.6, 5.8, 0, 0, Math.PI * 2);
+      context.fill();
+      context.beginPath();
+      context.arc(8.8, -67, 2.2, 0, Math.PI * 2);
+      context.fill();
+      context.fillStyle = "rgba(255,255,255,0.64)";
+      context.beginPath();
+      context.arc(7.8, -68.7, 0.8, 0, Math.PI * 2);
+      context.fill();
+      context.restore();
+      return;
+    }
+
+    // classic
+    context.beginPath();
+    context.ellipse(-8.8, -68, 5.4, 6.8, 0, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+    context.beginPath();
+    context.ellipse(8.8, -68, 5.4, 6.8, 0, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+
+    context.fillStyle = "#2e2520";
+    context.beginPath();
+    context.arc(-8.6, -67.5, 2.3, 0, Math.PI * 2);
+    context.fill();
+    context.beginPath();
+    context.arc(8.6, -67.5, 2.3, 0, Math.PI * 2);
+    context.fill();
+
+    context.fillStyle = "rgba(255,255,255,0.6)";
+    context.beginPath();
+    context.arc(-9.8, -68.8, 0.8, 0, Math.PI * 2);
+    context.fill();
+    context.beginPath();
+    context.arc(7.4, -68.8, 0.8, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+  }
+
   function drawFrame(now) {
     updateCanvasSize();
 
@@ -1180,34 +1549,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     if (openEyesAlpha > 0.01) {
       context.save();
       context.globalAlpha = openEyesAlpha;
-      // Bold cartoon eyes.
-      context.fillStyle = "#fffdf3";
-      context.strokeStyle = "#362d27";
-      context.lineWidth = 1.5;
-      context.beginPath();
-      context.ellipse(-8.8, -68, 5.4, 6.8, 0, 0, Math.PI * 2);
-      context.fill();
-      context.stroke();
-      context.beginPath();
-      context.ellipse(8.8, -68, 5.4, 6.8, 0, 0, Math.PI * 2);
-      context.fill();
-      context.stroke();
-
-      context.fillStyle = "#2e2520";
-      context.beginPath();
-      context.arc(-8.6, -67.5, 2.3, 0, Math.PI * 2);
-      context.fill();
-      context.beginPath();
-      context.arc(8.6, -67.5, 2.3, 0, Math.PI * 2);
-      context.fill();
-
-      context.fillStyle = "rgba(255,255,255,0.6)";
-      context.beginPath();
-      context.arc(-9.8, -68.8, 0.8, 0, Math.PI * 2);
-      context.fill();
-      context.beginPath();
-      context.arc(7.4, -68.8, 0.8, 0, Math.PI * 2);
-      context.fill();
+      drawOpenEyes(eyeStyle);
       context.restore();
     }
 
@@ -1369,12 +1711,23 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
   }
 
+  function setEyeStyle(styleName) {
+    const nextStyle = String(styleName || "").toLowerCase();
+    if (EYE_STYLES.includes(nextStyle)) {
+      eyeStyle = nextStyle;
+    }
+  }
+
   function getHairStyles() {
     return [...HAIR_STYLES];
   }
 
   function getBodyTypes() {
     return [...BODY_TYPES];
+  }
+
+  function getEyeStyles() {
+    return [...EYE_STYLES];
   }
 
   function destroy() {
@@ -1393,8 +1746,10 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     setCharacterProperties,
     setHairStyle,
     setBodyType,
+    setEyeStyle,
     getHairStyles,
     getBodyTypes,
+    getEyeStyles,
     playAnimation,
     destroy
   };

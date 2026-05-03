@@ -57,6 +57,7 @@ export function createGameApp() {
     characterPreviewCanvas: document.querySelector("#characterPreviewCanvas"),
     characterPreviewStatus: document.querySelector("#characterPreviewStatus"),
     characterPreviewHairStyle: document.querySelector("#characterPreviewHairStyle"),
+    characterPreviewEyeStyle: document.querySelector("#characterPreviewEyeStyle"),
     characterPreviewBodyType: document.querySelector("#characterPreviewBodyType")
   };
 
@@ -68,10 +69,12 @@ export function createGameApp() {
   });
   const previewTestAnimations = ["idle", "wave", "sandwich", "working", "celebrate", "sleep", "run", "talk"];
   const previewHairStyles = characterPreview.getHairStyles();
+  const previewEyeStyles = characterPreview.getEyeStyles();
   const previewBodyTypes = characterPreview.getBodyTypes();
   let previewAnimationOverride = null;
   let previewAnimationCycleIndex = -1;
   let previewHairStyleCycleIndex = Math.max(0, previewHairStyles.indexOf("classic"));
+  let previewEyeStyleCycleIndex = Math.max(0, previewEyeStyles.indexOf("classic"));
   let previewBodyTypeCycleIndex = Math.max(0, previewBodyTypes.indexOf("classic"));
 
   function syncHairStyleLabel() {
@@ -82,6 +85,11 @@ export function createGameApp() {
   function syncBodyTypeLabel() {
     const activeBodyType = previewBodyTypes[previewBodyTypeCycleIndex] || "classic";
     elements.characterPreviewBodyType.textContent = activeBodyType.toUpperCase();
+  }
+
+  function syncEyeStyleLabel() {
+    const activeEyeStyle = previewEyeStyles[previewEyeStyleCycleIndex] || "classic";
+    elements.characterPreviewEyeStyle.textContent = activeEyeStyle.toUpperCase();
   }
 
   function applyPreviewAnimationOverride() {
@@ -163,6 +171,8 @@ export function createGameApp() {
 
   characterPreview.setHairStyle(previewHairStyles[previewHairStyleCycleIndex]);
   syncHairStyleLabel();
+  characterPreview.setEyeStyle(previewEyeStyles[previewEyeStyleCycleIndex]);
+  syncEyeStyleLabel();
   characterPreview.setBodyType(previewBodyTypes[previewBodyTypeCycleIndex]);
   syncBodyTypeLabel();
 
@@ -184,6 +194,16 @@ export function createGameApp() {
     previewBodyTypeCycleIndex = (previewBodyTypeCycleIndex + 1) % previewBodyTypes.length;
     characterPreview.setBodyType(previewBodyTypes[previewBodyTypeCycleIndex]);
     syncBodyTypeLabel();
+  });
+
+  elements.characterPreviewEyeStyle.addEventListener("click", () => {
+    if (previewEyeStyles.length === 0) {
+      return;
+    }
+
+    previewEyeStyleCycleIndex = (previewEyeStyleCycleIndex + 1) % previewEyeStyles.length;
+    characterPreview.setEyeStyle(previewEyeStyles[previewEyeStyleCycleIndex]);
+    syncEyeStyleLabel();
   });
 
   function getMissionCategories() {
