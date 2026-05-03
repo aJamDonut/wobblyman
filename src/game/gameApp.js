@@ -135,6 +135,7 @@ export function createGameApp() {
   let isMissionActionsOverlayOpen = false;
   const strongholdRenderers = [];
   let strongholdRosterSignature = "";
+  let activeScreenId = "missionsScreen";
 
   function isMobileActionsPopupMode() {
     return mobilePreviewQuery.matches;
@@ -471,6 +472,17 @@ export function createGameApp() {
     }
   }
 
+  function syncRendererActivity() {
+    const documentVisible = !document.hidden;
+    const previewVisible = Boolean(elements.characterPreviewPanel?.offsetParent);
+    characterPreview.setAnimationEnabled(documentVisible && previewVisible);
+
+    const strongholdVisible = documentVisible && activeScreenId === "strongholdScreen";
+    strongholdRenderers.forEach((renderer) => {
+      renderer.setAnimationEnabled(strongholdVisible);
+    });
+  }
+
   function buildStrongholdSignature() {
     const missionKey = state.running?.key || "none";
     const missionSurvivorId = state.running?.survivorId || "none";
@@ -565,8 +577,11 @@ export function createGameApp() {
       renderer.setPrintEffectsEnabled(false);
       renderer.setShadowProperties({ fillColor: "rgba(0,0,0,0)", strokeColor: "rgba(0,0,0,0)" });
       renderer.playAnimation(chooseStrongholdAnimation(survivor, index), { loop: true });
+      renderer.setAnimationEnabled(false);
       strongholdRenderers.push(renderer);
     });
+
+    syncRendererActivity();
   }
 
   function syncCharacterPreview(activeSurvivor) {
@@ -1265,6 +1280,7 @@ export function createGameApp() {
   }
 
   function showScreen(screenId) {
+    activeScreenId = screenId;
     document.querySelectorAll(".screen").forEach((screen) => {
       screen.classList.remove("active");
     });
@@ -1278,6 +1294,8 @@ export function createGameApp() {
       elements.openStrongholdBtn.classList.toggle("active", screenId === "strongholdScreen");
       elements.openSurvivorsBtn.classList.toggle("active", screenId === "baseScreen");
     }
+
+    syncRendererActivity();
   }
 
   function toast(message) {
@@ -1665,6 +1683,8 @@ export function createGameApp() {
     flushPersist();
   });
 
+  document.addEventListener("visibilitychange", syncRendererActivity);
+
   elements.goBase.addEventListener("click", () => showScreen("baseScreen"));
   elements.goBaseFromStronghold?.addEventListener("click", () => showScreen("baseScreen"));
 
@@ -1797,4 +1817,5 @@ export function createGameApp() {
   });
 
   renderAll();
+  syncRendererActivity();
 }

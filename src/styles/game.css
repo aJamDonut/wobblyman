@@ -1623,6 +1623,7 @@ body.popup-open .toast {
 @media (max-width: 640px) {
   body {
     overflow: auto;
+    animation: none;
   }
 
   body::before,
@@ -1722,6 +1723,8 @@ body.popup-open .toast {
   .base-tab,
   .roster-btn {
     transform: none;
+    animation: none;
+    transition: none;
   }
 
   .mission-completion-popup {
@@ -1736,6 +1739,57 @@ body.popup-open .toast {
 
   .mission-completion-text {
     font-size: 14px;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .card,
+  .survivor-card,
+  .mission,
+  .tab,
+  .base-tab,
+  .roster-btn,
+  .reward,
+  .res,
+  .status,
+  .avatar,
+  .mini-avatar,
+  .trait,
+  .dynamic-int,
+  .level-pill,
+  .count-chip,
+  .popup-current-time,
+  .popup-step-btn,
+  .preview-mission-status,
+  .mission-cash-banner,
+  .mission-cash-chip,
+  .actions-menu-btn,
+  .popup-window {
+    backdrop-filter: none;
+    box-shadow: var(--shadow-hard);
+  }
+
+  .popup-layer {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  body.popup-open .screen,
+  body.popup-open .resources,
+  body.popup-open .actions-launcher-wrap,
+  body.popup-open .toast {
+    filter: none;
+  }
+
+  .mission:hover,
+  .tab:hover,
+  .base-tab:hover,
+  .roster-btn:hover,
+  .start-btn:hover,
+  .popup-confirm:hover,
+  .actions-menu-btn:hover {
+    transform: none;
+    box-shadow: var(--shadow-hard);
   }
 }
 

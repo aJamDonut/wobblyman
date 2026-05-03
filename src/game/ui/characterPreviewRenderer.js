@@ -897,6 +897,11 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   let effectMaskWidth = 0;
   let effectMaskHeight = 0;
   let printEffectsEnabled = true;
+  let animationEnabled = true;
+  let lastRenderTimestamp = 0;
+
+  const lowPowerMediaQuery = window.matchMedia("(max-width: 768px), (pointer: coarse)");
+  let lowPowerMode = lowPowerMediaQuery.matches;
 
   function lerp(a, b, t) {
     return a + (b - a) * t;
@@ -1228,7 +1233,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   }
 
   function updateCanvasSize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dprLimit = lowPowerMode ? 1.25 : 2;
+    const dpr = Math.min(window.devicePixelRatio || 1, dprLimit);
     const width = Math.max(280, Math.floor(canvas.clientWidth));
     const height = Math.max(320, Math.floor(canvas.clientHeight));
 
@@ -1238,7 +1244,14 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
 
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ensurePaperTexture(width, height);
+    if (printEffectsEnabled) {
+      ensurePaperTexture(width, height);
+    }
+  }
+
+  function handleLowPowerModeChange(event) {
+    lowPowerMode = Boolean(event?.matches);
+    updateCanvasSize();
   }
 
   function getLimbJointPoint(
@@ -3544,6 +3557,18 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   }
 
   function drawFrame(now) {
+    if (!animationEnabled) {
+      rafId = null;
+      return;
+    }
+
+    const targetFrameMs = lowPowerMode ? 1000 / 30 : 1000 / 60;
+    if (lastRenderTimestamp > 0 && now - lastRenderTimestamp < targetFrameMs) {
+      rafId = window.requestAnimationFrame(drawFrame);
+      return;
+    }
+    lastRenderTimestamp = now;
+
     updateCanvasSize();
 
     if (animationDurationMs > 0 && now - animationStartedAt >= animationDurationMs) {
@@ -3551,7 +3576,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
 
     // Use backing-store dimensions so transient clientWidth/clientHeight=0 states do not break rendering.
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, lowPowerMode ? 1.25 : 2);
     const width = Math.max(1, Math.floor(canvas.width / dpr));
     const height = Math.max(1, Math.floor(canvas.height / dpr));
     const centerX = width * 0.5;
@@ -4652,6 +4677,35 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
 
   function setPrintEffectsEnabled(value) {
     printEffectsEnabled = Boolean(value);
+    if (!printEffectsEnabled) {
+      paperTextureCanvas = null;
+      paperTextureWidth = 0;
+      paperTextureHeight = 0;
+      effectMaskCanvas = null;
+      effectMaskWidth = 0;
+      effectMaskHeight = 0;
+    }
+  }
+
+  function setAnimationEnabled(value) {
+    const nextEnabled = Boolean(value);
+    if (animationEnabled === nextEnabled) {
+      return;
+    }
+
+    animationEnabled = nextEnabled;
+    if (!animationEnabled) {
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      return;
+    }
+
+    lastRenderTimestamp = 0;
+    if (rafId === null) {
+      rafId = window.requestAnimationFrame(drawFrame);
+    }
   }
 
   function getHolderVisibility() {
@@ -4794,9 +4848,19 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
 
     window.removeEventListener("resize", updateCanvasSize);
+    if (typeof lowPowerMediaQuery.removeEventListener === "function") {
+      lowPowerMediaQuery.removeEventListener("change", handleLowPowerModeChange);
+    } else if (typeof lowPowerMediaQuery.removeListener === "function") {
+      lowPowerMediaQuery.removeListener(handleLowPowerModeChange);
+    }
   }
 
   window.addEventListener("resize", updateCanvasSize);
+  if (typeof lowPowerMediaQuery.addEventListener === "function") {
+    lowPowerMediaQuery.addEventListener("change", handleLowPowerModeChange);
+  } else if (typeof lowPowerMediaQuery.addListener === "function") {
+    lowPowerMediaQuery.addListener(handleLowPowerModeChange);
+  }
   updateCanvasSize();
   playAnimation("idle", { loop: true });
   rafId = window.requestAnimationFrame(drawFrame);
@@ -4809,6 +4873,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     setPetType,
     setPetVisibility,
     setHolderVisibility,
+    setAnimationEnabled,
     setPrintEffectsEnabled,
     getHolderVisibility,
     toggleHolderVisibility,
