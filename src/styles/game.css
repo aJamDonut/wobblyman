@@ -863,12 +863,22 @@ body.popup-open {
   }
 
   .character-preview-panel {
-    max-width: 968px;
+    width: min(100%, 360px);
+    margin: 0 auto 8px;
+    max-width: 360px;
     min-height: 0;
+    max-height: none;
   }
 
   .character-preview-canvas {
-    height: 260px;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    max-height: 360px;
+  }
+
+  .preview-body {
+    min-height: 0;
+    grid-template-rows: auto auto;
   }
 
   .tabs {

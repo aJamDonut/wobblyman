@@ -58,6 +58,7 @@ export function createGameApp() {
     missionPanelTitle: document.querySelector("#missionPanelTitle"),
     missionsCash: document.querySelector("#missionsCash"),
     missionsList: document.querySelector("#missionsList"),
+    characterPreviewPanel: document.querySelector(".character-preview-panel"),
     characterPreviewCanvas: document.querySelector("#characterPreviewCanvas"),
     characterPreviewCaption: document.querySelector("#characterPreviewCaption"),
     characterPreviewStatus: document.querySelector("#characterPreviewStatus"),
@@ -109,6 +110,9 @@ export function createGameApp() {
   const previewBodyTypes = characterPreview.getBodyTypes();
   const previewPetTypes = characterPreview.getPetTypes();
   const previewPropAnimations = characterPreview.getPropAnimations();
+  const mobilePreviewQuery = window.matchMedia("(max-width: 640px)");
+  const previewPanelDesktopParent = elements.characterPreviewPanel?.parentElement || null;
+  const previewPanelDesktopNextSibling = elements.characterPreviewPanel?.nextSibling || null;
   let previewAnimationOverride = null;
   let previewAnimationCycleIndex = -1;
   let previewHairStyleCycleIndex = Math.max(0, previewHairStyles.indexOf("hat-fedora"));
@@ -128,6 +132,26 @@ export function createGameApp() {
 
     elements.characterPreviewCaption.hidden = !previewDevToolsVisible;
     elements.characterPreviewCaption.setAttribute("aria-hidden", String(!previewDevToolsVisible));
+  }
+
+  function syncMobilePreviewPlacement() {
+    const previewPanel = elements.characterPreviewPanel;
+    const statBars = elements.activeStatRows;
+    if (!previewPanel || !statBars) {
+      return;
+    }
+
+    if (mobilePreviewQuery.matches) {
+      const profileBody = statBars.parentElement;
+      if (profileBody && previewPanel.parentElement !== profileBody) {
+        profileBody.insertBefore(previewPanel, statBars);
+      }
+      return;
+    }
+
+    if (previewPanelDesktopParent && previewPanel.parentElement !== previewPanelDesktopParent) {
+      previewPanelDesktopParent.insertBefore(previewPanel, previewPanelDesktopNextSibling);
+    }
   }
 
   function formatPropValue(value, digits = 0) {
@@ -560,6 +584,13 @@ export function createGameApp() {
   characterPreview.setPerspectiveTilt(previewPerspectiveTilt);
   syncPerspectiveLabel();
   syncPreviewDevToolsVisibility();
+  syncMobilePreviewPlacement();
+
+  if (typeof mobilePreviewQuery.addEventListener === "function") {
+    mobilePreviewQuery.addEventListener("change", syncMobilePreviewPlacement);
+  } else if (typeof mobilePreviewQuery.addListener === "function") {
+    mobilePreviewQuery.addListener(syncMobilePreviewPlacement);
+  }
 
   previewPropAnimations.forEach((animationName) => {
     const option = document.createElement("option");
