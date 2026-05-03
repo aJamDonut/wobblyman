@@ -34,7 +34,9 @@ export function createGameApp() {
     resources: document.querySelector("#resources"),
     missionsScreen: document.querySelector("#missionsScreen"),
     baseScreen: document.querySelector("#baseScreen"),
+    strongholdScreen: document.querySelector("#strongholdScreen"),
     goBase: document.querySelector("#goBase"),
+    goBaseFromStronghold: document.querySelector("#goBaseFromStronghold"),
     activeName: document.querySelector("#activeName"),
     activeLevel: document.querySelector("#activeLevel"),
     activeStatRows: document.querySelector("#activeStatRows"),
@@ -49,6 +51,8 @@ export function createGameApp() {
     addSurvivorBtn: document.querySelector("#addSurvivorBtn"),
     removeSurvivorBtn: document.querySelector("#removeSurvivorBtn"),
     goMissionsBtn: document.querySelector("#goMissionsBtn"),
+    openStrongholdBtn: document.querySelector("#openStrongholdBtn"),
+    openSurvivorsBtn: document.querySelector("#openSurvivorsBtn"),
     resetGameBtn: document.querySelector("#resetGameBtn"),
     popupLayer: document.querySelector("#popupLayer"),
     missionPanelTitle: document.querySelector("#missionPanelTitle"),
@@ -75,7 +79,8 @@ export function createGameApp() {
     characterPreviewPropRotationValue: document.querySelector("#characterPreviewPropRotationValue"),
     characterPreviewCopyProp: document.querySelector("#characterPreviewCopyProp"),
     characterPreviewPasteProp: document.querySelector("#characterPreviewPasteProp"),
-    characterPreviewPropPayload: document.querySelector("#characterPreviewPropPayload")
+    characterPreviewPropPayload: document.querySelector("#characterPreviewPropPayload"),
+    strongholdStage: document.querySelector("#strongholdStage")
   };
 
   const popupSystem = createPopupSystem(elements.popupLayer);
@@ -120,6 +125,8 @@ export function createGameApp() {
   let previewPetTypeCycleIndex = Math.max(0, previewPetTypes.indexOf("cat"));
   let previewPerspectiveTilt = 35;
   let selectedPropAnimation = previewPropAnimations[0] || null;
+  const strongholdRenderers = [];
+  let strongholdRosterSignature = "";
 
   function formatPropValue(value, digits = 0) {
     const numericValue = Number(value);
@@ -325,6 +332,115 @@ export function createGameApp() {
     }
 
     return "wave";
+  }
+
+  function hashString(input) {
+    const text = String(input || "");
+    let hash = 0;
+    for (let index = 0; index < text.length; index += 1) {
+      hash = (hash * 31 + text.charCodeAt(index)) % 2147483647;
+    }
+    return Math.abs(hash);
+  }
+
+  function chooseStrongholdAnimation(survivor, index) {
+    if (state.running?.survivorId === survivor.id) {
+      return getMissionAnimationName(state.running.key);
+    }
+
+    const idleAnimations = ["idle", "walk", "talk", "wave", "celebrate", "stretch", "sneak"];
+    return idleAnimations[index % idleAnimations.length];
+  }
+
+  function clearStrongholdRenderers() {
+    while (strongholdRenderers.length > 0) {
+      const renderer = strongholdRenderers.pop();
+      renderer.destroy();
+    }
+  }
+
+  function buildStrongholdSignature() {
+    const missionKey = state.running?.key || "none";
+    const missionSurvivorId = state.running?.survivorId || "none";
+    return state.survivors
+      .map((survivor) => {
+        return [
+          survivor.id,
+          survivor.name,
+          survivor.gender,
+          survivor.shirtColor,
+          missionSurvivorId === survivor.id ? missionKey : "idle"
+        ].join("|");
+      })
+      .join("||");
+  }
+
+  function createStrongholdSurvivorCard(survivor, index, total) {
+    const card = document.createElement("article");
+    card.className = "stronghold-survivor";
+
+    const centerOffset = index - (total - 1) / 2;
+    const distanceFromCenter = Math.abs(centerOffset);
+    const isFrontRow = distanceFromCenter <= 0.65;
+    const isMiddleRow = distanceFromCenter <= 1.7;
+    const depthClass = isFrontRow ? "is-front" : isMiddleRow ? "is-mid" : "is-back";
+    card.classList.add(depthClass);
+
+    const horizontalOffset = Math.round(centerOffset * 88);
+    const verticalOffset = isFrontRow ? 0 : isMiddleRow ? 20 : 36;
+    const scale = isFrontRow ? 1 : isMiddleRow ? 0.94 : 0.88;
+    const zIndex = isFrontRow ? 30 : isMiddleRow ? 20 : 10;
+
+    card.style.setProperty("--photo-x", `${horizontalOffset}px`);
+    card.style.setProperty("--photo-y", `${verticalOffset}px`);
+    card.style.setProperty("--photo-scale", String(scale));
+    card.style.setProperty("--photo-z", String(zIndex));
+
+    const canvas = document.createElement("canvas");
+    canvas.className = "stronghold-character-canvas";
+    canvas.setAttribute("aria-label", `${survivor.name} stronghold preview`);
+    card.appendChild(canvas);
+
+    return { card, canvas };
+  }
+
+  function renderStrongholdScene(force = false) {
+    if (!elements.strongholdStage) {
+      return;
+    }
+
+    const nextSignature = buildStrongholdSignature();
+    if (!force && nextSignature === strongholdRosterSignature) {
+      return;
+    }
+
+    strongholdRosterSignature = nextSignature;
+    clearStrongholdRenderers();
+    elements.strongholdStage.innerHTML = "";
+
+    if (state.survivors.length === 0) {
+      const emptyState = document.createElement("div");
+      emptyState.className = "stronghold-empty";
+      emptyState.textContent = "No survivors available. Recruit someone to populate the stronghold stage.";
+      elements.strongholdStage.appendChild(emptyState);
+      return;
+    }
+
+    state.survivors.forEach((survivor, index) => {
+      const { card, canvas } = createStrongholdSurvivorCard(survivor, index, state.survivors.length);
+      elements.strongholdStage.appendChild(card);
+
+      const renderer = createCharacterPreviewRenderer({ canvas, statusLabel: null });
+      const styleSeed = hashString(survivor.id);
+      renderer.setCharacterProperties(getSurvivorPreviewColors(survivor));
+      renderer.setHairStyle(previewHairStyles[styleSeed % previewHairStyles.length] || "classic");
+      renderer.setEyeStyle(previewEyeStyles[styleSeed % previewEyeStyles.length] || "classic");
+      renderer.setBodyType(previewBodyTypes[styleSeed % previewBodyTypes.length] || "classic");
+      renderer.setPetType(previewPetTypes[styleSeed % previewPetTypes.length] || "cat");
+      renderer.setPerspectiveTilt(20 + (index % 5) * 12);
+      renderer.playAnimation(chooseStrongholdAnimation(survivor, index), { loop: true });
+      strongholdRenderers.push(renderer);
+    });
   }
 
   function syncCharacterPreview(activeSurvivor) {
@@ -686,6 +802,7 @@ export function createGameApp() {
     updateSurvivorSummary();
     syncActionButtons();
     syncCharacterPreview(activeSurvivor);
+    renderStrongholdScene();
     queuePersist();
   }
 
@@ -740,6 +857,11 @@ export function createGameApp() {
       screen.classList.remove("active");
     });
     document.querySelector(`#${screenId}`).classList.add("active");
+
+    if (elements.openStrongholdBtn && elements.openSurvivorsBtn) {
+      elements.openStrongholdBtn.classList.toggle("active", screenId === "strongholdScreen");
+      elements.openSurvivorsBtn.classList.toggle("active", screenId === "baseScreen");
+    }
   }
 
   function toast(message) {
@@ -943,12 +1065,14 @@ export function createGameApp() {
   gameLoop.start(world);
 
   window.addEventListener("beforeunload", () => {
+    clearStrongholdRenderers();
     characterPreview.destroy();
     gameLoop.stop();
     flushPersist();
   });
 
   elements.goBase.addEventListener("click", () => showScreen("baseScreen"));
+  elements.goBaseFromStronghold?.addEventListener("click", () => showScreen("baseScreen"));
 
   elements.prevSurvivorBtn.addEventListener("click", () => {
     selectPreviousSurvivor(state);
@@ -1003,6 +1127,15 @@ export function createGameApp() {
     showScreen("missionsScreen");
   });
 
+  elements.openStrongholdBtn?.addEventListener("click", () => {
+    showScreen("strongholdScreen");
+    renderStrongholdScene(true);
+  });
+
+  elements.openSurvivorsBtn?.addEventListener("click", () => {
+    showScreen("baseScreen");
+  });
+
   document.querySelectorAll(".tab[data-mission-category]").forEach((tab) => {
     tab.addEventListener("click", () => {
       state.selectedMissionCategory = tab.dataset.missionCategory;
@@ -1010,7 +1143,7 @@ export function createGameApp() {
     });
   });
 
-  document.querySelectorAll(".base-tab").forEach((tab) => {
+  document.querySelectorAll(".base-tab[data-base-action='todo']").forEach((tab) => {
     tab.addEventListener("click", () => toast("Only the shown screens are implemented."));
   });
 

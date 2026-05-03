@@ -171,10 +171,10 @@
 
     <section id="baseScreen" class="screen">
       <div class="base-tabs">
-        <button class="base-tab">STRONGHOLD</button>
-        <button class="base-tab active">SURVIVORS</button>
-        <button class="base-tab">HOUSE</button>
-        <button class="base-tab">OUTPOSTS</button>
+        <button class="base-tab" id="openStrongholdBtn" data-base-screen="strongholdScreen">STRONGHOLD</button>
+        <button class="base-tab active" id="openSurvivorsBtn" data-base-screen="baseScreen">SURVIVORS</button>
+        <button class="base-tab" data-base-action="todo">HOUSE</button>
+        <button class="base-tab" data-base-action="todo">OUTPOSTS</button>
       </div>
       <div class="survivor-count">
         <span id="survivorsSummary">Survivors: 2/4</span
@@ -191,6 +191,17 @@
         <button class="roster-btn" id="resetGameBtn">RESET GAME</button>
       </div>
       <div class="roster" id="roster"></div>
+    </section>
+
+    <section id="strongholdScreen" class="screen">
+      <div class="top-link" id="goBaseFromStronghold">
+        <span class="chevron"></span>GO BACK
+      </div>
+
+      <div class="card stronghold-shell">
+        <div class="header-strip">STRONGHOLD STAGE</div>
+        <div id="strongholdStage" class="stronghold-stage"></div>
+      </div>
     </section>
 
     <div class="popup-layer" id="popupLayer" aria-hidden="true">

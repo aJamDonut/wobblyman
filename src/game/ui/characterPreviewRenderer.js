@@ -4287,6 +4287,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       window.cancelAnimationFrame(rafId);
       rafId = null;
     }
+
+    window.removeEventListener("resize", updateCanvasSize);
   }
 
   window.addEventListener("resize", updateCanvasSize);
