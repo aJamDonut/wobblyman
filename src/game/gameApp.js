@@ -282,8 +282,9 @@ export function createGameApp() {
   }
 
   function renderMissionTabs() {
+    const activeCategory = state.running?.categoryKey || state.selectedMissionCategory;
     document.querySelectorAll(".tab[data-mission-category]").forEach((tab) => {
-      const isActive = tab.dataset.missionCategory === state.selectedMissionCategory;
+      const isActive = tab.dataset.missionCategory === activeCategory;
       tab.classList.toggle("active", isActive);
     });
   }
@@ -291,9 +292,17 @@ export function createGameApp() {
   function renderMissionsList() {
     ensureValidMissionCategory();
 
-    const categoryKey = state.selectedMissionCategory;
+    const runningCategoryKey = state.running?.categoryKey || null;
+    const runningMissionKey = state.running?.key || null;
+    const categoryKey = runningCategoryKey || state.selectedMissionCategory;
     const missionCollection = getMissionCollection(categoryKey);
-    const missionEntries = Object.entries(missionCollection);
+    const missionEntries = Object.entries(missionCollection).filter(([missionKey]) => {
+      if (!runningMissionKey) {
+        return true;
+      }
+
+      return missionKey === runningMissionKey;
+    });
     const categoryTitle = String(categoryKey || "missions").toUpperCase();
     const runningProgress = getRunningMissionProgress();
 
