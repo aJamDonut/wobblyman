@@ -112,6 +112,46 @@
                   <span id="characterPreviewPerspectiveValue" class="preview-slider-value">100</span>
                 </div>
               </div>
+              <div class="preview-prop-tool" id="characterPreviewPropTool">
+                <div class="preview-prop-title">Prop Tool</div>
+                <div class="preview-row preview-row-prop-select">
+                  <span>Animation</span>
+                  <select id="characterPreviewPropAnimation" class="preview-prop-select" aria-label="Prop animation selection"></select>
+                </div>
+                <div class="preview-row preview-row-slider">
+                  <span>Offset X</span>
+                  <div class="preview-slider-wrap">
+                    <input id="characterPreviewPropOffsetX" class="preview-slider" type="range" min="-120" max="120" step="1" value="0" aria-label="Prop X offset" />
+                    <span id="characterPreviewPropOffsetXValue" class="preview-slider-value">0</span>
+                  </div>
+                </div>
+                <div class="preview-row preview-row-slider">
+                  <span>Offset Y</span>
+                  <div class="preview-slider-wrap">
+                    <input id="characterPreviewPropOffsetY" class="preview-slider" type="range" min="-120" max="120" step="1" value="0" aria-label="Prop Y offset" />
+                    <span id="characterPreviewPropOffsetYValue" class="preview-slider-value">0</span>
+                  </div>
+                </div>
+                <div class="preview-row preview-row-slider">
+                  <span>Scale</span>
+                  <div class="preview-slider-wrap">
+                    <input id="characterPreviewPropScale" class="preview-slider" type="range" min="0.2" max="4" step="0.05" value="1" aria-label="Prop scale" />
+                    <span id="characterPreviewPropScaleValue" class="preview-slider-value">1</span>
+                  </div>
+                </div>
+                <div class="preview-row preview-row-slider">
+                  <span>Rotate</span>
+                  <div class="preview-slider-wrap">
+                    <input id="characterPreviewPropRotation" class="preview-slider" type="range" min="-180" max="180" step="1" value="0" aria-label="Prop rotation" />
+                    <span id="characterPreviewPropRotationValue" class="preview-slider-value">0</span>
+                  </div>
+                </div>
+                <div class="preview-prop-actions">
+                  <button id="characterPreviewCopyProp" class="preview-prop-btn" type="button">COPY PROP</button>
+                  <button id="characterPreviewPasteProp" class="preview-prop-btn" type="button">PASTE PROP</button>
+                </div>
+                <textarea id="characterPreviewPropPayload" class="preview-prop-payload" rows="5" spellcheck="false" aria-label="Prop settings payload"></textarea>
+              </div>
             </div>
           </div>
         </aside>

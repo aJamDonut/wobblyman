@@ -79,6 +79,29 @@ const DEFAULT_SHADOW_STYLE = {
   strokeColor: "#555555"
 };
 
+const PROP_TRANSFORM_DEFAULTS = Object.freeze({
+  sandwich: { x: 0, y: 0, scale: 1, rotation: 0 },
+  shower: { x: 0, y: 0, scale: 1, rotation: 0 },
+  wash: { x: 0, y: 0, scale: 1, rotation: 0 },
+  dig: {
+      "x": 0,
+      "y": 13,
+      "scale": 1.5,
+      "rotation": -98
+    },
+  search: {
+      "x": -16,
+      "y": -18,
+      "scale": 1.45,
+      "rotation": 31
+    },
+  hunt: { x: 0, y: 0, scale: 1, rotation: 0 },
+  cook: { x: 0, y: 0, scale: 1, rotation: 0 }
+});
+
+
+const DEG_TO_RAD = Math.PI / 180;
+
 const BODY_TYPE_PROFILES = {
   classic: { torsoWidth: 48, torsoHeight: 62, torsoRadius: 25, torsoYOffset: 0, insetScaleX: 0.67, insetScaleY: 0.71 },
   petite: { torsoWidth: 40, torsoHeight: 54, torsoRadius: 22, torsoYOffset: 4, insetScaleX: 0.7, insetScaleY: 0.7 },
@@ -111,6 +134,48 @@ function blendHexColor(hexColor, amount) {
 
 function sketchNoise(seed, amplitude = 1) {
   return Math.sin(seed * 12.9898) * amplitude;
+}
+
+function normalizePropTransformValue(value, fallback) {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : fallback;
+}
+
+function normalizePropTransform(transform, defaults) {
+  return {
+    x: normalizePropTransformValue(transform?.x, defaults.x),
+    y: normalizePropTransformValue(transform?.y, defaults.y),
+    scale: clamp(normalizePropTransformValue(transform?.scale, defaults.scale), 0.1, 8),
+    rotation: normalizePropTransformValue(transform?.rotation, defaults.rotation)
+  };
+}
+
+function parsePropTransformPayload(rawPayload) {
+  if (rawPayload && typeof rawPayload === "object") {
+    return rawPayload;
+  }
+
+  const payloadText = String(rawPayload || "").trim();
+  if (!payloadText) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(payloadText);
+  } catch {
+    const firstBrace = payloadText.indexOf("{");
+    const lastBrace = payloadText.lastIndexOf("}");
+    if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+      return null;
+    }
+
+    const candidate = payloadText.slice(firstBrace, lastBrace + 1);
+    try {
+      return JSON.parse(candidate);
+    } catch {
+      return null;
+    }
+  }
 }
 
 function createPose(timeSeconds, animationName) {
@@ -522,6 +587,12 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   let petType = "cat";
   let perspectiveTilt = 0;
   let shadowStyle = { ...DEFAULT_SHADOW_STYLE };
+  let propTransforms = Object.fromEntries(
+    Object.entries(PROP_TRANSFORM_DEFAULTS).map(([animationName, defaults]) => [
+      animationName,
+      { ...defaults }
+    ])
+  );
   let currentAnimation = "idle";
   let transitionFromAnimation = "idle";
   let transitionStartedAt = performance.now();
@@ -571,6 +642,22 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       leftPawLift: lerp(fromPose.leftPawLift, toPose.leftPawLift, mix),
       rightPawLift: lerp(fromPose.rightPawLift, toPose.rightPawLift, mix),
       earPerk: lerp(fromPose.earPerk, toPose.earPerk, mix)
+    };
+  }
+
+  function getResolvedPropTransform(animationName) {
+    const defaults = PROP_TRANSFORM_DEFAULTS[animationName] || { x: 0, y: 0, scale: 1, rotation: 0 };
+    const current = propTransforms[animationName] || defaults;
+    return normalizePropTransform(current, defaults);
+  }
+
+  function getPropPlacement(animationName, baseX, baseY, baseRotationRadians = 0) {
+    const transform = getResolvedPropTransform(animationName);
+    return {
+      x: baseX + transform.x,
+      y: baseY + transform.y,
+      scale: transform.scale,
+      rotation: baseRotationRadians + transform.rotation * DEG_TO_RAD
     };
   }
 
@@ -2603,52 +2690,123 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
 
     if (sandwichWeight > 0.01) {
+      const sandwichPlacement = getPropPlacement(
+        "sandwich",
+        perspectivePose.leftArm.x + 7,
+        perspectivePose.leftArm.y - 2,
+        -0.22 + Math.sin(seconds * 6) * 0.05
+      );
       context.save();
       context.globalAlpha = sandwichWeight;
-      drawSandwich(perspectivePose.leftArm.x + 7, perspectivePose.leftArm.y - 2, -0.22 + Math.sin(seconds * 6) * 0.05);
+      context.translate(sandwichPlacement.x, sandwichPlacement.y);
+      context.rotate(sandwichPlacement.rotation);
+      context.scale(sandwichPlacement.scale, sandwichPlacement.scale);
+      drawSandwich(0, 0, 0);
       context.restore();
     }
 
     if (showerWeight > 0.01) {
+      const showerPlacement = getPropPlacement("shower", 0, -86, 0);
       context.save();
       context.globalAlpha = showerWeight;
-      drawWaterDroplets(0, -86, seconds);
+      context.translate(showerPlacement.x, showerPlacement.y);
+      context.rotate(showerPlacement.rotation);
+      context.scale(showerPlacement.scale, showerPlacement.scale);
+      drawWaterDroplets(0, 0, seconds);
       context.restore();
     }
 
     if (washWeight > 0.01) {
+      const washPlacementLeft = getPropPlacement(
+        "wash",
+        perspectivePose.leftArm.x + 6,
+        perspectivePose.leftArm.y - 4,
+        0
+      );
+      const washPlacementRight = getPropPlacement(
+        "wash",
+        perspectivePose.rightArm.x - 6,
+        perspectivePose.rightArm.y - 2,
+        0
+      );
       context.save();
       context.globalAlpha = washWeight;
-      drawSoapBubbles(perspectivePose.leftArm.x + 6, perspectivePose.leftArm.y - 4, seconds);
-      drawSoapBubbles(perspectivePose.rightArm.x - 6, perspectivePose.rightArm.y - 2, seconds + 0.4);
+      context.save();
+      context.translate(washPlacementLeft.x, washPlacementLeft.y);
+      context.rotate(washPlacementLeft.rotation);
+      context.scale(washPlacementLeft.scale, washPlacementLeft.scale);
+      drawSoapBubbles(0, 0, seconds);
+      context.restore();
+      context.save();
+      context.translate(washPlacementRight.x, washPlacementRight.y);
+      context.rotate(washPlacementRight.rotation);
+      context.scale(washPlacementRight.scale, washPlacementRight.scale);
+      drawSoapBubbles(0, 0, seconds + 0.4);
+      context.restore();
       context.restore();
     }
 
     if (digWeight > 0.01) {
+      const digPlacement = getPropPlacement(
+        "dig",
+        perspectivePose.rightArm.x + 4,
+        perspectivePose.rightArm.y - 4,
+        0.4 + Math.sin(seconds * 5.4) * 0.1
+      );
       context.save();
       context.globalAlpha = digWeight;
-      drawSpade(perspectivePose.rightArm.x + 4, perspectivePose.rightArm.y - 4, 0.4 + Math.sin(seconds * 5.4) * 0.1);
+      context.translate(digPlacement.x, digPlacement.y);
+      context.rotate(digPlacement.rotation);
+      context.scale(digPlacement.scale, digPlacement.scale);
+      drawSpade(0, 0, 0);
       context.restore();
     }
 
     if (searchWeight > 0.01) {
+      const searchPlacement = getPropPlacement(
+        "search",
+        perspectivePose.rightArm.x + 5,
+        perspectivePose.rightArm.y - 1,
+        -0.18 + Math.sin(seconds * 2.8) * 0.08
+      );
       context.save();
       context.globalAlpha = searchWeight;
-      drawMagnifyingGlass(perspectivePose.rightArm.x + 5, perspectivePose.rightArm.y - 1, -0.18 + Math.sin(seconds * 2.8) * 0.08);
+      context.translate(searchPlacement.x, searchPlacement.y);
+      context.rotate(searchPlacement.rotation);
+      context.scale(searchPlacement.scale, searchPlacement.scale);
+      drawMagnifyingGlass(0, 0, 0);
       context.restore();
     }
 
     if (huntWeight > 0.01) {
+      const huntPlacement = getPropPlacement(
+        "hunt",
+        perspectivePose.leftArm.x - 4,
+        perspectivePose.leftArm.y - 1,
+        -0.1 + Math.sin(seconds * 4.8) * 0.05
+      );
       context.save();
       context.globalAlpha = huntWeight;
-      drawBow(perspectivePose.leftArm.x - 4, perspectivePose.leftArm.y - 1, -0.1 + Math.sin(seconds * 4.8) * 0.05);
+      context.translate(huntPlacement.x, huntPlacement.y);
+      context.rotate(huntPlacement.rotation);
+      context.scale(huntPlacement.scale, huntPlacement.scale);
+      drawBow(0, 0, 0);
       context.restore();
     }
 
     if (cookWeight > 0.01) {
+      const cookPlacement = getPropPlacement(
+        "cook",
+        (perspectivePose.leftArm.x + perspectivePose.rightArm.x) * 0.5,
+        (perspectivePose.leftArm.y + perspectivePose.rightArm.y) * 0.5 - 6,
+        -0.12 + Math.sin(seconds * 7.4) * 0.05
+      );
       context.save();
       context.globalAlpha = cookWeight;
-      drawKnifeAndCarrot((perspectivePose.leftArm.x + perspectivePose.rightArm.x) * 0.5, (perspectivePose.leftArm.y + perspectivePose.rightArm.y) * 0.5 - 6, -0.12 + Math.sin(seconds * 7.4) * 0.05);
+      context.translate(cookPlacement.x, cookPlacement.y);
+      context.rotate(cookPlacement.rotation);
+      context.scale(cookPlacement.scale, cookPlacement.scale);
+      drawKnifeAndCarrot(0, 0, 0);
       context.restore();
     }
 
@@ -2932,6 +3090,109 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     return [...PET_TYPES];
   }
 
+  function getCurrentAnimation() {
+    return currentAnimation;
+  }
+
+  function getPropAnimations() {
+    return Object.keys(PROP_TRANSFORM_DEFAULTS);
+  }
+
+  function getPropTransform(animationName) {
+    if (!PROP_TRANSFORM_DEFAULTS[animationName]) {
+      return null;
+    }
+
+    return getResolvedPropTransform(animationName);
+  }
+
+  function setPropTransform(animationName, nextTransform = {}) {
+    if (!PROP_TRANSFORM_DEFAULTS[animationName]) {
+      return false;
+    }
+
+    const merged = normalizePropTransform(
+      {
+        ...getResolvedPropTransform(animationName),
+        ...nextTransform
+      },
+      PROP_TRANSFORM_DEFAULTS[animationName]
+    );
+
+    propTransforms[animationName] = merged;
+    return true;
+  }
+
+  function getAllPropTransforms() {
+    return Object.fromEntries(
+      Object.keys(PROP_TRANSFORM_DEFAULTS).map((animationName) => [animationName, getResolvedPropTransform(animationName)])
+    );
+  }
+
+  function exportPropTransforms(animationName = null) {
+    if (animationName && PROP_TRANSFORM_DEFAULTS[animationName]) {
+      return JSON.stringify(
+        {
+          propTransforms: {
+            [animationName]: getResolvedPropTransform(animationName)
+          }
+        },
+        null,
+        2
+      );
+    }
+
+    return JSON.stringify(
+      {
+        propTransforms: getAllPropTransforms()
+      },
+      null,
+      2
+    );
+  }
+
+  function importPropTransforms(rawPayload) {
+    const parsed = parsePropTransformPayload(rawPayload);
+    if (!parsed || typeof parsed !== "object") {
+      return { ok: false, reason: "invalid-payload", applied: [] };
+    }
+
+    let candidateTransforms = null;
+    if (parsed.propTransforms && typeof parsed.propTransforms === "object") {
+      candidateTransforms = parsed.propTransforms;
+    } else if (
+      typeof parsed.animation === "string" &&
+      PROP_TRANSFORM_DEFAULTS[parsed.animation]
+    ) {
+      candidateTransforms = {
+        [parsed.animation]: {
+          x: parsed.x,
+          y: parsed.y,
+          scale: parsed.scale,
+          rotation: parsed.rotation
+        }
+      };
+    } else {
+      candidateTransforms = parsed;
+    }
+
+    const applied = [];
+    Object.entries(candidateTransforms).forEach(([animationName, transform]) => {
+      if (!PROP_TRANSFORM_DEFAULTS[animationName] || !transform || typeof transform !== "object") {
+        return;
+      }
+
+      setPropTransform(animationName, transform);
+      applied.push(animationName);
+    });
+
+    if (applied.length === 0) {
+      return { ok: false, reason: "no-valid-transforms", applied: [] };
+    }
+
+    return { ok: true, applied };
+  }
+
   function destroy() {
     if (rafId !== null) {
       window.cancelAnimationFrame(rafId);
@@ -2957,6 +3218,13 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     getEyeStyles,
     getPetTypes,
     getShadowProperties,
+    getCurrentAnimation,
+    getPropAnimations,
+    getPropTransform,
+    getAllPropTransforms,
+    setPropTransform,
+    exportPropTransforms,
+    importPropTransforms,
     playAnimation,
     destroy
   };

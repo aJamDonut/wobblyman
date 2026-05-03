@@ -169,6 +169,72 @@ button {
   color: #eef9ff;
 }
 
+.preview-prop-tool {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px dashed #2a3339;
+  display: grid;
+  gap: 8px;
+}
+
+.preview-prop-title {
+  font-size: 11px;
+  color: #d7e2e8;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.preview-row-prop-select {
+  align-items: center;
+}
+
+.preview-prop-select {
+  min-width: 132px;
+  height: 24px;
+  border: 1px solid #2d3840;
+  background: #10171d;
+  color: #d7e2e8;
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  border-radius: 4px;
+  padding: 0 6px;
+}
+
+.preview-prop-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.preview-prop-btn {
+  flex: 1;
+  background: #172026;
+  border: 1px solid #2f3b44;
+  color: #d7e2e8;
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  border-radius: 4px;
+  padding: 6px 7px;
+}
+
+.preview-prop-btn:hover {
+  background: #1e2a31;
+}
+
+.preview-prop-payload {
+  width: 100%;
+  min-height: 84px;
+  resize: vertical;
+  border: 1px solid #2a3339;
+  background: #0b1116;
+  color: #d7e2e8;
+  border-radius: 4px;
+  padding: 6px;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
 .profile-body { padding: 15px 12px 13px; }
 
 .profile-row {

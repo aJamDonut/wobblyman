@@ -60,7 +60,19 @@ export function createGameApp() {
     characterPreviewBodyType: document.querySelector("#characterPreviewBodyType"),
     characterPreviewPet: document.querySelector("#characterPreviewPet"),
     characterPreviewPerspective: document.querySelector("#characterPreviewPerspective"),
-    characterPreviewPerspectiveValue: document.querySelector("#characterPreviewPerspectiveValue")
+    characterPreviewPerspectiveValue: document.querySelector("#characterPreviewPerspectiveValue"),
+    characterPreviewPropAnimation: document.querySelector("#characterPreviewPropAnimation"),
+    characterPreviewPropOffsetX: document.querySelector("#characterPreviewPropOffsetX"),
+    characterPreviewPropOffsetY: document.querySelector("#characterPreviewPropOffsetY"),
+    characterPreviewPropScale: document.querySelector("#characterPreviewPropScale"),
+    characterPreviewPropRotation: document.querySelector("#characterPreviewPropRotation"),
+    characterPreviewPropOffsetXValue: document.querySelector("#characterPreviewPropOffsetXValue"),
+    characterPreviewPropOffsetYValue: document.querySelector("#characterPreviewPropOffsetYValue"),
+    characterPreviewPropScaleValue: document.querySelector("#characterPreviewPropScaleValue"),
+    characterPreviewPropRotationValue: document.querySelector("#characterPreviewPropRotationValue"),
+    characterPreviewCopyProp: document.querySelector("#characterPreviewCopyProp"),
+    characterPreviewPasteProp: document.querySelector("#characterPreviewPasteProp"),
+    characterPreviewPropPayload: document.querySelector("#characterPreviewPropPayload")
   };
 
   const popupSystem = createPopupSystem(elements.popupLayer);
@@ -95,6 +107,7 @@ export function createGameApp() {
   const previewEyeStyles = characterPreview.getEyeStyles();
   const previewBodyTypes = characterPreview.getBodyTypes();
   const previewPetTypes = characterPreview.getPetTypes();
+  const previewPropAnimations = characterPreview.getPropAnimations();
   let previewAnimationOverride = null;
   let previewAnimationCycleIndex = -1;
   let previewHairStyleCycleIndex = Math.max(0, previewHairStyles.indexOf("hat-fedora"));
@@ -102,6 +115,126 @@ export function createGameApp() {
   let previewBodyTypeCycleIndex = Math.max(0, previewBodyTypes.indexOf("classic"));
   let previewPetTypeCycleIndex = Math.max(0, previewPetTypes.indexOf("cat"));
   let previewPerspectiveTilt = 100;
+  let selectedPropAnimation = previewPropAnimations[0] || null;
+
+  function formatPropValue(value, digits = 0) {
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue)) {
+      return digits > 0 ? Number(0).toFixed(digits) : "0";
+    }
+
+    return digits > 0 ? numericValue.toFixed(digits) : String(Math.round(numericValue));
+  }
+
+  function syncPropControlLabels(transform) {
+    elements.characterPreviewPropOffsetXValue.textContent = formatPropValue(transform.x, 0);
+    elements.characterPreviewPropOffsetYValue.textContent = formatPropValue(transform.y, 0);
+    elements.characterPreviewPropScaleValue.textContent = formatPropValue(transform.scale, 2);
+    elements.characterPreviewPropRotationValue.textContent = formatPropValue(transform.rotation, 0);
+  }
+
+  function syncPropPayloadForSelection() {
+    if (!selectedPropAnimation) {
+      elements.characterPreviewPropPayload.value = "";
+      return;
+    }
+
+    elements.characterPreviewPropPayload.value = characterPreview.exportPropTransforms(selectedPropAnimation);
+  }
+
+  function syncPropControlsFromRenderer() {
+    if (!selectedPropAnimation) {
+      return;
+    }
+
+    const currentTransform = characterPreview.getPropTransform(selectedPropAnimation);
+    if (!currentTransform) {
+      return;
+    }
+
+    elements.characterPreviewPropOffsetX.value = String(currentTransform.x);
+    elements.characterPreviewPropOffsetY.value = String(currentTransform.y);
+    elements.characterPreviewPropScale.value = String(currentTransform.scale);
+    elements.characterPreviewPropRotation.value = String(currentTransform.rotation);
+    syncPropControlLabels(currentTransform);
+    syncPropPayloadForSelection();
+  }
+
+  function syncPropAnimationSelectionFromCurrentAnimation() {
+    const activeAnimation = characterPreview.getCurrentAnimation();
+    if (!previewPropAnimations.includes(activeAnimation)) {
+      return;
+    }
+
+    selectedPropAnimation = activeAnimation;
+    elements.characterPreviewPropAnimation.value = selectedPropAnimation;
+    syncPropControlsFromRenderer();
+  }
+
+  function applyPropControlInputs() {
+    if (!selectedPropAnimation) {
+      return;
+    }
+
+    characterPreview.setPropTransform(selectedPropAnimation, {
+      x: Number(elements.characterPreviewPropOffsetX.value),
+      y: Number(elements.characterPreviewPropOffsetY.value),
+      scale: Number(elements.characterPreviewPropScale.value),
+      rotation: Number(elements.characterPreviewPropRotation.value)
+    });
+
+    const updatedTransform = characterPreview.getPropTransform(selectedPropAnimation);
+    if (!updatedTransform) {
+      return;
+    }
+
+    syncPropControlLabels(updatedTransform);
+    syncPropPayloadForSelection();
+  }
+
+  async function copySelectedPropSettings() {
+    if (!selectedPropAnimation) {
+      toast("No prop animation available.");
+      return;
+    }
+
+    const payload = characterPreview.exportPropTransforms(selectedPropAnimation);
+    elements.characterPreviewPropPayload.value = payload;
+
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(payload);
+        toast(`Copied ${selectedPropAnimation} prop settings.`);
+        return;
+      } catch {
+        // Fall through to textarea-only behavior.
+      }
+    }
+
+    toast("Prop settings placed in payload box.");
+  }
+
+  function pastePropSettingsFromPayload() {
+    const payload = String(elements.characterPreviewPropPayload.value || "").trim();
+    if (!payload) {
+      toast("Paste prop JSON into the payload box first.");
+      return;
+    }
+
+    const result = characterPreview.importPropTransforms(payload);
+    if (!result.ok) {
+      toast("Invalid prop payload.");
+      return;
+    }
+
+    if (result.applied.length === 1) {
+      selectedPropAnimation = result.applied[0];
+      elements.characterPreviewPropAnimation.value = selectedPropAnimation;
+    }
+
+    syncPropControlsFromRenderer();
+    toast(`Applied prop settings: ${result.applied.join(", ")}.`);
+  }
 
   function syncHairStyleLabel() {
     const activeHairStyle = previewHairStyles[previewHairStyleCycleIndex] || "classic";
@@ -130,10 +263,12 @@ export function createGameApp() {
   function applyPreviewAnimationOverride() {
     if (!previewAnimationOverride) {
       syncCharacterPreview(getSurvivorById(state, state.activeId));
+      syncPropAnimationSelectionFromCurrentAnimation();
       return;
     }
 
     characterPreview.playAnimation(previewAnimationOverride, { loop: true });
+    syncPropAnimationSelectionFromCurrentAnimation();
   }
 
   function getSurvivorPreviewColors(survivor) {
@@ -178,11 +313,13 @@ export function createGameApp() {
   function syncCharacterPreview(activeSurvivor) {
     if (previewAnimationOverride) {
       characterPreview.playAnimation(previewAnimationOverride, { loop: true });
+      syncPropAnimationSelectionFromCurrentAnimation();
       return;
     }
 
     if (!activeSurvivor) {
       characterPreview.playAnimation("idle", { loop: true });
+      syncPropAnimationSelectionFromCurrentAnimation();
       return;
     }
 
@@ -190,10 +327,12 @@ export function createGameApp() {
 
     if (state.running && state.running.survivorId === activeSurvivor.id) {
       characterPreview.playAnimation(getMissionAnimationName(state.running.key), { loop: true });
+      syncPropAnimationSelectionFromCurrentAnimation();
       return;
     }
 
     characterPreview.playAnimation("idle", { loop: true });
+    syncPropAnimationSelectionFromCurrentAnimation();
   }
 
   // Expose a function-call API for animation triggers during development/testing.
@@ -202,6 +341,18 @@ export function createGameApp() {
       durationMs: Number(durationMs) || 0,
       loop: !durationMs
     });
+  };
+
+  window.getCharacterPreviewPropSettings = (animationName = null) => {
+    return characterPreview.exportPropTransforms(animationName ? String(animationName) : null);
+  };
+
+  window.applyCharacterPreviewPropSettings = (payload) => {
+    const result = characterPreview.importPropTransforms(payload);
+    if (result.ok) {
+      syncPropControlsFromRenderer();
+    }
+    return result;
   };
 
   elements.characterPreviewStatus.addEventListener("click", () => {
@@ -229,6 +380,18 @@ export function createGameApp() {
   syncPetTypeLabel();
   characterPreview.setPerspectiveTilt(previewPerspectiveTilt);
   syncPerspectiveLabel();
+
+  previewPropAnimations.forEach((animationName) => {
+    const option = document.createElement("option");
+    option.value = animationName;
+    option.textContent = animationName.toUpperCase();
+    elements.characterPreviewPropAnimation.appendChild(option);
+  });
+
+  if (selectedPropAnimation) {
+    elements.characterPreviewPropAnimation.value = selectedPropAnimation;
+  }
+  syncPropControlsFromRenderer();
 
   elements.characterPreviewHairStyle.addEventListener("click", () => {
     if (previewHairStyles.length === 0) {
@@ -275,6 +438,34 @@ export function createGameApp() {
     previewPerspectiveTilt = Number.isFinite(nextTilt) ? Math.max(-100, Math.min(100, nextTilt)) : 0;
     characterPreview.setPerspectiveTilt(previewPerspectiveTilt);
     syncPerspectiveLabel();
+  });
+
+  elements.characterPreviewPropAnimation.addEventListener("change", () => {
+    const nextAnimation = String(elements.characterPreviewPropAnimation.value || "");
+    if (!previewPropAnimations.includes(nextAnimation)) {
+      return;
+    }
+
+    selectedPropAnimation = nextAnimation;
+    characterPreview.playAnimation(selectedPropAnimation, { loop: true });
+    syncPropControlsFromRenderer();
+  });
+
+  [
+    elements.characterPreviewPropOffsetX,
+    elements.characterPreviewPropOffsetY,
+    elements.characterPreviewPropScale,
+    elements.characterPreviewPropRotation
+  ].forEach((input) => {
+    input.addEventListener("input", applyPropControlInputs);
+  });
+
+  elements.characterPreviewCopyProp.addEventListener("click", () => {
+    copySelectedPropSettings();
+  });
+
+  elements.characterPreviewPasteProp.addEventListener("click", () => {
+    pastePropSettingsFromPayload();
   });
 
   function getMissionCategories() {
