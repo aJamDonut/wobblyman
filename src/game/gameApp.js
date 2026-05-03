@@ -4,7 +4,6 @@ import { GameLoop } from "./engine/GameLoop.js";
 import { clock } from "./helpers.js";
 import { clearPersistedState, loadPersistedState, savePersistedState } from "./persistence.js";
 import { renderActive, renderMissionsCash, renderResources, renderRoster } from "./render.js";
-import { createMissionTimerPopup } from "./ui/missionTimerPopup.js";
 import { createCharacterPreviewRenderer } from "./ui/characterPreviewRenderer.js";
 import { createPopupSystem } from "./ui/popupSystem.js";
 import {
@@ -86,7 +85,6 @@ export function createGameApp() {
   };
 
   const popupSystem = createPopupSystem(elements.popupLayer);
-  const missionTimerPopup = createMissionTimerPopup(popupSystem);
   const characterPreview = createCharacterPreviewRenderer({
     canvas: elements.characterPreviewCanvas,
     statusLabel: elements.characterPreviewStatus
@@ -672,6 +670,20 @@ export function createGameApp() {
     });
   }
 
+  function hasHideFlags(hideFlags) {
+    if (!Array.isArray(hideFlags) || hideFlags.length === 0) {
+      return false;
+    }
+
+    return hideFlags.some((flagName) => {
+      if (typeof flagName !== "string" || flagName.trim() === "") {
+        return false;
+      }
+
+      return isFlagTruthy(flagName);
+    });
+  }
+
   function isCategoryVisibleByTabFlag(categoryKey) {
     const categoryTab = document.querySelector(`.tab[data-mission-category="${categoryKey}"]`);
     if (!categoryTab) {
@@ -755,6 +767,24 @@ export function createGameApp() {
     return Math.max(0, Math.floor(mission.cashPayout));
   }
 
+  function isOneTimeMission(mission) {
+    return Boolean(mission?.oneTime);
+  }
+
+  function shouldShowMissionTimer(mission) {
+    return Boolean(mission?.showTimer);
+  }
+
+  function getMissionTotalSeconds(mission) {
+    const cycleSeconds = Math.max(1, Math.floor(mission?.seconds || 1));
+    if (isOneTimeMission(mission) || shouldShowMissionTimer(mission)) {
+      return cycleSeconds;
+    }
+
+    // Default missions run effectively forever until canceled.
+    return Number.MAX_SAFE_INTEGER;
+  }
+
   function getAvailableCash() {
     return Math.max(0, Math.floor(Number(state.resources.cash) || 0));
   }
@@ -819,7 +849,7 @@ export function createGameApp() {
     const missionCollection = getMissionCollection(categoryKey);
     const missionEntries = Object.entries(missionCollection).filter(([missionKey, mission]) => {
       if (!runningMissionKey) {
-        return hasRequiredFlags(mission?.requiredFlags);
+        return hasRequiredFlags(mission?.requiredFlags) && !hasHideFlags(mission?.hideFlags);
       }
 
       return missionKey === runningMissionKey;
@@ -840,6 +870,7 @@ export function createGameApp() {
       missionElement.className = "card mission";
       missionElement.dataset.missionCategory = categoryKey;
       missionElement.dataset.mission = missionKey;
+      const oneTimeMission = isOneTimeMission(mission);
 
       const timerSeconds =
         runningProgress && runningProgress.categoryKey === categoryKey && runningProgress.key === missionKey
@@ -849,27 +880,39 @@ export function createGameApp() {
       const riskMarkup = mission.riskLabel ? `<div class="low">${mission.riskLabel}</div>` : "";
       const cashCost = getMissionCashCost(mission);
       const cashPayout = getMissionCashPayout(mission);
+      const rewardMarkup = mission.rewardLabel
+        ? `<div class="reward"><span class="sandwich">🥪</span>${mission.rewardLabel}</div>`
+        : "";
+      const xpMarkup = mission.xpLabel
+        ? `<div class="reward xp-chip"><span class="xp-dot">XP</span>${mission.xpLabel}</div>`
+        : "";
+      const rewardRowMarkup =
+        rewardMarkup || riskMarkup || xpMarkup
+          ? `<div class="reward-row">
+            <div>
+              ${rewardMarkup}
+              ${riskMarkup}
+            </div>
+            ${xpMarkup}
+          </div>`
+          : "";
       const missionEconomyMarkup =
         cashCost > 0 || cashPayout > 0
           ? `<div class="mission-economy-row">${
               cashCost > 0 ? `<span class="mission-cash-chip mission-cash-cost">COST $${cashCost}</span>` : ""
             }${cashPayout > 0 ? `<span class="mission-cash-chip mission-cash-payout">PAYOUT $${cashPayout}</span>` : ""}</div>`
           : "";
+      const timerMarkup = shouldShowMissionTimer(mission)
+        ? `<div class="timer">⏱ ${clock(timerSeconds)}</div>`
+        : "";
 
       missionElement.innerHTML = `
         <div>
           <h2>${mission.title}</h2>
-          <div class="provides">Provides</div>
-          <div class="reward-row">
-            <div>
-              <div class="reward"><span class="sandwich">🥪</span>${mission.rewardLabel}</div>
-              ${riskMarkup}
-            </div>
-            <div class="reward xp-chip"><span class="xp-dot">XP</span>${mission.xpLabel}</div>
-          </div>
+          ${rewardRowMarkup}
           ${missionEconomyMarkup}
         </div>
-        <div class="start-block"><button class="start-btn">START</button><div class="timer">⏱ ${clock(timerSeconds)}</div></div>`;
+        <div class="start-block"><button class="start-btn">START</button>${timerMarkup}</div>`;
 
       missionElement.querySelector(".start-btn").addEventListener("click", () => {
         if (state.running?.categoryKey === categoryKey && state.running?.key === missionKey) {
@@ -1038,6 +1081,12 @@ export function createGameApp() {
       return;
     }
 
+    if (hasHideFlags(mission.hideFlags)) {
+      toast(`${mission.title} is unavailable.`);
+      renderAll();
+      return;
+    }
+
     const cashCost = getMissionCashCost(mission);
     if (cashCost > getAvailableCash()) {
       toast(`Need $${cashCost} cash to start ${mission.title}.`);
@@ -1126,24 +1175,14 @@ export function createGameApp() {
       return;
     }
 
-    const cashCost = getMissionCashCost(mission);
-    if (cashCost > getAvailableCash()) {
-      toast(`Need $${cashCost} cash to start ${mission.title}.`);
+    if (hasHideFlags(mission.hideFlags)) {
+      toast(`${mission.title} is unavailable.`);
       renderAll();
       return;
     }
 
-    const result = await missionTimerPopup.selectDuration({
-      missionKey,
-      missionTitle: mission.title,
-      defaultSeconds: mission.seconds
-    });
-
-    if (!result || !result.confirmed) {
-      return;
-    }
-
-    beginMission(categoryKey, missionKey, result.seconds);
+    const totalSeconds = getMissionTotalSeconds(mission);
+    beginMission(categoryKey, missionKey, totalSeconds);
   }
 
   function renderMissionTimer(categoryKey, missionKey, remainingSeconds) {
@@ -1152,7 +1191,12 @@ export function createGameApp() {
       return;
     }
 
-    missionRoot.querySelector(".timer").textContent = `⏱ ${clock(remainingSeconds)}`;
+    const timer = missionRoot.querySelector(".timer");
+    if (!timer) {
+      return;
+    }
+
+    timer.textContent = `⏱ ${clock(remainingSeconds)}`;
   }
 
   function completeMission(missionProgress) {
