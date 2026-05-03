@@ -58,7 +58,8 @@ export function createGameApp() {
     characterPreviewStatus: document.querySelector("#characterPreviewStatus"),
     characterPreviewHairStyle: document.querySelector("#characterPreviewHairStyle"),
     characterPreviewEyeStyle: document.querySelector("#characterPreviewEyeStyle"),
-    characterPreviewBodyType: document.querySelector("#characterPreviewBodyType")
+    characterPreviewBodyType: document.querySelector("#characterPreviewBodyType"),
+    characterPreviewPet: document.querySelector("#characterPreviewPet")
   };
 
   const popupSystem = createPopupSystem(elements.popupLayer);
@@ -71,11 +72,13 @@ export function createGameApp() {
   const previewHairStyles = characterPreview.getHairStyles();
   const previewEyeStyles = characterPreview.getEyeStyles();
   const previewBodyTypes = characterPreview.getBodyTypes();
+  const previewPetTypes = characterPreview.getPetTypes();
   let previewAnimationOverride = null;
   let previewAnimationCycleIndex = -1;
   let previewHairStyleCycleIndex = Math.max(0, previewHairStyles.indexOf("classic"));
   let previewEyeStyleCycleIndex = Math.max(0, previewEyeStyles.indexOf("classic"));
   let previewBodyTypeCycleIndex = Math.max(0, previewBodyTypes.indexOf("classic"));
+  let previewPetTypeCycleIndex = Math.max(0, previewPetTypes.indexOf("cat"));
 
   function syncHairStyleLabel() {
     const activeHairStyle = previewHairStyles[previewHairStyleCycleIndex] || "classic";
@@ -90,6 +93,11 @@ export function createGameApp() {
   function syncEyeStyleLabel() {
     const activeEyeStyle = previewEyeStyles[previewEyeStyleCycleIndex] || "classic";
     elements.characterPreviewEyeStyle.textContent = activeEyeStyle.toUpperCase();
+  }
+
+  function syncPetTypeLabel() {
+    const activePetType = previewPetTypes[previewPetTypeCycleIndex] || "cat";
+    elements.characterPreviewPet.textContent = activePetType.toUpperCase();
   }
 
   function applyPreviewAnimationOverride() {
@@ -175,6 +183,8 @@ export function createGameApp() {
   syncEyeStyleLabel();
   characterPreview.setBodyType(previewBodyTypes[previewBodyTypeCycleIndex]);
   syncBodyTypeLabel();
+  characterPreview.setPetType(previewPetTypes[previewPetTypeCycleIndex]);
+  syncPetTypeLabel();
 
   elements.characterPreviewHairStyle.addEventListener("click", () => {
     if (previewHairStyles.length === 0) {
@@ -204,6 +214,16 @@ export function createGameApp() {
     previewEyeStyleCycleIndex = (previewEyeStyleCycleIndex + 1) % previewEyeStyles.length;
     characterPreview.setEyeStyle(previewEyeStyles[previewEyeStyleCycleIndex]);
     syncEyeStyleLabel();
+  });
+
+  elements.characterPreviewPet.addEventListener("click", () => {
+    if (previewPetTypes.length === 0) {
+      return;
+    }
+
+    previewPetTypeCycleIndex = (previewPetTypeCycleIndex + 1) % previewPetTypes.length;
+    characterPreview.setPetType(previewPetTypes[previewPetTypeCycleIndex]);
+    syncPetTypeLabel();
   });
 
   function getMissionCategories() {

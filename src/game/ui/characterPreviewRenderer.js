@@ -69,6 +69,8 @@ const EYE_STYLES = [
   "monocle"
 ];
 
+const PET_TYPES = ["cat", "dog"];
+
 const HAIR_SIZE_SCALE = 1.3;
 
 const BODY_TYPE_PROFILES = {
@@ -178,6 +180,61 @@ function createPose(timeSeconds, animationName) {
   return pose;
 }
 
+function createPetPose(timeSeconds, animationName) {
+  const pace = Math.sin(timeSeconds * 4.3);
+  const pose = {
+    bounce: Math.sin(timeSeconds * 2.2) * 1.5,
+    lean: Math.sin(timeSeconds * 1.8) * 0.03,
+    headTilt: Math.sin(timeSeconds * 2.6) * 0.06,
+    tailSwing: Math.sin(timeSeconds * 7.2) * 0.5,
+    leftPawLift: (pace + 1) * 0.5,
+    rightPawLift: (Math.sin(timeSeconds * 4.3 + Math.PI) + 1) * 0.5,
+    earPerk: 0.4
+  };
+
+  if (animationName === "run") {
+    const sprint = Math.sin(timeSeconds * 11.5);
+    pose.bounce = Math.sin(timeSeconds * 9.5) * 2.6;
+    pose.lean = 0.14;
+    pose.headTilt = sprint * 0.04;
+    pose.tailSwing = Math.sin(timeSeconds * 18) * 0.95;
+    pose.leftPawLift = (sprint + 1) * 0.5;
+    pose.rightPawLift = (Math.sin(timeSeconds * 11.5 + Math.PI) + 1) * 0.5;
+    pose.earPerk = 0.9;
+  }
+
+  if (animationName === "sleep") {
+    const breathing = Math.sin(timeSeconds * 1.6);
+    pose.bounce = breathing * 0.8 + 2;
+    pose.lean = -0.1;
+    pose.headTilt = -0.18;
+    pose.tailSwing = Math.sin(timeSeconds * 1.1) * 0.1;
+    pose.leftPawLift = 0.12;
+    pose.rightPawLift = 0.12;
+    pose.earPerk = 0.08;
+  }
+
+  if (animationName === "celebrate" || animationName === "wave") {
+    pose.bounce = Math.abs(Math.sin(timeSeconds * 7.5)) * 3.2;
+    pose.tailSwing = Math.sin(timeSeconds * 16) * 0.9;
+    pose.headTilt = Math.sin(timeSeconds * 7.5) * 0.14;
+    pose.leftPawLift = 0.8;
+    pose.rightPawLift = 0.8;
+    pose.earPerk = 1;
+  }
+
+  if (animationName === "working" || animationName === "sandwich") {
+    pose.bounce = Math.sin(timeSeconds * 6.3) * 1.7;
+    pose.lean = Math.sin(timeSeconds * 4.8) * 0.08;
+    pose.tailSwing = Math.sin(timeSeconds * 12) * 0.7;
+    pose.leftPawLift = (Math.sin(timeSeconds * 8.5) + 1) * 0.5;
+    pose.rightPawLift = (Math.sin(timeSeconds * 8.5 + Math.PI) + 1) * 0.5;
+    pose.earPerk = 0.7;
+  }
+
+  return pose;
+}
+
 export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   if (!(canvas instanceof HTMLCanvasElement)) {
     throw new Error("Character renderer requires a canvas element.");
@@ -192,6 +249,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   let hairStyle = "classic";
   let bodyType = "classic";
   let eyeStyle = "classic";
+  let petType = "cat";
   let currentAnimation = "idle";
   let transitionFromAnimation = "idle";
   let transitionStartedAt = performance.now();
@@ -229,6 +287,18 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         x: lerp(fromPose.rightLeg.x, toPose.rightLeg.x, mix),
         y: lerp(fromPose.rightLeg.y, toPose.rightLeg.y, mix)
       }
+    };
+  }
+
+  function interpolatePetPose(fromPose, toPose, mix) {
+    return {
+      bounce: lerp(fromPose.bounce, toPose.bounce, mix),
+      lean: lerp(fromPose.lean, toPose.lean, mix),
+      headTilt: lerp(fromPose.headTilt, toPose.headTilt, mix),
+      tailSwing: lerp(fromPose.tailSwing, toPose.tailSwing, mix),
+      leftPawLift: lerp(fromPose.leftPawLift, toPose.leftPawLift, mix),
+      rightPawLift: lerp(fromPose.rightPawLift, toPose.rightPawLift, mix),
+      earPerk: lerp(fromPose.earPerk, toPose.earPerk, mix)
     };
   }
 
@@ -1442,6 +1512,11 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const pose = transitionDurationMs > 0
       ? interpolatePose(fromPose, toPose, easedMix)
       : toPose;
+    const petFromPose = createPetPose(seconds, transitionFromAnimation);
+    const petToPose = createPetPose(seconds, currentAnimation);
+    const petPose = transitionDurationMs > 0
+      ? interpolatePetPose(petFromPose, petToPose, easedMix)
+      : petToPose;
 
     if (transitionDurationMs > 0 && transitionMix >= 1) {
       transitionDurationMs = 0;
@@ -1646,6 +1721,18 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
 
     context.restore();
 
+    const petAnchorX = Math.max(58, width - 76);
+    const petAnchorY = Math.max(92, height - 44);
+    context.save();
+    context.strokeStyle = "rgba(59, 48, 41, 0.32)";
+    context.lineWidth = 1;
+    context.beginPath();
+    context.ellipse(petAnchorX, petAnchorY + 8, 34, 8, 0, 0, Math.PI * 2);
+    context.stroke();
+    context.restore();
+
+    drawPet(petAnchorX, petAnchorY, seconds, petPose);
+
     if (talkWeight > 0.01) {
       context.save();
       context.globalAlpha = talkWeight;
@@ -1664,6 +1751,144 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
 
     rafId = window.requestAnimationFrame(drawFrame);
+  }
+
+  function drawPet(anchorX, anchorY, seconds, pose) {
+    const isDog = petType === "dog";
+    const bodyColor = isDog ? "#b58d60" : "#8a7b72";
+    const accentColor = isDog ? "#e6cfb3" : "#d6c3b6";
+    const lineColor = isDog ? "#4b3a2d" : "#3e3330";
+    const pawColor = blendHexColor(bodyColor, -0.08);
+
+    context.save();
+    context.translate(anchorX, anchorY + pose.bounce);
+    context.rotate(pose.lean);
+
+    const bodyWidth = isDog ? 50 : 46;
+    const bodyHeight = isDog ? 25 : 23;
+    const headRadius = isDog ? 12.2 : 11.5;
+
+    const rearLegX = -16;
+    const frontLegX = 14;
+    const rearLegY = 13;
+    const frontLegY = 12;
+    const rearLift = pose.rightPawLift * 4.8;
+    const frontLift = pose.leftPawLift * 5.2;
+
+    drawLimb(
+      rearLegX,
+      rearLegY,
+      rearLegX - 1.3,
+      20 - rearLift,
+      3.1,
+      pawColor,
+      1.2,
+      seconds * 10 + 1.5,
+      lineColor,
+      0,
+      1,
+      1,
+      0,
+      0.08
+    );
+    drawLimb(
+      frontLegX,
+      frontLegY,
+      frontLegX + 1.1,
+      20 - frontLift,
+      3.1,
+      pawColor,
+      1.2,
+      seconds * 10 + 2.9,
+      lineColor,
+      0,
+      1,
+      1,
+      0,
+      0.08
+    );
+
+    context.fillStyle = bodyColor;
+    context.strokeStyle = lineColor;
+    context.lineWidth = 1.4;
+    context.beginPath();
+    context.ellipse(0, 0, bodyWidth * 0.5, bodyHeight * 0.5, 0, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+
+    context.save();
+    context.translate(bodyWidth * 0.38, -4.2);
+    context.rotate(pose.headTilt);
+    context.fillStyle = bodyColor;
+    context.beginPath();
+    context.arc(0, 0, headRadius, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+
+    context.fillStyle = bodyColor;
+    if (isDog) {
+      const flop = 2.4 - pose.earPerk * 1.6;
+      context.beginPath();
+      context.ellipse(-8.6, -6.2 + flop, 4.2, 7.2, -0.35, 0, Math.PI * 2);
+      context.ellipse(8.6, -6.2 + flop, 4.2, 7.2, 0.35, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+    } else {
+      const perk = pose.earPerk * 1.6;
+      context.beginPath();
+      context.moveTo(-7.8, -6.8);
+      context.lineTo(-4.2, -17.6 - perk);
+      context.lineTo(-0.8, -7.4);
+      context.closePath();
+      context.moveTo(7.8, -6.8);
+      context.lineTo(4.2, -17.6 - perk);
+      context.lineTo(0.8, -7.4);
+      context.closePath();
+      context.fill();
+      context.stroke();
+    }
+
+    context.fillStyle = accentColor;
+    context.beginPath();
+    context.ellipse(0.5, 4.1, 5.9, 4.3, 0, 0, Math.PI * 2);
+    context.fill();
+
+    context.fillStyle = "#2a2421";
+    context.beginPath();
+    context.arc(-3.8, -1.8, 1.25, 0, Math.PI * 2);
+    context.arc(3.8, -1.8, 1.25, 0, Math.PI * 2);
+    context.fill();
+
+    context.beginPath();
+    context.arc(0.2, 1.8, 1.2, 0, Math.PI * 2);
+    context.fill();
+    context.lineWidth = 1;
+    context.beginPath();
+    context.moveTo(0.2, 3.1);
+    context.quadraticCurveTo(0.8, 4.4, 2.2, 4.9);
+    context.moveTo(0.2, 3.1);
+    context.quadraticCurveTo(-0.6, 4.4, -2.1, 4.9);
+    context.stroke();
+    context.restore();
+
+    context.strokeStyle = lineColor;
+    context.lineWidth = 2.6;
+    context.lineCap = "round";
+    context.beginPath();
+    const tailBaseX = -bodyWidth * 0.5 + 3;
+    const tailBaseY = -3;
+    const tailLength = isDog ? 20 : 18;
+    const tailCurve = pose.tailSwing;
+    context.moveTo(tailBaseX, tailBaseY);
+    context.quadraticCurveTo(
+      tailBaseX - tailLength * 0.48,
+      tailBaseY - tailCurve * (isDog ? 4.8 : 6.1),
+      tailBaseX - tailLength,
+      tailBaseY - 4 - tailCurve * (isDog ? 1.8 : 5.8)
+    );
+    context.stroke();
+
+    context.restore();
   }
 
   function playAnimation(name, options = {}) {
@@ -1718,6 +1943,13 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
   }
 
+  function setPetType(typeName) {
+    const nextType = String(typeName || "").toLowerCase();
+    if (PET_TYPES.includes(nextType)) {
+      petType = nextType;
+    }
+  }
+
   function getHairStyles() {
     return [...HAIR_STYLES];
   }
@@ -1728,6 +1960,10 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
 
   function getEyeStyles() {
     return [...EYE_STYLES];
+  }
+
+  function getPetTypes() {
+    return [...PET_TYPES];
   }
 
   function destroy() {
@@ -1747,9 +1983,11 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     setHairStyle,
     setBodyType,
     setEyeStyle,
+    setPetType,
     getHairStyles,
     getBodyTypes,
     getEyeStyles,
+    getPetTypes,
     playAnimation,
     destroy
   };
