@@ -875,12 +875,28 @@ export function createGameApp() {
     return Math.max(0, Math.floor(mission.cashCost));
   }
 
-  function getMissionCashPayout(mission) {
+  function getMissionCashPayout(mission, survivorOverride = null) {
     if (!mission || !Number.isFinite(mission.cashPayout)) {
       return 0;
     }
 
-    return Math.max(0, Math.floor(mission.cashPayout));
+    const baseCashPayout = Math.max(0, Number(mission.cashPayout));
+    const skillKey = typeof mission.skill === "string" ? mission.skill.trim() : "";
+    const hasSkillScaling = Boolean(skillKey);
+
+    if (!hasSkillScaling) {
+      return Math.max(0, Math.ceil(baseCashPayout));
+    }
+
+    const skillMultiplier = Number.isFinite(mission.skillMultiplier)
+      ? Math.max(0, Number(mission.skillMultiplier))
+      : 1;
+    const survivor = survivorOverride || getSurvivorById(state, state.activeId);
+    const survivorSkillValue = Number.isFinite(survivor?.[skillKey])
+      ? Math.max(0, Number(survivor[skillKey]))
+      : 0;
+
+    return Math.max(0, Math.ceil(baseCashPayout * survivorSkillValue * skillMultiplier));
   }
 
   function isOneTimeMission(mission) {
@@ -961,6 +977,7 @@ export function createGameApp() {
 
     const runningCategoryKey = state.running?.categoryKey || null;
     const runningMissionKey = state.running?.key || null;
+    const activeSurvivor = getSurvivorById(state, state.activeId);
     const categoryKey = runningCategoryKey || state.selectedMissionCategory;
     const missionCollection = getMissionCollection(categoryKey);
     const missionEntries = Object.entries(missionCollection).filter(([missionKey, mission]) => {
@@ -1019,7 +1036,7 @@ export function createGameApp() {
 
       const riskMarkup = mission.riskLabel ? `<div class="low">${mission.riskLabel}</div>` : "";
       const cashCost = getMissionCashCost(mission);
-      const cashPayout = getMissionCashPayout(mission);
+      const cashPayout = getMissionCashPayout(mission, activeSurvivor);
       const rewardMarkup = mission.rewardLabel
         ? `<div class="reward"><span class="sandwich">🥪</span>${mission.rewardLabel}</div>`
         : "";
@@ -1046,8 +1063,7 @@ export function createGameApp() {
         ? `<div class="timer">⏱ ${clock(timerSeconds)}</div>`
         : "";
 
-      if (!existingMissionElement) {
-        missionElement.innerHTML = `
+      missionElement.innerHTML = `
         <div>
           <h2>${mission.title}</h2>
           ${rewardRowMarkup}
@@ -1055,19 +1071,16 @@ export function createGameApp() {
         </div>
         <div class="start-block"><button class="start-btn">START</button>${timerMarkup}</div>`;
 
-        missionElement.querySelector(".start-btn").addEventListener("click", () => {
+      const startButton = missionElement.querySelector(".start-btn");
+      if (startButton) {
+        startButton.onclick = () => {
           if (state.running?.categoryKey === categoryKey && state.running?.key === missionKey) {
             cancelMission();
             return;
           }
 
           startMission(categoryKey, missionKey);
-        });
-      } else if (shouldShowMissionTimer(mission)) {
-        const timerElement = missionElement.querySelector(".timer");
-        if (timerElement) {
-          timerElement.textContent = `⏱ ${clock(timerSeconds)}`;
-        }
+        };
       }
 
       orderedMissionElements.push(missionElement);
@@ -1285,7 +1298,7 @@ export function createGameApp() {
         reward: mission.reward,
         rewardLabel: mission.rewardLabel,
         cashCost,
-        cashPayout: getMissionCashPayout(mission),
+        cashPayout: getMissionCashPayout(mission, activeSurvivor),
         cycleSeconds,
         cycleRemainingSeconds: cycleSeconds,
         cyclesCompleted: 0,
@@ -1475,7 +1488,9 @@ export function createGameApp() {
       state.resources[rewardResource] += 1;
     }
 
-    const missionCashPayout = Math.max(0, Math.floor(Number(missionProgress.cashPayout) || 0));
+    const missionCashPayout = mission
+      ? getMissionCashPayout(mission, activeSurvivor)
+      : Math.max(0, Math.ceil(Number(missionProgress.cashPayout) || 0));
     if (missionCashPayout > 0) {
       state.resources.cash = getAvailableCash() + missionCashPayout;
     }

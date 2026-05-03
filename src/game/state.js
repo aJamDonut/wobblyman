@@ -143,6 +143,15 @@ function withMissionEconomy(missionCategories) {
           const cashPayout = Number.isFinite(mission.cashPayout)
             ? Math.max(0, mission.cashPayout)
             : 0;
+          const payoutSkill =
+            typeof mission.skill === "string" && mission.skill.trim().length > 0
+              ? mission.skill.trim().toLowerCase()
+              : null;
+          const skillMultiplier = payoutSkill
+            ? Number.isFinite(mission.skillMultiplier)
+              ? Math.max(0, mission.skillMultiplier)
+              : 1
+            : null;
 
           return [
             missionKey,
@@ -150,6 +159,8 @@ function withMissionEconomy(missionCategories) {
               ...mission,
               cashCost,
               cashPayout,
+              skill: payoutSkill,
+              skillMultiplier,
             },
           ];
         }),
@@ -252,6 +263,8 @@ export function createInitialState() {
           },
           statXp: { music: 1 },
           cashPayout: 1,
+          skill: "music",
+          skillMultiplier: 1.1,
         },
         sleep: {
           title: "SLEEP",
