@@ -402,17 +402,28 @@ export function createGameApp() {
     const card = document.createElement("article");
     card.className = "stronghold-survivor";
 
-    const centerOffset = index - (total - 1) / 2;
+    const rowWidth = Math.max(4, Math.min(10, Math.ceil(Math.sqrt(total) * 1.9)));
+    const rowIndex = Math.floor(index / rowWidth);
+    const rowCount = Math.ceil(total / rowWidth);
+    const rowStart = rowIndex * rowWidth;
+    const rowSize = Math.min(rowWidth, total - rowStart);
+    const indexInRow = index - rowStart;
+    const centerOffset = indexInRow - (rowSize - 1) / 2;
     const distanceFromCenter = Math.abs(centerOffset);
-    const isFrontRow = distanceFromCenter <= 0.65;
-    const isMiddleRow = distanceFromCenter <= 1.7;
-    const depthClass = isFrontRow ? "is-front" : isMiddleRow ? "is-mid" : "is-back";
+    const depthClass = rowIndex <= 0
+      ? "is-front"
+      : rowIndex <= 1
+        ? "is-mid"
+        : "is-back";
     card.classList.add(depthClass);
 
-    const horizontalOffset = Math.round(centerOffset * 88);
-    const verticalOffset = isFrontRow ? 0 : isMiddleRow ? 20 : 36;
-    const scale = isFrontRow ? 1 : isMiddleRow ? 0.94 : 0.88;
-    const zIndex = isFrontRow ? 30 : isMiddleRow ? 20 : 10;
+    const spacing = Math.max(18, 34 - rowIndex * 1.3);
+    const horizontalOffset = Math.round(centerOffset * spacing);
+    const rowWave = Math.sin((indexInRow + rowIndex * 0.7) * 1.4) * 4;
+    const depthOffset = rowIndex * 20 + distanceFromCenter * 2.2 + (rowCount > 1 ? 2 : 0);
+    const verticalOffset = Math.max(0, Math.round(depthOffset + rowWave));
+    const scale = Math.max(0.82, 1 - rowIndex * 0.05 - verticalOffset * 0.0014);
+    const zIndex = 10 + verticalOffset;
 
     card.style.setProperty("--photo-x", `${horizontalOffset}px`);
     card.style.setProperty("--photo-y", `${verticalOffset}px`);
@@ -460,7 +471,9 @@ export function createGameApp() {
       renderer.setEyeStyle(previewEyeStyles[styleSeed % previewEyeStyles.length] || "classic");
       renderer.setBodyType(previewBodyTypes[styleSeed % previewBodyTypes.length] || "classic");
       renderer.setPetType(previewPetTypes[styleSeed % previewPetTypes.length] || "cat");
+      renderer.setPetVisibility(false);
       renderer.setPerspectiveTilt(20 + (index % 5) * 12);
+      renderer.setShadowProperties({ fillColor: "rgba(0,0,0,0)", strokeColor: "rgba(0,0,0,0)" });
       renderer.playAnimation(chooseStrongholdAnimation(survivor, index), { loop: true });
       strongholdRenderers.push(renderer);
     });

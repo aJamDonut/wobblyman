@@ -772,6 +772,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   let bodyType = "classic";
   let eyeStyle = "classic";
   let petType = "cat";
+  let petVisible = true;
   let holderVisible = true;
   let perspectiveAngle = 0;
   let shadowStyle = { ...DEFAULT_SHADOW_STYLE };
@@ -3872,17 +3873,19 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
 
     context.restore();
 
-    const petAnchorX = Math.max(58, width - 76);
-    const petAnchorY = Math.max(92, height - 44);
-    context.save();
-    context.strokeStyle = "rgba(59, 48, 41, 0.32)";
-    context.lineWidth = 1;
-    context.beginPath();
-    context.ellipse(petAnchorX, petAnchorY + 8, 34, 8, 0, 0, Math.PI * 2);
-    context.stroke();
-    context.restore();
+    if (petVisible) {
+      const petAnchorX = Math.max(58, width - 76);
+      const petAnchorY = Math.max(92, height - 44);
+      context.save();
+      context.strokeStyle = "rgba(59, 48, 41, 0.32)";
+      context.lineWidth = 1;
+      context.beginPath();
+      context.ellipse(petAnchorX, petAnchorY + 8, 34, 8, 0, 0, Math.PI * 2);
+      context.stroke();
+      context.restore();
 
-    drawPet(petAnchorX, petAnchorY, seconds, petPose);
+      drawPet(petAnchorX, petAnchorY, seconds, petPose);
+    }
 
     if (talkWeight > 0.01) {
       context.save();
@@ -4104,6 +4107,10 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
   }
 
+  function setPetVisibility(value) {
+    petVisible = Boolean(value);
+  }
+
   function setShadowProperties(nextProperties = {}) {
     const parsedOffsetX = Number(nextProperties.offsetX);
     const parsedOffsetY = Number(nextProperties.offsetY);
@@ -4283,6 +4290,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     setBodyType,
     setEyeStyle,
     setPetType,
+    setPetVisibility,
     setHolderVisibility,
     getHolderVisibility,
     toggleHolderVisibility,

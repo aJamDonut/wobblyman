@@ -44,7 +44,7 @@ export function loadPersistedState(initialState) {
     }
 
     if (Number.isInteger(persisted.survivorCapacity) && persisted.survivorCapacity > 0) {
-      state.survivorCapacity = persisted.survivorCapacity;
+      state.survivorCapacity = Math.max(initialState.survivorCapacity, persisted.survivorCapacity);
     }
 
     if (typeof persisted.selectedMissionCategory === "string") {

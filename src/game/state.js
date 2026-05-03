@@ -135,7 +135,7 @@ function withMissionStatChanges(missionCategories) {
 export function createInitialState() {
   return {
     resources: { sandwich: 0, platter: 0 },
-    survivorCapacity: 10,
+    survivorCapacity: 100,
     activeId: "ritu",
     survivors: [
       createSurvivor(

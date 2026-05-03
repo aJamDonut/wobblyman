@@ -581,7 +581,7 @@ h1, h2, h3, p { margin: 0; }
   width: 194px;
   transform: translate(var(--photo-x, 0px), var(--photo-y, 0px)) scale(var(--photo-scale, 1));
   z-index: var(--photo-z, 1);
-  filter: drop-shadow(0 6px 8px rgba(38, 30, 24, 0.18));
+  filter: none;
 }
 
 .stronghold-character-canvas {
