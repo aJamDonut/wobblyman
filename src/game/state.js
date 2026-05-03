@@ -132,18 +132,16 @@ function withMissionStatChanges(missionCategories) {
   );
 }
 
-function withMissionEconomy(missionCategories, missionEconomyConfig = {}) {
+function withMissionEconomy(missionCategories) {
   return Object.fromEntries(
     Object.entries(missionCategories).map(([categoryKey, missionCollection]) => {
-      const categoryEconomy = missionEconomyConfig[categoryKey] || {};
       const mappedMissions = Object.fromEntries(
         Object.entries(missionCollection).map(([missionKey, mission]) => {
-          const missionEconomy = categoryEconomy[missionKey] || {};
-          const cashCost = Number.isFinite(missionEconomy.cashCost)
-            ? Math.max(0, missionEconomy.cashCost)
+          const cashCost = Number.isFinite(mission.cashCost)
+            ? Math.max(0, mission.cashCost)
             : 0;
-          const cashPayout = Number.isFinite(missionEconomy.cashPayout)
-            ? Math.max(0, missionEconomy.cashPayout)
+          const cashPayout = Number.isFinite(mission.cashPayout)
+            ? Math.max(0, mission.cashPayout)
             : 0;
 
           return [
@@ -163,29 +161,6 @@ function withMissionEconomy(missionCategories, missionEconomyConfig = {}) {
 }
 
 export function createInitialState() {
-  const missionEconomyConfig = {
-    missions: {
-      dig: { cashPayout: 3 },
-      search: { cashPayout: 4 },
-      platter: { cashCost: 8, cashPayout: 11 },
-      brewCoffee: { cashPayout: 2 },
-    },
-    work: {
-      salvageSort: { cashPayout: 5 },
-      campConcert: { cashCost: 10, cashPayout: 16 },
-      woodChop: { cashPayout: 2 },
-    },
-    mall: {
-      medWorkshop: { cashCost: 14, cashPayout: 24 },
-      recordVitals: { cashPayout: 3 },
-    },
-    business: {
-      codeLedger: { cashPayout: 8 },
-      archiveRestoration: { cashCost: 18, cashPayout: 30 },
-      archives: { cashPayout: 6 },
-    },
-  };
-
   return {
     resources: { sandwich: 0, platter: 0, cash: 25 },
     survivorCapacity: 100,
@@ -270,6 +245,7 @@ export function createInitialState() {
           seconds: 22,
           xp: 0.75,
           statXp: { physical: 2, business: 1 },
+          cashPayout: 3,
           reward: "sandwich",
         },
         search: {
@@ -279,6 +255,7 @@ export function createInitialState() {
           seconds: 24,
           xp: 0.8,
           statXp: { knowledge: 3, speech: 1 },
+          cashPayout: 4,
           reward: "sandwich",
         },
         hunt: {
@@ -325,6 +302,8 @@ export function createInitialState() {
           seconds: 45,
           xp: 4,
           statXp: { cooking: 4, business: 2 },
+          cashCost: 8,
+          cashPayout: 11,
           reward: "platter",
         },
         brewCoffee: {
@@ -334,6 +313,7 @@ export function createInitialState() {
           seconds: 18,
           xp: 0.7,
           statXp: { cooking: 2, food: 1 },
+          cashPayout: 2,
           reward: "sandwich",
         },
         rationPrep: {
@@ -417,6 +397,7 @@ export function createInitialState() {
           seconds: 40,
           xp: 1.25,
           statXp: { business: 2, food: 1 },
+          cashPayout: 2,
           reward: "sandwich",
         },
         tentRepair: {
@@ -453,6 +434,8 @@ export function createInitialState() {
           seconds: 65,
           xp: 2.1,
           statXp: { music: 4, social: 2 },
+          cashCost: 10,
+          cashPayout: 16,
           reward: "platter",
         },
         kitchenLine: {
@@ -471,6 +454,7 @@ export function createInitialState() {
           seconds: 44,
           xp: 1.35,
           statXp: { business: 2, knowledge: 2 },
+          cashPayout: 5,
           reward: "sandwich",
         },
       },
@@ -518,6 +502,7 @@ export function createInitialState() {
           seconds: 41,
           xp: 1.3,
           statXp: { knowledge: 3, business: 1 },
+          cashPayout: 3,
           reward: "sandwich",
         },
         cleanWard: {
@@ -537,6 +522,8 @@ export function createInitialState() {
           seconds: 85,
           xp: 3,
           statXp: { knowledge: 5, speech: 2 },
+          cashCost: 14,
+          cashPayout: 24,
           reward: "platter",
         },
         patientRounds: {
@@ -557,6 +544,7 @@ export function createInitialState() {
           seconds: 90,
           xp: 1.2,
           statXp: { knowledge: 3, business: 1 },
+          cashPayout: 6,
           reward: "platter",
         },
         mapStudy: {
@@ -611,6 +599,7 @@ export function createInitialState() {
           seconds: 62,
           xp: 2,
           statXp: { knowledge: 3, business: 2 },
+          cashPayout: 8,
           reward: "sandwich",
         },
         archiveRestoration: {
@@ -621,6 +610,8 @@ export function createInitialState() {
           seconds: 96,
           xp: 3.4,
           statXp: { art: 5, knowledge: 2 },
+          cashCost: 18,
+          cashPayout: 30,
           reward: "platter",
         },
         debateClub: {
@@ -633,7 +624,7 @@ export function createInitialState() {
           reward: "sandwich",
         },
       },
-    }), missionEconomyConfig),
+    })),
     flags: {},
     selectedMissionCategory: "missions",
     running: null,

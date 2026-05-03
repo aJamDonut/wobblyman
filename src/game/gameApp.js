@@ -1214,9 +1214,13 @@ export function createGameApp() {
         return current / maxValue < 0.1;
       });
 
-      const strainIncrease = strainFromStatChangesPerTick + (hasCriticalNeed ? 0.5 : 0);
-      if (strainIncrease > 0) {
-        applyStatDelta(activeSurvivor, "strain", strainIncrease);
+      if (hasCriticalNeed) {
+        const strainIncrease = strainFromStatChangesPerTick + 0.5;
+        if (strainIncrease > 0) {
+          applyStatDelta(activeSurvivor, "strain", strainIncrease);
+        }
+      } else {
+        applyStatDelta(activeSurvivor, "strain", -0.5);
       }
     }
   }
