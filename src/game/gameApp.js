@@ -69,7 +69,28 @@ export function createGameApp() {
     canvas: elements.characterPreviewCanvas,
     statusLabel: elements.characterPreviewStatus
   });
-  const previewTestAnimations = ["idle", "wave", "sandwich", "working", "celebrate", "sleep", "run", "talk"];
+  const previewTestAnimations = [
+    "idle",
+    "wave",
+    "sandwich",
+    "working",
+    "celebrate",
+    "sleep",
+    "run",
+    "talk",
+    "jump",
+    "dance",
+    "sneak",
+    "stretch",
+    "punch",
+    "pushups",
+    "shower",
+    "wash",
+    "dig",
+    "search",
+    "hunt",
+    "cook"
+  ];
   const previewHairStyles = characterPreview.getHairStyles();
   const previewEyeStyles = characterPreview.getEyeStyles();
   const previewBodyTypes = characterPreview.getBodyTypes();
@@ -128,6 +149,21 @@ export function createGameApp() {
   }
 
   function getMissionAnimationName(missionKey) {
+    const missionAnimationMap = {
+      workout: "pushups",
+      pushups: "pushups",
+      shower: "shower",
+      wash: "wash",
+      dig: "dig",
+      search: "search",
+      hunt: "hunt",
+      cook: "cook"
+    };
+
+    if (missionAnimationMap[missionKey]) {
+      return missionAnimationMap[missionKey];
+    }
+
     if (missionKey === "sandwich") {
       return "sandwich";
     }

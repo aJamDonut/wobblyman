@@ -190,6 +190,127 @@ function createPose(timeSeconds, animationName) {
     pose.rightArm = { x: 36 + Math.sin(timeSeconds * 8 + 0.8) * 3, y: -8 + Math.cos(timeSeconds * 8 + 0.8) * 2 };
   }
 
+  if (animationName === "jump") {
+    const lift = Math.max(0, Math.sin(timeSeconds * 7.2));
+    pose.bounce = -18 * lift;
+    pose.lean = Math.sin(timeSeconds * 5.4) * 0.03;
+    pose.leftArm = { x: -34 - lift * 7, y: -56 - lift * 14 };
+    pose.rightArm = { x: 34 + lift * 7, y: -56 - lift * 14 };
+    pose.leftLeg = { x: -16 + Math.sin(timeSeconds * 7.2) * 3, y: 78 - lift * 12 };
+    pose.rightLeg = { x: 16 + Math.sin(timeSeconds * 7.2 + Math.PI) * 3, y: 78 - lift * 12 };
+  }
+
+  if (animationName === "dance") {
+    const groove = Math.sin(timeSeconds * 7.6);
+    const sway = Math.cos(timeSeconds * 3.8);
+    pose.bounce = Math.sin(timeSeconds * 7.6) * 4;
+    pose.lean = groove * 0.15;
+    pose.leftArm = { x: -42 + groove * 8, y: -34 + sway * 8 };
+    pose.rightArm = { x: 42 - groove * 8, y: -34 - sway * 8 };
+    pose.leftLeg = { x: -24 + groove * 9, y: 78 + Math.abs(sway) * 2.5 };
+    pose.rightLeg = { x: 24 - groove * 9, y: 78 + Math.abs(groove) * 2.5 };
+  }
+
+  if (animationName === "sneak") {
+    const step = Math.sin(timeSeconds * 4.9);
+    pose.lean = -0.22 + Math.sin(timeSeconds * 2.4) * 0.03;
+    pose.bounce = 9 + Math.abs(step) * 1.7;
+    pose.leftArm = { x: -28 + step * 4, y: -6 + Math.cos(timeSeconds * 4.9) * 2 };
+    pose.rightArm = { x: 24 - step * 4, y: -2 + Math.sin(timeSeconds * 4.9) * 2 };
+    pose.leftLeg = { x: -20 - step * 7, y: 84 + Math.abs(step) * 2 };
+    pose.rightLeg = { x: 20 + step * 7, y: 84 + Math.abs(step) * 2 };
+  }
+
+  if (animationName === "stretch") {
+    const reach = (Math.sin(timeSeconds * 2.8) + 1) * 0.5;
+    pose.lean = Math.sin(timeSeconds * 2.8) * 0.06;
+    pose.bounce = -2 - reach * 3;
+    pose.leftArm = { x: -26 - reach * 12, y: -64 - reach * 16 };
+    pose.rightArm = { x: 26 + reach * 12, y: -64 - reach * 16 };
+    pose.leftLeg = { x: -17, y: 79 + Math.sin(timeSeconds * 2.8 + 1) * 1.2 };
+    pose.rightLeg = { x: 17, y: 79 + Math.sin(timeSeconds * 2.8 + 2.4) * 1.2 };
+  }
+
+  if (animationName === "punch") {
+    const jab = Math.max(0, Math.sin(timeSeconds * 11.2));
+    pose.lean = 0.15 * jab;
+    pose.bounce = Math.sin(timeSeconds * 11.2) * 1.8;
+    pose.leftArm = { x: -36 + Math.sin(timeSeconds * 5.6) * 2, y: -12 };
+    pose.rightArm = { x: 34 + jab * 25, y: -22 + jab * 2 };
+    pose.leftLeg = { x: -20 - jab * 4, y: 78 + jab * 2.2 };
+    pose.rightLeg = { x: 20 + jab * 4, y: 78 + jab * 1.4 };
+  }
+
+  if (animationName === "pushups") {
+    const rep = (Math.sin(timeSeconds * 6.8) + 1) * 0.5;
+    pose.lean = 0.28;
+    pose.bounce = 10 + rep * 8;
+    pose.leftArm = { x: -34 + rep * 6, y: -2 + rep * 14 };
+    pose.rightArm = { x: 34 - rep * 6, y: -2 + rep * 14 };
+    pose.leftLeg = { x: -18 + rep * 4, y: 88 - rep * 8 };
+    pose.rightLeg = { x: 18 - rep * 4, y: 88 - rep * 8 };
+  }
+
+  if (animationName === "shower") {
+    const rinse = Math.sin(timeSeconds * 3.4);
+    pose.lean = 0.03;
+    pose.bounce = Math.sin(timeSeconds * 2.2) * 1.6;
+    pose.leftArm = { x: -18 + rinse * 4, y: -70 + Math.cos(timeSeconds * 4.4) * 5 };
+    pose.rightArm = { x: 18 - rinse * 4, y: -58 + Math.sin(timeSeconds * 4.1) * 4 };
+    pose.leftLeg = { x: -17, y: 79 + Math.abs(rinse) * 1.2 };
+    pose.rightLeg = { x: 17, y: 79 + Math.abs(rinse) * 1.2 };
+  }
+
+  if (animationName === "wash") {
+    const scrub = Math.sin(timeSeconds * 8.6);
+    pose.lean = -0.07;
+    pose.bounce = Math.sin(timeSeconds * 6.2) * 1.8;
+    pose.leftArm = { x: -20 + scrub * 6, y: -36 + Math.cos(timeSeconds * 8.6) * 3 };
+    pose.rightArm = { x: 24 - scrub * 5, y: -34 + Math.sin(timeSeconds * 8.6) * 3 };
+    pose.leftLeg = { x: -18, y: 79.5 };
+    pose.rightLeg = { x: 18, y: 79.5 };
+  }
+
+  if (animationName === "dig") {
+    const scoop = Math.sin(timeSeconds * 5.4);
+    pose.lean = 0.2 + Math.max(0, scoop) * 0.08;
+    pose.bounce = 3 + Math.abs(scoop) * 2.8;
+    pose.leftArm = { x: -32 + scoop * 10, y: -18 + Math.abs(scoop) * 8 };
+    pose.rightArm = { x: 40 + scoop * 12, y: -14 + Math.abs(scoop) * 9 };
+    pose.leftLeg = { x: -22 - scoop * 5, y: 82 + Math.abs(scoop) * 2 };
+    pose.rightLeg = { x: 16 + scoop * 3, y: 80 + Math.abs(scoop) * 1.4 };
+  }
+
+  if (animationName === "search") {
+    const scan = Math.sin(timeSeconds * 2.8);
+    pose.lean = -0.1 + scan * 0.06;
+    pose.bounce = Math.sin(timeSeconds * 3) * 1.3;
+    pose.leftArm = { x: -34 + scan * 8, y: -18 + Math.cos(timeSeconds * 2.8) * 2 };
+    pose.rightArm = { x: 38 + scan * 7, y: -36 + Math.sin(timeSeconds * 2.8) * 4 };
+    pose.leftLeg = { x: -19 + scan * 2, y: 79 + Math.abs(scan) * 1.2 };
+    pose.rightLeg = { x: 19 - scan * 2, y: 79 + Math.abs(scan) * 1.2 };
+  }
+
+  if (animationName === "hunt") {
+    const stalk = Math.sin(timeSeconds * 4.8);
+    pose.lean = 0.12;
+    pose.bounce = 2 + Math.abs(stalk) * 2.2;
+    pose.leftArm = { x: -40 + stalk * 7, y: -24 + Math.cos(timeSeconds * 4.8) * 3 };
+    pose.rightArm = { x: 30 - stalk * 6, y: -20 + Math.sin(timeSeconds * 4.8) * 2 };
+    pose.leftLeg = { x: -21 - stalk * 8, y: 83 + Math.abs(stalk) * 2.2 };
+    pose.rightLeg = { x: 19 + stalk * 8, y: 83 + Math.abs(stalk) * 2.2 };
+  }
+
+  if (animationName === "cook") {
+    const stir = Math.sin(timeSeconds * 7.4);
+    pose.lean = -0.03;
+    pose.bounce = Math.sin(timeSeconds * 5.2) * 1.5;
+    pose.leftArm = { x: -22 + stir * 8, y: -34 + Math.cos(timeSeconds * 7.4) * 4 };
+    pose.rightArm = { x: 30 + stir * 5, y: -30 + Math.sin(timeSeconds * 7.4) * 4 };
+    pose.leftLeg = { x: -18, y: 79.5 + Math.abs(stir) * 0.8 };
+    pose.rightLeg = { x: 18, y: 79.5 + Math.abs(stir) * 0.8 };
+  }
+
   return pose;
 }
 
@@ -243,6 +364,137 @@ function createPetPose(timeSeconds, animationName) {
     pose.leftPawLift = (Math.sin(timeSeconds * 8.5) + 1) * 0.5;
     pose.rightPawLift = (Math.sin(timeSeconds * 8.5 + Math.PI) + 1) * 0.5;
     pose.earPerk = 0.7;
+  }
+
+  if (animationName === "jump") {
+    const hop = Math.max(0, Math.sin(timeSeconds * 7.2));
+    pose.bounce = -4.5 * hop;
+    pose.lean = Math.sin(timeSeconds * 5.2) * 0.04;
+    pose.headTilt = Math.sin(timeSeconds * 7.2) * 0.1;
+    pose.tailSwing = Math.sin(timeSeconds * 12.6) * 0.75;
+    pose.leftPawLift = 0.65 + hop * 0.25;
+    pose.rightPawLift = 0.65 + hop * 0.25;
+    pose.earPerk = 0.95;
+  }
+
+  if (animationName === "dance") {
+    pose.bounce = Math.sin(timeSeconds * 8) * 2.6;
+    pose.lean = Math.sin(timeSeconds * 4) * 0.12;
+    pose.headTilt = Math.sin(timeSeconds * 8) * 0.2;
+    pose.tailSwing = Math.sin(timeSeconds * 16) * 1;
+    pose.leftPawLift = (Math.sin(timeSeconds * 8 + 0.4) + 1) * 0.5;
+    pose.rightPawLift = (Math.sin(timeSeconds * 8 + Math.PI + 0.4) + 1) * 0.5;
+    pose.earPerk = 0.88;
+  }
+
+  if (animationName === "sneak") {
+    const creep = Math.sin(timeSeconds * 4.9);
+    pose.bounce = 2.8 + Math.abs(creep) * 0.8;
+    pose.lean = -0.16;
+    pose.headTilt = -0.08 + Math.sin(timeSeconds * 2.45) * 0.03;
+    pose.tailSwing = Math.sin(timeSeconds * 6.6) * 0.3;
+    pose.leftPawLift = 0.25 + Math.max(0, creep) * 0.35;
+    pose.rightPawLift = 0.25 + Math.max(0, -creep) * 0.35;
+    pose.earPerk = 0.5;
+  }
+
+  if (animationName === "stretch") {
+    const stretch = (Math.sin(timeSeconds * 2.8) + 1) * 0.5;
+    pose.bounce = -1.4 - stretch * 1.8;
+    pose.lean = Math.sin(timeSeconds * 2.8) * 0.05;
+    pose.headTilt = -0.14 + stretch * 0.06;
+    pose.tailSwing = Math.sin(timeSeconds * 4.8) * 0.2;
+    pose.leftPawLift = 0.12;
+    pose.rightPawLift = 0.82;
+    pose.earPerk = 0.32;
+  }
+
+  if (animationName === "punch") {
+    const jab = Math.max(0, Math.sin(timeSeconds * 11.2));
+    pose.bounce = Math.sin(timeSeconds * 9.4) * 1.4;
+    pose.lean = 0.1 * jab;
+    pose.headTilt = 0.06 * jab;
+    pose.tailSwing = Math.sin(timeSeconds * 14.4) * 0.6;
+    pose.leftPawLift = 0.25;
+    pose.rightPawLift = 0.3 + jab * 0.65;
+    pose.earPerk = 0.92;
+  }
+
+  if (animationName === "pushups") {
+    const rep = (Math.sin(timeSeconds * 6.8) + 1) * 0.5;
+    pose.bounce = 1.8 + rep * 2;
+    pose.lean = 0.15;
+    pose.headTilt = 0.05;
+    pose.tailSwing = Math.sin(timeSeconds * 8.8) * 0.3;
+    pose.leftPawLift = 0.25 + rep * 0.35;
+    pose.rightPawLift = 0.25 + rep * 0.35;
+    pose.earPerk = 0.72;
+  }
+
+  if (animationName === "shower") {
+    const rinse = Math.sin(timeSeconds * 3.4);
+    pose.bounce = Math.sin(timeSeconds * 2.2) * 1;
+    pose.lean = 0.03;
+    pose.headTilt = Math.sin(timeSeconds * 3.4) * 0.08;
+    pose.tailSwing = Math.sin(timeSeconds * 5.5) * 0.2;
+    pose.leftPawLift = 0.4 + Math.max(0, rinse) * 0.2;
+    pose.rightPawLift = 0.35 + Math.max(0, -rinse) * 0.2;
+    pose.earPerk = 0.42;
+  }
+
+  if (animationName === "wash") {
+    const scrub = Math.sin(timeSeconds * 8.6);
+    pose.bounce = Math.sin(timeSeconds * 5.6) * 1.2;
+    pose.lean = -0.05;
+    pose.headTilt = -0.06 + Math.sin(timeSeconds * 8.6) * 0.04;
+    pose.tailSwing = Math.sin(timeSeconds * 10.8) * 0.4;
+    pose.leftPawLift = 0.3 + Math.max(0, scrub) * 0.35;
+    pose.rightPawLift = 0.3 + Math.max(0, -scrub) * 0.35;
+    pose.earPerk = 0.56;
+  }
+
+  if (animationName === "dig") {
+    const scoop = Math.sin(timeSeconds * 5.4);
+    pose.bounce = 1.4 + Math.abs(scoop) * 1.6;
+    pose.lean = 0.12;
+    pose.headTilt = 0.05;
+    pose.tailSwing = Math.sin(timeSeconds * 13) * 0.85;
+    pose.leftPawLift = 0.3 + Math.max(0, scoop) * 0.5;
+    pose.rightPawLift = 0.2 + Math.max(0, -scoop) * 0.5;
+    pose.earPerk = 0.84;
+  }
+
+  if (animationName === "search") {
+    const scan = Math.sin(timeSeconds * 2.8);
+    pose.bounce = Math.sin(timeSeconds * 3) * 1;
+    pose.lean = -0.06 + scan * 0.04;
+    pose.headTilt = scan * 0.13;
+    pose.tailSwing = Math.sin(timeSeconds * 6.2) * 0.35;
+    pose.leftPawLift = 0.28;
+    pose.rightPawLift = 0.55;
+    pose.earPerk = 0.88;
+  }
+
+  if (animationName === "hunt") {
+    const stalk = Math.sin(timeSeconds * 4.8);
+    pose.bounce = 1.2 + Math.abs(stalk) * 1.4;
+    pose.lean = 0.14;
+    pose.headTilt = -0.03 + stalk * 0.05;
+    pose.tailSwing = Math.sin(timeSeconds * 11.2) * 0.65;
+    pose.leftPawLift = 0.2 + Math.max(0, stalk) * 0.4;
+    pose.rightPawLift = 0.2 + Math.max(0, -stalk) * 0.4;
+    pose.earPerk = 0.96;
+  }
+
+  if (animationName === "cook") {
+    const stir = Math.sin(timeSeconds * 7.4);
+    pose.bounce = Math.sin(timeSeconds * 5.2) * 1.2;
+    pose.lean = -0.02;
+    pose.headTilt = Math.sin(timeSeconds * 7.4) * 0.06;
+    pose.tailSwing = Math.sin(timeSeconds * 9.4) * 0.45;
+    pose.leftPawLift = 0.35 + Math.max(0, stir) * 0.28;
+    pose.rightPawLift = 0.35 + Math.max(0, -stir) * 0.28;
+    pose.earPerk = 0.66;
   }
 
   return pose;
@@ -507,6 +759,166 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.arc(0, 0, 2.2, 0, Math.PI * 2);
     context.arc(12, 0, 2.2, 0, Math.PI * 2);
     context.fill();
+
+    context.restore();
+  }
+
+  function drawWaterDroplets(x, y, seconds) {
+    const droplets = [
+      { x: -12, y: -18, radius: 3.2, phase: 0 },
+      { x: 0, y: -22, radius: 3.8, phase: 1.2 },
+      { x: 11, y: -16, radius: 2.9, phase: 2.4 },
+      { x: -6, y: -6, radius: 2.6, phase: 3.1 },
+      { x: 8, y: -2, radius: 2.3, phase: 4.2 }
+    ];
+
+    context.save();
+    context.translate(x, y);
+    droplets.forEach((droplet) => {
+      const fall = ((seconds * 52 + droplet.phase * 14) % 28) - 14;
+      const sway = Math.sin(seconds * 4 + droplet.phase) * 1.2;
+      context.fillStyle = "rgba(88, 173, 233, 0.82)";
+      context.beginPath();
+      context.ellipse(droplet.x + sway, droplet.y + fall, droplet.radius * 0.9, droplet.radius * 1.35, 0, 0, Math.PI * 2);
+      context.fill();
+    });
+    context.restore();
+  }
+
+  function drawSoapBubbles(x, y, seconds) {
+    const bubbles = [
+      { x: -10, y: -12, radius: 4.5, phase: 0.4 },
+      { x: -2, y: -20, radius: 3.2, phase: 1.3 },
+      { x: 8, y: -10, radius: 5.2, phase: 2.1 },
+      { x: 16, y: -18, radius: 2.8, phase: 2.9 },
+      { x: -16, y: -4, radius: 3.4, phase: 3.7 }
+    ];
+
+    context.save();
+    context.translate(x, y);
+    bubbles.forEach((bubble) => {
+      const rise = Math.sin(seconds * 2.5 + bubble.phase) * 4.5;
+      const drift = Math.cos(seconds * 2 + bubble.phase) * 2;
+      context.fillStyle = "rgba(229, 244, 255, 0.42)";
+      context.strokeStyle = "rgba(168, 205, 236, 0.72)";
+      context.lineWidth = 1;
+      context.beginPath();
+      context.arc(bubble.x + drift, bubble.y + rise, bubble.radius, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+    });
+    context.restore();
+  }
+
+  function drawSpade(x, y, tilt = 0) {
+    context.save();
+    context.translate(x, y);
+    context.rotate(tilt);
+
+    context.fillStyle = "#6a4f35";
+    context.beginPath();
+    context.roundRect(-3.2, -36, 6.4, 38, 2.6);
+    context.fill();
+
+    context.fillStyle = "#888f98";
+    context.strokeStyle = "#3b4249";
+    context.lineWidth = 1.3;
+    context.beginPath();
+    context.moveTo(0, 4);
+    context.lineTo(-11, 16);
+    context.lineTo(0, 30);
+    context.lineTo(11, 16);
+    context.closePath();
+    context.fill();
+    context.stroke();
+
+    context.restore();
+  }
+
+  function drawMagnifyingGlass(x, y, tilt = 0) {
+    context.save();
+    context.translate(x, y);
+    context.rotate(tilt);
+
+    context.fillStyle = "rgba(198, 228, 250, 0.38)";
+    context.strokeStyle = "#3f464e";
+    context.lineWidth = 2;
+    context.beginPath();
+    context.arc(0, 0, 8, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+
+    context.strokeStyle = "#725639";
+    context.lineWidth = 3;
+    context.lineCap = "round";
+    context.beginPath();
+    context.moveTo(5.8, 5.8);
+    context.lineTo(14, 14);
+    context.stroke();
+
+    context.restore();
+  }
+
+  function drawBow(x, y, tilt = 0) {
+    context.save();
+    context.translate(x, y);
+    context.rotate(tilt);
+
+    context.strokeStyle = "#6f5134";
+    context.lineWidth = 3.4;
+    context.lineCap = "round";
+    context.beginPath();
+    context.moveTo(0, -25);
+    context.quadraticCurveTo(-18, 0, 0, 25);
+    context.stroke();
+
+    context.strokeStyle = "#d7dbe0";
+    context.lineWidth = 1.5;
+    context.beginPath();
+    context.moveTo(0, -22);
+    context.lineTo(0, 22);
+    context.stroke();
+
+    context.restore();
+  }
+
+  function drawKnifeAndCarrot(x, y, tilt = 0) {
+    context.save();
+    context.translate(x, y);
+    context.rotate(tilt);
+
+    context.fillStyle = "#d97a2d";
+    context.beginPath();
+    context.moveTo(-22, 12);
+    context.lineTo(3, 6);
+    context.lineTo(3, 18);
+    context.closePath();
+    context.fill();
+
+    context.strokeStyle = "#4b7b42";
+    context.lineWidth = 1.6;
+    context.beginPath();
+    context.moveTo(-22, 12);
+    context.lineTo(-28, 7);
+    context.moveTo(-22, 12);
+    context.lineTo(-28, 14);
+    context.stroke();
+
+    context.fillStyle = "#9e6842";
+    context.beginPath();
+    context.roundRect(3, -16, 8, 12, 2.2);
+    context.fill();
+
+    context.fillStyle = "#c5ccd3";
+    context.strokeStyle = "#545c64";
+    context.lineWidth = 1.3;
+    context.beginPath();
+    context.moveTo(11, -13);
+    context.lineTo(28, -8);
+    context.lineTo(11, -3);
+    context.closePath();
+    context.fill();
+    context.stroke();
 
     context.restore();
   }
@@ -1806,6 +2218,12 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const sleepWeight = getAnimationWeight("sleep", easedMix);
     const talkWeight = getAnimationWeight("talk", easedMix);
     const sandwichWeight = getAnimationWeight("sandwich", easedMix);
+    const showerWeight = getAnimationWeight("shower", easedMix);
+    const washWeight = getAnimationWeight("wash", easedMix);
+    const digWeight = getAnimationWeight("dig", easedMix);
+    const searchWeight = getAnimationWeight("search", easedMix);
+    const huntWeight = getAnimationWeight("hunt", easedMix);
+    const cookWeight = getAnimationWeight("cook", easedMix);
     const idleWeight = getAnimationWeight("idle", easedMix);
     const perspectiveBlend = clamp(perspectiveTilt / 100, -1, 1);
     const perspectiveStrength = Math.abs(perspectiveBlend);
@@ -2188,6 +2606,49 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.save();
       context.globalAlpha = sandwichWeight;
       drawSandwich(perspectivePose.leftArm.x + 7, perspectivePose.leftArm.y - 2, -0.22 + Math.sin(seconds * 6) * 0.05);
+      context.restore();
+    }
+
+    if (showerWeight > 0.01) {
+      context.save();
+      context.globalAlpha = showerWeight;
+      drawWaterDroplets(0, -86, seconds);
+      context.restore();
+    }
+
+    if (washWeight > 0.01) {
+      context.save();
+      context.globalAlpha = washWeight;
+      drawSoapBubbles(perspectivePose.leftArm.x + 6, perspectivePose.leftArm.y - 4, seconds);
+      drawSoapBubbles(perspectivePose.rightArm.x - 6, perspectivePose.rightArm.y - 2, seconds + 0.4);
+      context.restore();
+    }
+
+    if (digWeight > 0.01) {
+      context.save();
+      context.globalAlpha = digWeight;
+      drawSpade(perspectivePose.rightArm.x + 4, perspectivePose.rightArm.y - 4, 0.4 + Math.sin(seconds * 5.4) * 0.1);
+      context.restore();
+    }
+
+    if (searchWeight > 0.01) {
+      context.save();
+      context.globalAlpha = searchWeight;
+      drawMagnifyingGlass(perspectivePose.rightArm.x + 5, perspectivePose.rightArm.y - 1, -0.18 + Math.sin(seconds * 2.8) * 0.08);
+      context.restore();
+    }
+
+    if (huntWeight > 0.01) {
+      context.save();
+      context.globalAlpha = huntWeight;
+      drawBow(perspectivePose.leftArm.x - 4, perspectivePose.leftArm.y - 1, -0.1 + Math.sin(seconds * 4.8) * 0.05);
+      context.restore();
+    }
+
+    if (cookWeight > 0.01) {
+      context.save();
+      context.globalAlpha = cookWeight;
+      drawKnifeAndCarrot((perspectivePose.leftArm.x + perspectivePose.rightArm.x) * 0.5, (perspectivePose.leftArm.y + perspectivePose.rightArm.y) * 0.5 - 6, -0.12 + Math.sin(seconds * 7.4) * 0.05);
       context.restore();
     }
 
