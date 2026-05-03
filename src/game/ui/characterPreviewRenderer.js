@@ -185,6 +185,8 @@ function createPose(timeSeconds, animationName) {
   const pose = {
     bounce,
     lean: Math.sin(timeSeconds * 1.6) * 0.05,
+    perspectiveTilt: 0,
+    perspectiveTiltMix: 0,
     leftArm: { x: -36 + Math.sin(timeSeconds * 2) * 4, y: shoulderY + 44 },
     rightArm: { x: 36 + Math.sin(timeSeconds * 2 + Math.PI) * 4, y: shoulderY + 44 },
     leftLeg: { x: -18 + Math.sin(timeSeconds * 1.8) * 2, y: 78 },
@@ -220,6 +222,8 @@ function createPose(timeSeconds, animationName) {
     pose.leftLeg = { x: -20, y: 78 + Math.sin(timeSeconds * 9) * 2 };
     pose.rightLeg = { x: 20, y: 78 + Math.sin(timeSeconds * 9 + Math.PI) * 2 };
     pose.bounce = Math.abs(Math.sin(timeSeconds * 10)) * -12;
+    pose.perspectiveTilt = Math.sin(timeSeconds * 1.25) * 100;
+    pose.perspectiveTiltMix = 1;
   }
 
   if (animationName === "working") {
@@ -649,6 +653,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     return {
       bounce: lerp(fromPose.bounce, toPose.bounce, mix),
       lean: lerp(fromPose.lean, toPose.lean, mix),
+      perspectiveTilt: lerp(fromPose.perspectiveTilt || 0, toPose.perspectiveTilt || 0, mix),
+      perspectiveTiltMix: lerp(fromPose.perspectiveTiltMix || 0, toPose.perspectiveTiltMix || 0, mix),
       leftArm: {
         x: lerp(fromPose.leftArm.x, toPose.leftArm.x, mix),
         y: lerp(fromPose.leftArm.y, toPose.leftArm.y, mix)
@@ -2450,7 +2456,10 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const huntWeight = getAnimationWeight("hunt", easedMix);
     const cookWeight = getAnimationWeight("cook", easedMix);
     const idleWeight = getAnimationWeight("idle", easedMix);
-    const perspectiveBlend = clamp(perspectiveTilt / 100, -1, 1);
+    const animatedTiltMix = clamp(pose.perspectiveTiltMix || 0, 0, 1);
+    const animatedPerspectiveTilt = clamp(pose.perspectiveTilt || 0, -100, 100);
+    const resolvedPerspectiveTilt = clamp(lerp(perspectiveTilt, animatedPerspectiveTilt, animatedTiltMix), -100, 100);
+    const perspectiveBlend = clamp(resolvedPerspectiveTilt / 100, -1, 1);
     const perspectiveStrength = Math.abs(perspectiveBlend);
     const leftLegShiftX = perspectiveBlend < 0
       ? 4.2 * perspectiveStrength
