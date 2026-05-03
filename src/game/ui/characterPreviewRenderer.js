@@ -809,6 +809,12 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   let animationDurationMs = 0;
   let rafId = null;
   let legBendDirectionValue = -0.8;
+  let paperTextureCanvas = null;
+  let paperTextureWidth = 0;
+  let paperTextureHeight = 0;
+  let effectMaskCanvas = null;
+  let effectMaskWidth = 0;
+  let effectMaskHeight = 0;
 
   function lerp(a, b, t) {
     return a + (b - a) * t;
@@ -899,6 +905,242 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     return clamp(weight, 0, 1);
   }
 
+  function ensurePaperTexture(width, height) {
+    const safeWidth = Math.max(1, Math.floor(width));
+    const safeHeight = Math.max(1, Math.floor(height));
+    if (
+      paperTextureCanvas &&
+      paperTextureWidth === safeWidth &&
+      paperTextureHeight === safeHeight
+    ) {
+      return;
+    }
+
+    paperTextureCanvas = document.createElement("canvas");
+    paperTextureCanvas.width = safeWidth;
+    paperTextureCanvas.height = safeHeight;
+    paperTextureWidth = safeWidth;
+    paperTextureHeight = safeHeight;
+
+    const textureContext = paperTextureCanvas.getContext("2d");
+    if (!textureContext) {
+      paperTextureCanvas = null;
+      return;
+    }
+
+    const imageData = textureContext.createImageData(safeWidth, safeHeight);
+    const data = imageData.data;
+    for (let y = 0; y < safeHeight; y += 1) {
+      for (let x = 0; x < safeWidth; x += 1) {
+        const index = (y * safeWidth + x) * 4;
+        const grain = (Math.random() - 0.5) * 52;
+        const fiberWave = Math.sin(x * 0.13 + y * 0.055) * 8 + Math.cos(y * 0.19 - x * 0.04) * 4.6;
+        const tone = 226 + grain + fiberWave;
+        data[index] = clamp(Math.round(tone + 12), 158, 255);
+        data[index + 1] = clamp(Math.round(tone + 4), 148, 252);
+        data[index + 2] = clamp(Math.round(tone - 16), 132, 246);
+        data[index + 3] = 255;
+      }
+    }
+    textureContext.putImageData(imageData, 0, 0);
+
+    const fiberCount = Math.max(130, Math.floor((safeWidth * safeHeight) / 920));
+    textureContext.lineCap = "round";
+    for (let i = 0; i < fiberCount; i += 1) {
+      const startX = Math.random() * safeWidth;
+      const startY = Math.random() * safeHeight;
+      const length = 8 + Math.random() * 28;
+      const angle = (Math.random() - 0.5) * Math.PI * 0.45;
+      const endX = startX + Math.cos(angle) * length;
+      const endY = startY + Math.sin(angle) * length;
+      textureContext.strokeStyle = `rgba(116, 88, 58, ${0.055 + Math.random() * 0.1})`;
+      textureContext.lineWidth = 0.8 + Math.random() * 1.2;
+      textureContext.beginPath();
+      textureContext.moveTo(startX, startY);
+      textureContext.lineTo(endX, endY);
+      textureContext.stroke();
+    }
+
+    const crossHatchCount = Math.max(90, Math.floor((safeWidth * safeHeight) / 1350));
+    for (let i = 0; i < crossHatchCount; i += 1) {
+      const startX = Math.random() * safeWidth;
+      const startY = Math.random() * safeHeight;
+      const length = 5 + Math.random() * 18;
+      const diagonal = (Math.random() < 0.5 ? -1 : 1) * (0.78 + Math.random() * 0.34);
+      const endX = startX + length;
+      const endY = startY + length * diagonal;
+      textureContext.strokeStyle = `rgba(83, 62, 38, ${0.045 + Math.random() * 0.09})`;
+      textureContext.lineWidth = 0.45 + Math.random() * 0.8;
+      textureContext.beginPath();
+      textureContext.moveTo(startX, startY);
+      textureContext.lineTo(endX, endY);
+      textureContext.stroke();
+    }
+
+    const blotchCount = Math.max(12, Math.floor((safeWidth * safeHeight) / 17000));
+    for (let i = 0; i < blotchCount; i += 1) {
+      const radius = 30 + Math.random() * 90;
+      const centerX = Math.random() * safeWidth;
+      const centerY = Math.random() * safeHeight;
+      const blotchGradient = textureContext.createRadialGradient(
+        centerX,
+        centerY,
+        radius * 0.12,
+        centerX,
+        centerY,
+        radius
+      );
+      blotchGradient.addColorStop(0, "rgba(152, 121, 79, 0.14)");
+      blotchGradient.addColorStop(1, "rgba(164, 138, 99, 0)");
+      textureContext.fillStyle = blotchGradient;
+      textureContext.beginPath();
+      textureContext.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      textureContext.fill();
+    }
+
+    // Sparse dot matrix gives a printed-ink vibe once blended over the character.
+    const dotSpacing = 5;
+    for (let y = 0; y < safeHeight; y += dotSpacing) {
+      for (let x = 0; x < safeWidth; x += dotSpacing) {
+        const jitterX = (Math.random() - 0.5) * 1.6;
+        const jitterY = (Math.random() - 0.5) * 1.6;
+        const radius = 0.28 + Math.random() * 0.7;
+        const alpha = 0.03 + Math.random() * 0.09;
+        textureContext.fillStyle = `rgba(71, 54, 34, ${alpha})`;
+        textureContext.beginPath();
+        textureContext.arc(x + jitterX, y + jitterY, radius, 0, Math.PI * 2);
+        textureContext.fill();
+      }
+    }
+  }
+
+  function ensureEffectMaskSurface(width, height) {
+    const safeWidth = Math.max(1, Math.floor(width));
+    const safeHeight = Math.max(1, Math.floor(height));
+    if (
+      effectMaskCanvas &&
+      effectMaskWidth === safeWidth &&
+      effectMaskHeight === safeHeight
+    ) {
+      return;
+    }
+
+    effectMaskCanvas = document.createElement("canvas");
+    effectMaskCanvas.width = safeWidth;
+    effectMaskCanvas.height = safeHeight;
+    effectMaskWidth = safeWidth;
+    effectMaskHeight = safeHeight;
+  }
+
+  function drawPaperTextureOverlay(width, height) {
+    ensurePaperTexture(width, height);
+    ensureEffectMaskSurface(width, height);
+    if (!paperTextureCanvas || !effectMaskCanvas) {
+      return;
+    }
+
+    const effectMaskContext = effectMaskCanvas.getContext("2d");
+    if (!effectMaskContext) {
+      return;
+    }
+
+    effectMaskContext.setTransform(1, 0, 0, 1, 0, 0);
+    effectMaskContext.clearRect(0, 0, width, height);
+    effectMaskContext.drawImage(canvas, 0, 0, width, height);
+
+    context.save();
+    context.globalCompositeOperation = "multiply";
+    context.globalAlpha = 0.62;
+    context.drawImage(paperTextureCanvas, 0, 0, width, height);
+
+    context.globalCompositeOperation = "overlay";
+    context.globalAlpha = 0.32;
+    context.drawImage(paperTextureCanvas, 0, 0, width, height);
+
+    context.globalCompositeOperation = "color-burn";
+    context.globalAlpha = 0.06;
+    context.drawImage(paperTextureCanvas, 0, 0, width, height);
+
+    context.globalCompositeOperation = "soft-light";
+    context.globalAlpha = 0.24;
+    context.fillStyle = "rgba(246, 240, 226, 1)";
+    context.fillRect(0, 0, width, height);
+
+    context.globalCompositeOperation = "multiply";
+    context.globalAlpha = 0.1;
+    context.fillStyle = "rgba(168, 146, 112, 0.9)";
+    context.fillRect(0, 0, width, height);
+
+    context.globalCompositeOperation = "source-over";
+    context.globalAlpha = 0.3;
+    const vignette = context.createRadialGradient(
+      width * 0.5,
+      height * 0.42,
+      Math.min(width, height) * 0.18,
+      width * 0.5,
+      height * 0.5,
+      Math.max(width, height) * 0.76
+    );
+    vignette.addColorStop(0, "rgba(251, 247, 236, 0)");
+    vignette.addColorStop(1, "rgba(88, 72, 54, 0.46)");
+    context.fillStyle = vignette;
+    context.fillRect(0, 0, width, height);
+
+    // Keep texture effects only where sprites were drawn, preserving transparent background.
+    context.globalCompositeOperation = "destination-in";
+    context.globalAlpha = 1;
+    context.drawImage(effectMaskCanvas, 0, 0, width, height);
+    context.restore();
+  }
+
+  function applyPosterizedPrintPass(width, height) {
+    const imageData = context.getImageData(0, 0, width, height);
+    const source = imageData.data;
+    const bayer4x4 = [
+      0, 8, 2, 10,
+      12, 4, 14, 6,
+      3, 11, 1, 9,
+      15, 7, 13, 5
+    ];
+    const toneLevels = 5;
+    const toneStep = 255 / (toneLevels - 1);
+
+    for (let y = 0; y < height; y += 1) {
+      const yOffset = y * width;
+      for (let x = 0; x < width; x += 1) {
+        const index = (yOffset + x) * 4;
+        const alpha = source[index + 3];
+        if (alpha < 2) {
+          continue;
+        }
+
+        const red = source[index];
+        const green = source[index + 1];
+        const blue = source[index + 2];
+        const luminance = red * 0.299 + green * 0.587 + blue * 0.114;
+        const matrixValue = bayer4x4[(y & 3) * 4 + (x & 3)];
+        const ditherOffset = (matrixValue - 7.5) * 2.7;
+        const paperGrain = sketchNoise(x * 0.17 + y * 0.11, 8.5);
+        const quantized = clamp(
+          Math.round((luminance + ditherOffset + paperGrain) / toneStep) * toneStep,
+          0,
+          255
+        );
+
+        const sepiaRed = clamp(quantized * 1.02 + 8, 0, 255);
+        const sepiaGreen = clamp(quantized * 0.97 + 4, 0, 255);
+        const sepiaBlue = clamp(quantized * 0.9 + 1, 0, 255);
+        const inkWeight = quantized < 96 ? 0.46 : 0.36;
+
+        source[index] = Math.round(red * (1 - inkWeight) + sepiaRed * inkWeight);
+        source[index + 1] = Math.round(green * (1 - inkWeight) + sepiaGreen * inkWeight);
+        source[index + 2] = Math.round(blue * (1 - inkWeight) + sepiaBlue * inkWeight);
+      }
+    }
+
+    context.putImageData(imageData, 0, 0);
+  }
+
   function updateCanvasSize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const width = Math.max(280, Math.floor(canvas.clientWidth));
@@ -910,6 +1152,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
 
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ensurePaperTexture(width, height);
   }
 
   function getLimbJointPoint(
@@ -2500,25 +2743,37 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const torsoHeight = bodyProfile.torsoHeight;
     const torsoY = -38 + bodyProfile.torsoYOffset;
     const torsoX = -torsoWidth * 0.5;
-    const outlineWidth = 7;
-    const limbOutlineWidth = 13;
+    const outlineWidth = 4.6;
+    const legOutlineThickness = 12.8;
+    const armOutlineThickness = 7.1;
     const headOffsetY = 4;
+    const outlineBaseColor = "#272321";
+    const outlineHairColor = "#221e1c";
 
     context.save();
-    context.strokeStyle = "#000000";
+    context.strokeStyle = outlineBaseColor;
     context.lineWidth = outlineWidth;
     context.lineCap = "round";
     context.lineJoin = "round";
 
-    const drawOutlineLimb = (rootX, rootY, endX, endY, wobble, phase, bendDirection = 1) => {
-      const joint = getLimbJointPoint(rootX, rootY, endX, endY, wobble, phase, bendDirection, {
-        jointSeed: 0.45
-      });
-      context.beginPath();
-      context.moveTo(rootX, rootY);
-      context.quadraticCurveTo((rootX + joint.x) * 0.5, (rootY + joint.y) * 0.5, joint.x, joint.y);
-      context.quadraticCurveTo((joint.x + endX) * 0.5, (joint.y + endY) * 0.5, endX, endY);
-      drawRawStroke();
+    const drawOutlineLimb = (rootX, rootY, endX, endY, thickness, wobble, phase, bendDirection = 1) => {
+      drawLimb(
+        rootX,
+        rootY,
+        endX,
+        endY,
+        thickness,
+        outlineBaseColor,
+        wobble,
+        phase,
+        outlineBaseColor,
+        0,
+        0,
+        3,
+        0,
+        1,
+        bendDirection
+      );
     };
 
     const getOutlineHandShape = (armZ, emphasis = 0) => {
@@ -2533,8 +2788,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         1.75
       );
       return {
-        radiusX: 9.2 * sizeScale,
-        radiusY: 7.7 * sizeScale
+        radiusX: 8.9 * sizeScale,
+        radiusY: 7.45 * sizeScale
       };
     };
 
@@ -2549,25 +2804,58 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         1.45
       );
       return {
-        radiusX: 10.8 * sizeScale,
-        radiusY: 5.9 * sizeScale
+        radiusX: 10.4 * sizeScale,
+        radiusY: 5.5 * sizeScale
       };
     };
 
     const drawLeftOutlineLeg = () => {
-      drawOutlineLimb(leftLegRootX, 18, legPose.leftLeg.x, leftLegEndY, 4.2 * wobbleScale, seconds * 7 + 0.5, legBendDirection);
+      drawOutlineLimb(
+        leftLegRootX,
+        18,
+        legPose.leftLeg.x,
+        leftLegEndY,
+        legOutlineThickness,
+        4.2 * wobbleScale,
+        seconds * 7 + 0.5,
+        legBendDirection
+      );
     };
     const drawRightOutlineLeg = () => {
-      drawOutlineLimb(rightLegRootX, 18, legPose.rightLeg.x, rightLegEndY, 4.2 * wobbleScale, seconds * 7 + 2.2, legBendDirection);
+      drawOutlineLimb(
+        rightLegRootX,
+        18,
+        legPose.rightLeg.x,
+        rightLegEndY,
+        legOutlineThickness,
+        4.2 * wobbleScale,
+        seconds * 7 + 2.2,
+        legBendDirection
+      );
     };
     const drawLeftOutlineArm = () => {
-      drawOutlineLimb(leftArmRootX, -28, armPose.leftArm.x, armPose.leftArm.y, 4.6 * wobbleScale * 0.1, seconds * 9 + 0.8);
+      drawOutlineLimb(
+        leftArmRootX,
+        -28,
+        armPose.leftArm.x,
+        armPose.leftArm.y,
+        armOutlineThickness,
+        4.6 * wobbleScale,
+        seconds * 9 + 0.8
+      );
     };
     const drawRightOutlineArm = () => {
-      drawOutlineLimb(rightArmRootX, -28, armPose.rightArm.x, armPose.rightArm.y, 4.6 * wobbleScale * 0.1, seconds * 9 + 2.7);
+      drawOutlineLimb(
+        rightArmRootX,
+        -28,
+        armPose.rightArm.x,
+        armPose.rightArm.y,
+        armOutlineThickness,
+        4.6 * wobbleScale,
+        seconds * 9 + 2.7
+      );
     };
 
-    context.lineWidth = limbOutlineWidth;
     if (perspectiveBlend > 0) {
       drawRightOutlineLeg();
       drawLeftOutlineLeg();
@@ -2672,7 +2960,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.translate(0, 66);
     const previousSuppressDecorativeStrokes = suppressDecorativeStrokes;
     suppressDecorativeStrokes = false;
-    drawHairStyle(hairStyle, "#000000", seconds, true);
+    drawHairStyle(hairStyle, outlineHairColor, seconds, true);
     suppressDecorativeStrokes = previousSuppressDecorativeStrokes;
     context.restore();
 
@@ -3475,6 +3763,9 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.fillText("Z", centerX + 58, centerY - 152);
       context.restore();
     }
+
+    applyPosterizedPrintPass(width, height);
+    drawPaperTextureOverlay(width, height);
 
     rafId = window.requestAnimationFrame(drawFrame);
   }
