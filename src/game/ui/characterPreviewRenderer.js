@@ -72,8 +72,12 @@ const EYE_STYLES = [
 const PET_TYPES = ["cat", "dog"];
 
 const HAIR_SIZE_SCALE = 1.3;
-const BODY_SHADOW_OFFSET_X = 11;
-const BODY_SHADOW_OFFSET_Y = -11;
+const DEFAULT_SHADOW_STYLE = {
+  offsetX: -49,
+  offsetY: -9,
+  fillColor: "#6f6f6f",
+  strokeColor: "#555555"
+};
 
 const BODY_TYPE_PROFILES = {
   classic: { torsoWidth: 48, torsoHeight: 62, torsoRadius: 25, torsoYOffset: 0, insetScaleX: 0.67, insetScaleY: 0.71 },
@@ -252,6 +256,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   let bodyType = "classic";
   let eyeStyle = "classic";
   let petType = "cat";
+  let shadowStyle = { ...DEFAULT_SHADOW_STYLE };
   let currentAnimation = "idle";
   let transitionFromAnimation = "idle";
   let transitionStartedAt = performance.now();
@@ -492,8 +497,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.restore();
   }
 
-  function drawHairStyle(styleName, hairColor, seconds) {
-    const strokeColor = blendHexColor(hairColor, -0.45);
+  function drawHairStyle(styleName, hairColor, seconds, useOutline = true) {
+    const strokeColor = useOutline ? blendHexColor(hairColor, -0.45) : hairColor;
     const baselineY = -75;
     context.fillStyle = hairColor;
     context.strokeStyle = strokeColor;
@@ -1492,13 +1497,13 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   }
 
   function drawBodyShadowCopy(pose, leftLegEndY, rightLegEndY, bodyProfile, seconds, wobbleScale) {
-    const shadowFill = "#6f6f6f";
-    const shadowStroke = "#555555";
+    const shadowFill = shadowStyle.fillColor;
+    const shadowStroke = shadowStyle.strokeColor;
 
     context.save();
 
-    const shadowOffsetX = BODY_SHADOW_OFFSET_X;
-    const shadowOffsetY = BODY_SHADOW_OFFSET_Y;
+    const shadowOffsetX = shadowStyle.offsetX;
+    const shadowOffsetY = shadowStyle.offsetY;
 
     // Keep foot contacts fixed while offsetting the upper body silhouette.
     drawLimb(
@@ -1551,6 +1556,11 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.arc(shadowOffsetX, -62 + shadowOffsetY, 25.5, 0, Math.PI * 2);
     context.fill();
     context.stroke();
+
+    context.save();
+    context.translate(shadowOffsetX, shadowOffsetY + 4);
+    drawHairStyle(hairStyle, shadowFill, seconds, false);
+    context.restore();
 
     context.beginPath();
     context.ellipse(pose.leftLeg.x - 1, leftLegEndY + 1.5, 9.5, 5, 0, 0, Math.PI * 2);
@@ -2017,6 +2027,25 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
   }
 
+  function setShadowProperties(nextProperties = {}) {
+    const parsedOffsetX = Number(nextProperties.offsetX);
+    const parsedOffsetY = Number(nextProperties.offsetY);
+    const nextFillColor = String(nextProperties.fillColor || "").trim();
+    const nextStrokeColor = String(nextProperties.strokeColor || "").trim();
+
+    shadowStyle = {
+      ...shadowStyle,
+      ...(Number.isFinite(parsedOffsetX) ? { offsetX: parsedOffsetX } : {}),
+      ...(Number.isFinite(parsedOffsetY) ? { offsetY: parsedOffsetY } : {}),
+      ...(nextFillColor ? { fillColor: nextFillColor } : {}),
+      ...(nextStrokeColor ? { strokeColor: nextStrokeColor } : {})
+    };
+  }
+
+  function getShadowProperties() {
+    return { ...shadowStyle };
+  }
+
   function getHairStyles() {
     return [...HAIR_STYLES];
   }
@@ -2051,10 +2080,12 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     setBodyType,
     setEyeStyle,
     setPetType,
+    setShadowProperties,
     getHairStyles,
     getBodyTypes,
     getEyeStyles,
     getPetTypes,
+    getShadowProperties,
     playAnimation,
     destroy
   };
