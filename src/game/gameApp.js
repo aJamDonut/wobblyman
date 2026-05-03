@@ -922,6 +922,21 @@ export function createGameApp() {
     return Math.max(0, Math.ceil(baseCashPayout * survivorSkillValue * skillMultiplier));
   }
 
+  function getMissionCashDrainPerSecond(mission) {
+    if (!mission || !Number.isFinite(mission.cashDrainPerSecond)) {
+      return 0;
+    }
+
+    return Math.max(0, Number(mission.cashDrainPerSecond));
+  }
+
+  function getMissionCashRequiredToStart(mission) {
+    const upfrontCost = getMissionCashCost(mission);
+    const perSecondDrain = getMissionCashDrainPerSecond(mission);
+    const minimumDrainReserve = perSecondDrain > 0 ? 1 : 0;
+    return upfrontCost + minimumDrainReserve;
+  }
+
   function isOneTimeMission(mission) {
     return Boolean(mission?.oneTime);
   }
@@ -1060,6 +1075,7 @@ export function createGameApp() {
       const riskMarkup = mission.riskLabel ? `<div class="low">${mission.riskLabel}</div>` : "";
       const cashCost = getMissionCashCost(mission);
       const cashPayout = getMissionCashPayout(mission, activeSurvivor);
+      const cashDrainPerSecond = getMissionCashDrainPerSecond(mission);
       const rewardMarkup = mission.rewardLabel
         ? `<div class="reward"><span class="sandwich">🥪</span>${mission.rewardLabel}</div>`
         : "";
@@ -1077,9 +1093,10 @@ export function createGameApp() {
           </div>`
           : "";
       const missionEconomyMarkup =
-        cashCost > 0 || cashPayout > 0
+        cashCost > 0 || cashPayout > 0 || cashDrainPerSecond > 0
           ? `<div class="mission-economy-row">${
               cashCost > 0 ? `<span class="mission-cash-chip mission-cash-cost">COST $${cashCost}</span>` : ""
+            }${cashDrainPerSecond > 0 ? `<span class="mission-cash-chip mission-cash-cost">COST $${cashDrainPerSecond}/S</span>` : ""
             }${cashPayout > 0 ? `<span class="mission-cash-chip mission-cash-payout">PAYOUT $${cashPayout}</span>` : ""}</div>`
           : "";
       const timerMarkup = shouldShowMissionTimer(mission)
@@ -1152,6 +1169,7 @@ export function createGameApp() {
       const button = missionElement.querySelector(".start-btn");
       const mission = getMission(missionCategory, missionKey);
       const cashCost = getMissionCashCost(mission);
+      const cashRequiredToStart = getMissionCashRequiredToStart(mission);
 
       if (!hasSurvivor) {
         button.disabled = true;
@@ -1160,8 +1178,8 @@ export function createGameApp() {
       }
 
       if (!runningMissionKey) {
-        button.disabled = cashCost > availableCash;
-        button.textContent = cashCost > availableCash ? "CANT AFFORD" : "START";
+        button.disabled = cashRequiredToStart > availableCash;
+        button.textContent = cashRequiredToStart > availableCash ? "CANT AFFORD" : "START";
         return;
       }
 
@@ -1295,8 +1313,9 @@ export function createGameApp() {
     }
 
     const cashCost = getMissionCashCost(mission);
-    if (cashCost > getAvailableCash()) {
-      toast(`Need $${cashCost} cash to start ${mission.title}.`);
+    const cashRequiredToStart = getMissionCashRequiredToStart(mission);
+    if (cashRequiredToStart > getAvailableCash()) {
+      toast(`Need $${cashRequiredToStart} cash to start ${mission.title}.`);
       renderAll();
       return;
     }
@@ -1322,6 +1341,8 @@ export function createGameApp() {
         rewardLabel: mission.rewardLabel,
         cashCost,
         cashPayout: getMissionCashPayout(mission, activeSurvivor),
+        cashDrainPerSecond: getMissionCashDrainPerSecond(mission),
+        cashDrainAccrued: 0,
         cycleSeconds,
         cycleRemainingSeconds: cycleSeconds,
         cyclesCompleted: 0,
@@ -1484,6 +1505,38 @@ export function createGameApp() {
     }
   }
 
+  function applyMissionCashDrainForDuration(missionProgress, durationSeconds) {
+    const drainPerSecond = Number.isFinite(missionProgress?.cashDrainPerSecond)
+      ? Math.max(0, Number(missionProgress.cashDrainPerSecond))
+      : 0;
+
+    if (drainPerSecond <= 0 || durationSeconds <= 0) {
+      return { drained: 0, stoppedForCash: false };
+    }
+
+    const accruedCash = Number.isFinite(missionProgress.cashDrainAccrued)
+      ? Math.max(0, Number(missionProgress.cashDrainAccrued))
+      : 0;
+    const totalDue = accruedCash + durationSeconds * drainPerSecond;
+    const wholeDollarsDue = Math.floor(totalDue);
+    missionProgress.cashDrainAccrued = totalDue - wholeDollarsDue;
+
+    if (wholeDollarsDue <= 0) {
+      return { drained: 0, stoppedForCash: false };
+    }
+
+    const availableCash = getAvailableCash();
+    const drainedCash = Math.min(availableCash, wholeDollarsDue);
+    state.resources.cash = Math.max(0, availableCash - drainedCash);
+
+    if (drainedCash < wholeDollarsDue) {
+      missionProgress.cashDrainAccrued = 0;
+      return { drained: drainedCash, stoppedForCash: true };
+    }
+
+    return { drained: drainedCash, stoppedForCash: false };
+  }
+
   function applyMissionCycleRewards(missionProgress) {
     const activeSurvivor = getSurvivorById(state, missionProgress.survivorId);
     if (!activeSurvivor) {
@@ -1537,9 +1590,26 @@ export function createGameApp() {
   gameLoop.addSystem(missionProgressSystem, {
     onMissionTick: (missionProgress, activeDeltaSeconds) => {
       let appliedStatChange = false;
+      let changedCash = false;
       const activeSurvivor = getSurvivorById(state, missionProgress.survivorId);
+      const mission = getMission(missionProgress.categoryKey, missionProgress.key);
+
+      const cashDrainResult = applyMissionCashDrainForDuration(
+        missionProgress,
+        Math.max(0, activeDeltaSeconds || 0),
+      );
+
+      if (cashDrainResult.drained > 0) {
+        changedCash = true;
+      }
+
+      if (cashDrainResult.stoppedForCash) {
+        cancelMission();
+        toast(`Out of cash. ${mission?.title || "Mission"} stopped.`);
+        return;
+      }
+
       if (activeSurvivor) {
-        const mission = getMission(missionProgress.categoryKey, missionProgress.key);
         const elapsedForStatChange =
           (Number.isFinite(missionProgress.statChangeElapsedSeconds)
             ? missionProgress.statChangeElapsedSeconds
@@ -1568,6 +1638,11 @@ export function createGameApp() {
       }
 
       renderMissionTimer(missionProgress.categoryKey, missionProgress.key, missionProgress.remainingSeconds);
+      if (changedCash) {
+        renderMissionsCash(state, elements);
+        syncActionButtons();
+        queuePersist();
+      }
       if (appliedStatChange) {
         renderRoster(state, elements, onSelectSurvivor);
       }

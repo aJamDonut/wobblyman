@@ -143,6 +143,9 @@ function withMissionEconomy(missionCategories) {
           const cashPayout = Number.isFinite(mission.cashPayout)
             ? Math.max(0, mission.cashPayout)
             : 0;
+          const cashDrainPerSecond = Number.isFinite(mission.cashDrainPerSecond)
+            ? Math.max(0, mission.cashDrainPerSecond)
+            : 0;
           const payoutSkill =
             typeof mission.skill === "string" && mission.skill.trim().length > 0
               ? mission.skill.trim().toLowerCase()
@@ -159,6 +162,7 @@ function withMissionEconomy(missionCategories) {
               ...mission,
               cashCost,
               cashPayout,
+              cashDrainPerSecond,
               skill: payoutSkill,
               skillMultiplier,
             },
@@ -180,7 +184,7 @@ export function createInitialState() {
       createSurvivor(
         {
           id: "ritu",
-          name: "Ritu Shadowaxe",
+          name: "Wobblyman",
           level: 5,
           gender: "female",
           ...createPaletteForIndex(0),
@@ -340,6 +344,13 @@ export function createInitialState() {
           popupIcon: "💼",
           flags: [{ flagName: "hasJob", newValue: true }],
           hideFlags: ["hasJob"]
+        },
+        callFriends: {
+          title: "CALL FRIENDS",
+          seconds: 1,
+          xp: 0.5,
+          statXp: { social: 1, speech: 1 },
+          cashCost: 1,
         },
         openBusiness: {
           title: "OPEN BUSINESS",
