@@ -103,6 +103,7 @@ export function createGameApp() {
     "wave",
     "sandwich",
     "busk",
+    "buying",
     "read",
     "working",
     "celebrate",
@@ -405,6 +406,11 @@ export function createGameApp() {
   }
 
   function getMissionAnimationName(missionKey) {
+    const normalizedKey = String(missionKey || "").toLowerCase();
+    if (normalizedKey.startsWith("buy") || normalizedKey === "phone") {
+      return "buying";
+    }
+
     const missionAnimationMap = {
       workout: "pushups",
       pushups: "pushups",

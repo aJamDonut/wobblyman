@@ -87,7 +87,8 @@ const PROP_TRANSFORM_DEFAULTS = Object.freeze({
       "rotation": 31
     },
   hunt: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
-  cook: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 }
+  cook: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
+  buying: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 }
 });
 
 
@@ -333,7 +334,7 @@ function createPose(timeSeconds, animationName) {
     pose.bounce = Math.sin(timeSeconds * 4.4) * 1.5 + strumDown * 0.7;
     pose.leftArm = {
       x: -24 + fret * 2.2,
-      y: -26 + Math.sin(timeSeconds * 5) * 1.8,
+      y: -20 + Math.sin(timeSeconds * 5) * 1.8,
       z: -8
     };
     pose.rightArm = {
@@ -582,6 +583,17 @@ function createPose(timeSeconds, animationName) {
     pose.rightLeg = { x: 18, y: 79.5 + impact * 0.7 };
   }
 
+  if (animationName === "buying") {
+    const countMoney = Math.sin(timeSeconds * 7.8);
+    const flutter = Math.cos(timeSeconds * 9.4);
+    pose.lean = -0.05 + Math.sin(timeSeconds * 2.4) * 0.02;
+    pose.bounce = Math.sin(timeSeconds * 4.6) * 1.5;
+    pose.leftArm = { x: -16 + countMoney * 3.2, y: -32 + flutter * 2.2, z: 10 };
+    pose.rightArm = { x: 22 + countMoney * 4.2, y: -30 - flutter * 2.6, z: 22 };
+    pose.leftLeg = { x: -18, y: 79.5 + Math.abs(countMoney) * 0.8 };
+    pose.rightLeg = { x: 18, y: 79.5 + Math.abs(countMoney) * 0.8 };
+  }
+
   return withPoseDepth(pose);
 }
 
@@ -639,7 +651,13 @@ function createPetPose(timeSeconds, animationName) {
     pose.earPerk = 1;
   }
 
-  if (animationName === "working" || animationName === "sandwich" || animationName === "busk" || animationName === "read") {
+  if (
+    animationName === "working"
+    || animationName === "sandwich"
+    || animationName === "busk"
+    || animationName === "read"
+    || animationName === "buying"
+  ) {
     pose.bounce = Math.sin(timeSeconds * 6.3) * 1.7;
     pose.lean = Math.sin(timeSeconds * 4.8) * 0.08;
     pose.tailSwing = Math.sin(timeSeconds * 12) * 0.7;
@@ -1745,6 +1763,82 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.stroke();
       context.restore();
     }
+
+    context.restore();
+  }
+
+  function drawCashStack(x, y, tilt = 0, flick = 0) {
+    context.save();
+    context.translate(x, y);
+    context.rotate(tilt);
+
+    const noteSpread = Math.sin(flick) * 1.8;
+    context.fillStyle = "#89c971";
+    context.strokeStyle = "#3e6f33";
+    context.lineWidth = 1;
+
+    context.beginPath();
+    context.roundRect(-16 - noteSpread * 0.25, -9, 32, 18, 3);
+    context.fill();
+    context.stroke();
+
+    context.beginPath();
+    context.roundRect(-14 + noteSpread * 0.2, -11, 30, 18, 3);
+    context.fillStyle = "#9fdb84";
+    context.fill();
+    context.stroke();
+
+    context.fillStyle = "rgba(53, 95, 44, 0.9)";
+    context.beginPath();
+    context.roundRect(-4, -4.8, 8, 9.6, 2.2);
+    context.fill();
+
+    context.strokeStyle = "rgba(232, 248, 225, 0.9)";
+    context.lineWidth = 1.2;
+    context.beginPath();
+    context.moveTo(-9, -0.8);
+    context.quadraticCurveTo(0, -7.2, 9, -0.8);
+    context.moveTo(-9, 1.8);
+    context.quadraticCurveTo(0, 8.2, 9, 1.8);
+    context.stroke();
+
+    context.restore();
+  }
+
+  function drawBuyingMoneySymbols(x, y, seconds, intensity = 1) {
+    const symbols = [
+      { x: -15, y: 0, rise: 24, speed: 0.95, phase: 0.18, size: 0.9 },
+      { x: 4, y: -2, rise: 28, speed: 1.1, phase: 0.61, size: 1.1 },
+      { x: 18, y: 2, rise: 22, speed: 1.25, phase: 0.89, size: 0.8 }
+    ];
+
+    context.save();
+    context.translate(x, y);
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+
+    symbols.forEach((symbol) => {
+      const progress = ((seconds * symbol.speed + symbol.phase) % 1 + 1) % 1;
+      const rise = progress * symbol.rise;
+      const sway = Math.sin(seconds * 5.4 + symbol.phase * Math.PI * 2) * 4;
+      const pulse = 1 + Math.sin(seconds * 8 + symbol.phase * Math.PI * 2) * 0.08;
+      const fade = clamp((1 - progress * 0.92) * intensity, 0, 1);
+      if (fade <= 0.01) {
+        return;
+      }
+
+      context.save();
+      context.globalAlpha = fade;
+      context.translate(symbol.x + sway, symbol.y - rise);
+      context.scale(symbol.size * pulse, symbol.size * pulse);
+      context.font = "700 16px 'Patrick Hand', 'Comic Sans MS', cursive";
+      context.fillStyle = "rgba(104, 166, 66, 0.95)";
+      context.strokeStyle = "rgba(51, 89, 38, 0.9)";
+      context.lineWidth = 1.1;
+      context.strokeText("$", 0, 0);
+      context.fillText("$", 0, 0);
+      context.restore();
+    });
 
     context.restore();
   }
@@ -3372,6 +3466,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const searchWeight = getAnimationWeight("search", easedMix);
     const huntWeight = getAnimationWeight("hunt", easedMix);
     const cookWeight = getAnimationWeight("cook", easedMix);
+    const buyingWeight = getAnimationWeight("buying", easedMix);
     const punchWeight = getAnimationWeight("punch", easedMix);
     const idleWeight = getAnimationWeight("idle", easedMix);
     const animatedTiltMix = clamp(pose.perspectiveTiltMix || 0, 0, 1);
@@ -4085,6 +4180,33 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.scale(cookPlacement.scale, cookPlacement.scale);
       drawKnifeAndCarrot(0, 0, 0, cookCycle, chopImpact);
       context.restore();
+    }
+
+    if (buyingWeight > 0.01) {
+      const moneyFlick = seconds * 8.2;
+      const buyingPlacement = getPropPlacement(
+        "buying",
+        (perspectivePose.leftArm.x + perspectivePose.rightArm.x) * 0.5,
+        (perspectivePose.leftArm.y + perspectivePose.rightArm.y) * 0.5 + 6,
+        -0.08 + Math.sin(seconds * 4.6) * 0.04,
+        { perspectiveBlend, depthVisibility, baseZ: centerDepth + 8 }
+      );
+      context.save();
+      context.globalAlpha = buyingWeight;
+      context.translate(buyingPlacement.x, buyingPlacement.y);
+      context.rotate(buyingPlacement.rotation);
+      context.scale(buyingPlacement.scale, buyingPlacement.scale);
+      drawCashStack(0, 0, 0, moneyFlick);
+      context.restore();
+
+      const symbolPlacement = getPropPlacement(
+        "buying",
+        buyingPlacement.x + 16,
+        buyingPlacement.y - 22,
+        0,
+        { perspectiveBlend, depthVisibility, baseZ: centerDepth + 24 }
+      );
+      drawBuyingMoneySymbols(symbolPlacement.x, symbolPlacement.y, seconds, buyingWeight);
     }
 
     // Draw the arm that's closer to the camera in front of the body.

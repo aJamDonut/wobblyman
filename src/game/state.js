@@ -268,7 +268,7 @@ export function createInitialState() {
         },
         sleep: {
           title: "SLEEP",
-          seconds: 10,
+          seconds: 5,
           xp: 0.5,
           statXp: { sleep: 3, knowledge: 1 },
           statChange: {
@@ -282,7 +282,7 @@ export function createInitialState() {
       catalog: {
         buyShower: {
           title: "BUY SHOWER",
-          seconds: 10,
+          seconds: 5,
           xp: 0.35,
           oneTime: true,
           cashCost: 25,
@@ -294,7 +294,7 @@ export function createInitialState() {
         },
         buyBooks: {
           title: "BUY BOOKS",
-          seconds: 10,
+          seconds: 5,
           xp: 0.35,
           oneTime: true,
           cashCost: 15,
@@ -306,7 +306,7 @@ export function createInitialState() {
         },
         buyWorkoutGear: {
           title: "BUY WORKOUT GEAR",
-          seconds: 10,
+          seconds: 5,
           xp: 0.35,
           oneTime: true,
           cashCost: 20,
@@ -318,7 +318,7 @@ export function createInitialState() {
         },
         phone: {
           title: "BUY PHONE",
-          seconds: 10,
+          seconds: 5,
           xp: 0.35,
           oneTime: true,
           cashCost: 10,
@@ -332,7 +332,7 @@ export function createInitialState() {
       phone: {
         job: {
           title: "FIND JOB",
-          seconds: 10,
+          seconds: 5,
           xp: 0.35,
           oneTime: true,
           popupTitle: "Job Locked In",
