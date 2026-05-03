@@ -1094,6 +1094,10 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   }
 
   function applyPosterizedPrintPass(width, height) {
+    if (width < 1 || height < 1) {
+      return;
+    }
+
     const imageData = context.getImageData(0, 0, width, height);
     const source = imageData.data;
     const bayer4x4 = [
@@ -3170,8 +3174,10 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       playAnimation(loopAnimation, { loop: true, transitionMs: 220 });
     }
 
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
+    // Use backing-store dimensions so transient clientWidth/clientHeight=0 states do not break rendering.
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const width = Math.max(1, Math.floor(canvas.width / dpr));
+    const height = Math.max(1, Math.floor(canvas.height / dpr));
     const centerX = width * 0.5;
     const centerY = height * 0.58;
 
