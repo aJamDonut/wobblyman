@@ -1530,29 +1530,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const wobbleScale = 0.65;
     const bodyProfile = BODY_TYPE_PROFILES[bodyType] || BODY_TYPE_PROFILES.classic;
 
-    context.fillStyle = "#f8f3de";
-    context.fillRect(0, 0, width, height);
-
-    context.strokeStyle = "rgba(69, 130, 186, 0.22)";
-    context.lineWidth = 1;
-    for (let y = 18; y < height; y += 24) {
-      context.beginPath();
-      context.moveTo(0, y);
-      context.lineTo(width, y);
-      context.stroke();
-    }
-
-    context.strokeStyle = "rgba(193, 80, 80, 0.42)";
-    context.beginPath();
-    context.moveTo(26, 0);
-    context.lineTo(26, height);
-    context.stroke();
-
-    context.strokeStyle = "rgba(59, 48, 41, 0.38)";
-    context.lineWidth = 1.1;
-    context.beginPath();
-    context.ellipse(centerX, centerY + 88, 52, 11, 0, 0, Math.PI * 2);
-    context.stroke();
+    context.clearRect(0, 0, width, height);
 
     context.save();
     context.translate(centerX, centerY + dampedBounce);
