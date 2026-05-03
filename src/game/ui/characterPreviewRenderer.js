@@ -12,14 +12,11 @@ const HAIR_STYLES = [
   "parted",
   "pompadour",
   "afro",
-  "mohawk",
-  "spiky",
   "bob",
   "ponytail",
   "wavy",
   "braids",
   "quiff",
-  "anime-spikes",
   "twin-tails",
   "hime-cut",
   "side-bangs",
@@ -27,23 +24,11 @@ const HAIR_STYLES = [
   "hero-sweep",
   "neko-fluff",
   "ribbon-bob",
-  "cyber-visor",
   "long-flow",
-  "ki-spikes",
-  "solar-mane",
-  "battle-wave",
-  "power-crown",
-  "comet-tail",
-  "hat-beanie",
-  "hat-cap",
   "hat-beret",
   "hat-top",
   "hat-bucket",
   "hat-fedora",
-  "hat-crown",
-  "hat-helmet",
-  "hat-chef",
-  "hat-wizard"
 ];
 
 const BODY_TYPES = [
@@ -57,16 +42,12 @@ const BODY_TYPES = [
 
 const EYE_STYLES = [
   "classic",
-  "sharp",
   "sleepy",
   "round",
-  "narrow",
-  "spark",
+  
   "sunglasses",
   "eyeglasses",
-  "-glasses",
   "aviators",
-  "monocle"
 ];
 
 const PET_TYPES = ["cat", "dog"];

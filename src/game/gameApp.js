@@ -96,21 +96,11 @@ export function createGameApp() {
     "working",
     "celebrate",
     "sleep",
-    "run",
-    "walk",
     "talk",
-    "jump",
-    "dance",
-    "sneak",
-    "stretch",
-    "punch",
-    "pushups",
     "shower",
     "wash",
     "dig",
-    "search",
-    "hunt",
-    "cook"
+    "search"
   ];
   const previewHairStyles = characterPreview.getHairStyles();
   const previewEyeStyles = characterPreview.getEyeStyles();
@@ -344,12 +334,9 @@ export function createGameApp() {
   }
 
   function chooseStrongholdAnimation(survivor, index) {
-    if (state.running?.survivorId === survivor.id) {
-      return getMissionAnimationName(state.running.key);
-    }
-
-    const idleAnimations = ["idle", "walk", "talk", "wave", "celebrate", "stretch", "sneak"];
-    return idleAnimations[index % idleAnimations.length];
+    const groupPhotoAnimations = ["idle", "celebrate", "talk"];
+    const styleSeed = hashString(`${survivor.id}:${index}`);
+    return groupPhotoAnimations[styleSeed % groupPhotoAnimations.length];
   }
 
   function clearStrongholdRenderers() {
