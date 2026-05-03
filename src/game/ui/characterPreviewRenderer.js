@@ -126,6 +126,13 @@ function createPose(timeSeconds, animationName) {
     rightLeg: { x: 18 + Math.sin(timeSeconds * 1.8 + Math.PI) * 2, y: 78 }
   };
 
+  if (animationName === "idle") {
+    const footSettle = Math.sin(timeSeconds * 1.3);
+    pose.bounce = Math.sin(timeSeconds * 2.1) * 2.4;
+    pose.leftLeg = { x: -18 + footSettle * 0.5, y: 78 };
+    pose.rightLeg = { x: 18 + Math.sin(timeSeconds * 1.3 + Math.PI) * 0.5, y: 78 };
+  }
+
   if (animationName === "wave") {
     pose.rightArm = {
       x: 48 + Math.sin(timeSeconds * 7) * 3,
@@ -422,6 +429,21 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     );
     context.stroke();
     context.restore();
+  }
+
+  function drawFlatLimb(rootX, rootY, endX, endY, thickness, color, wobble = 0, phase = 0) {
+    context.strokeStyle = color;
+    context.lineWidth = Math.max(0.8, thickness);
+    context.lineCap = "round";
+    context.beginPath();
+    context.moveTo(rootX, rootY);
+    context.quadraticCurveTo(
+      (rootX + endX) * 0.5 + Math.sin(phase) * wobble,
+      (rootY + endY) * 0.5 + Math.cos(phase * 1.2) * wobble * 0.55,
+      endX,
+      endY
+    );
+    context.stroke();
   }
 
   function drawSandwich(x, y, tilt = 0) {
@@ -1553,7 +1575,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const shadowOffsetY = shadowStyle.offsetY;
 
     // Keep foot contacts fixed while offsetting the upper body silhouette.
-    drawLimb(
+    drawFlatLimb(
       leftLegRootX + shadowOffsetX,
       18 + shadowOffsetY,
       pose.leftLeg.x,
@@ -1561,15 +1583,9 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       5.5,
       shadowFill,
       4.2 * wobbleScale,
-      seconds * 7 + 0.5,
-      shadowStroke,
-      0,
-      0,
-      1,
-      0,
-      0.1
+      seconds * 7 + 0.5
     );
-    drawLimb(
+    drawFlatLimb(
       rightLegRootX + shadowOffsetX,
       18 + shadowOffsetY,
       pose.rightLeg.x,
@@ -1577,13 +1593,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       5.5,
       shadowFill,
       4.2 * wobbleScale,
-      seconds * 7 + 2.2,
-      shadowStroke,
-      0,
-      0,
-      1,
-      0,
-      0.1
+      seconds * 7 + 2.2
     );
 
     const torsoWidth = bodyProfile.torsoWidth;
@@ -1619,7 +1629,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.stroke();
 
     const drawLeftShadowArm = () => {
-      drawLimb(
+      drawFlatLimb(
         leftArmRootX + shadowOffsetX,
         -28 + shadowOffsetY,
         pose.leftArm.x + shadowOffsetX,
@@ -1627,17 +1637,11 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         5,
         shadowFill,
         4.6 * wobbleScale,
-        seconds * 9 + 0.8,
-        shadowStroke,
-        0,
-        0,
-        1,
-        0,
-        0.1
+        seconds * 9 + 0.8
       );
     };
     const drawRightShadowArm = () => {
-      drawLimb(
+      drawFlatLimb(
         rightArmRootX + shadowOffsetX,
         -28 + shadowOffsetY,
         pose.rightArm.x + shadowOffsetX,
@@ -1645,13 +1649,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         5,
         shadowFill,
         4.6 * wobbleScale,
-        seconds * 9 + 2.7,
-        shadowStroke,
-        0,
-        0,
-        1,
-        0,
-        0.1
+        seconds * 9 + 2.7
       );
     };
 

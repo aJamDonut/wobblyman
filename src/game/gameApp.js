@@ -76,8 +76,8 @@ export function createGameApp() {
   const previewPetTypes = characterPreview.getPetTypes();
   let previewAnimationOverride = null;
   let previewAnimationCycleIndex = -1;
-  let previewHairStyleCycleIndex = Math.max(0, previewHairStyles.indexOf("classic"));
-  let previewEyeStyleCycleIndex = Math.max(0, previewEyeStyles.indexOf("classic"));
+  let previewHairStyleCycleIndex = Math.max(0, previewHairStyles.indexOf("hat-fedora"));
+  let previewEyeStyleCycleIndex = Math.max(0, previewEyeStyles.indexOf("round-glasses"));
   let previewBodyTypeCycleIndex = Math.max(0, previewBodyTypes.indexOf("classic"));
   let previewPetTypeCycleIndex = Math.max(0, previewPetTypes.indexOf("cat"));
   let previewPerspectiveTilt = 100;
