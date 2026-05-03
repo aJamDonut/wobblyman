@@ -808,6 +808,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   let animationStartedAt = performance.now();
   let animationDurationMs = 0;
   let rafId = null;
+  let legBendDirectionValue = -0.8;
 
   function lerp(a, b, t) {
     return a + (b - a) * t;
@@ -925,8 +926,30 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     detailWidth = null,
     sketchPasses = 3,
     strokeWidthBoost = 1,
-    jitterScale = 1
+    jitterScale = 1,
+    bendDirection = 1
   ) {
+    const getJointPoint = (jointSeed = 0, passIndex = 0) => {
+      const dx = endX - rootX;
+      const dy = endY - rootY;
+      const distance = Math.max(1, Math.hypot(dx, dy));
+      const nx = -dy / distance;
+      const ny = dx / distance;
+      const forwardBend = Math.sin(phase * 0.55 + jointSeed) * (distance * 0.04);
+      // Keep an intrinsic gait bend so knees do not snap straight while perspective side crosses.
+      const gaitBend = wobble * 0.42 + forwardBend;
+      const perspectiveBend = wobble * 0.72 * clamp(bendDirection, -1, 1);
+      const bendAmount = gaitBend + perspectiveBend;
+      const jointBaseX = rootX + dx * 0.5;
+      const jointBaseY = rootY + dy * 0.5;
+      const passJitterX = sketchNoise(phase + passIndex * 0.59 + jointSeed, 0.5 * motionScale);
+      const passJitterY = sketchNoise(phase + passIndex * 0.59 + jointSeed + 2.6, 0.45 * motionScale);
+      return {
+        x: jointBaseX + nx * bendAmount + passJitterX,
+        y: jointBaseY + ny * bendAmount + passJitterY
+      };
+    };
+
     const graphite = "#332923";
     const motionScale = Math.max(0, jitterScale);
     const fillTone = blendHexColor(color, fillShift);
@@ -940,31 +963,33 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       const passSeed = phase + pass * 0.73;
       const jitterX = sketchNoise(passSeed, 0.9 * motionScale);
       const jitterY = sketchNoise(passSeed + 2.4, 0.8 * motionScale);
-      const scaledWobble = wobble * motionScale;
-      const midX = (rootX + endX) * 0.5 + Math.sin(phase + pass * 0.35) * scaledWobble + jitterX;
-      const midY = (rootY + endY) * 0.5 + Math.cos(phase * 1.2 + pass * 0.42) * scaledWobble * 0.55 + jitterY;
+      const joint = getJointPoint(0.45, pass);
+      const upperMidX = (rootX + joint.x) * 0.5 + jitterX * 0.35;
+      const upperMidY = (rootY + joint.y) * 0.5 + jitterY * 0.35;
+      const lowerMidX = (joint.x + endX) * 0.5 - jitterX * 0.3;
+      const lowerMidY = (joint.y + endY) * 0.5 - jitterY * 0.3;
       context.beginPath();
       context.moveTo(rootX + jitterX * 0.35, rootY + jitterY * 0.35);
-      context.quadraticCurveTo(midX, midY, endX - jitterX * 0.25, endY - jitterY * 0.25);
+      context.quadraticCurveTo(upperMidX, upperMidY, joint.x, joint.y);
+      context.quadraticCurveTo(lowerMidX, lowerMidY, endX - jitterX * 0.25, endY - jitterY * 0.25);
       drawRawStroke();
     }
 
     const resolvedDetailWidth = Number.isFinite(detailWidth) ? detailWidth : Math.max(1.2, thickness * 0.28);
     if (!suppressDecorativeStrokes && resolvedDetailWidth > 0) {
+      const detailJoint = getJointPoint(1.2, 0);
       context.strokeStyle = detailColor || graphite;
       context.lineWidth = resolvedDetailWidth;
       context.beginPath();
       context.moveTo(rootX, rootY);
-      context.quadraticCurveTo(
-        (rootX + endX) * 0.5 + Math.sin(phase) * wobble,
-        (rootY + endY) * 0.5 + Math.cos(phase * 1.2) * wobble * 0.55,
-        endX,
-        endY
-      );
+      context.quadraticCurveTo((rootX + detailJoint.x) * 0.5, (rootY + detailJoint.y) * 0.5, detailJoint.x, detailJoint.y);
+      context.quadraticCurveTo((detailJoint.x + endX) * 0.5, (detailJoint.y + endY) * 0.5, endX, endY);
       drawRawStroke();
     }
 
     if (!suppressDecorativeStrokes) {
+      const shadowJoint = getJointPoint(2, 0);
+      const highlightJoint = getJointPoint(2.7, 0);
       context.save();
       context.globalAlpha = 0.5;
       context.strokeStyle = blendHexColor(color, -0.3);
@@ -972,8 +997,14 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.beginPath();
       context.moveTo(rootX + 0.8, rootY + 0.9);
       context.quadraticCurveTo(
-        (rootX + endX) * 0.5 + Math.sin(phase) * wobble + 0.8,
-        (rootY + endY) * 0.5 + Math.cos(phase * 1.2) * wobble * 0.55 + 0.9,
+        (rootX + shadowJoint.x) * 0.5 + 0.8,
+        (rootY + shadowJoint.y) * 0.5 + 0.9,
+        shadowJoint.x + 0.8,
+        shadowJoint.y + 0.9
+      );
+      context.quadraticCurveTo(
+        (shadowJoint.x + endX) * 0.5 + 0.8,
+        (shadowJoint.y + endY) * 0.5 + 0.9,
         endX + 0.8,
         endY + 0.9
       );
@@ -985,8 +1016,14 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.beginPath();
       context.moveTo(rootX - 0.5, rootY - 0.4);
       context.quadraticCurveTo(
-        (rootX + endX) * 0.5 + Math.sin(phase) * wobble - 0.5,
-        (rootY + endY) * 0.5 + Math.cos(phase * 1.2) * wobble * 0.55 - 0.4,
+        (rootX + highlightJoint.x) * 0.5 - 0.5,
+        (rootY + highlightJoint.y) * 0.5 - 0.4,
+        highlightJoint.x - 0.5,
+        highlightJoint.y - 0.4
+      );
+      context.quadraticCurveTo(
+        (highlightJoint.x + endX) * 0.5 - 0.5,
+        (highlightJoint.y + endY) * 0.5 - 0.4,
         endX - 0.5,
         endY - 0.4
       );
@@ -995,18 +1032,25 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
   }
 
-  function drawFlatLimb(rootX, rootY, endX, endY, thickness, color, wobble = 0, phase = 0) {
+  function drawFlatLimb(rootX, rootY, endX, endY, thickness, color, wobble = 0, phase = 0, bendDirection = 1) {
+    const dx = endX - rootX;
+    const dy = endY - rootY;
+    const distance = Math.max(1, Math.hypot(dx, dy));
+    const nx = -dy / distance;
+    const ny = dx / distance;
+    const gaitBend = wobble * 0.44 + Math.sin(phase * 0.55) * (distance * 0.03);
+    const perspectiveBend = wobble * 0.74 * clamp(bendDirection, -1, 1);
+    const bendAmount = gaitBend + perspectiveBend;
+    const jointX = rootX + dx * 0.5 + nx * bendAmount;
+    const jointY = rootY + dy * 0.5 + ny * bendAmount;
+
     context.strokeStyle = color;
     context.lineWidth = Math.max(0.8, thickness);
     context.lineCap = "round";
     context.beginPath();
     context.moveTo(rootX, rootY);
-    context.quadraticCurveTo(
-      (rootX + endX) * 0.5 + Math.sin(phase) * wobble,
-      (rootY + endY) * 0.5 + Math.cos(phase * 1.2) * wobble * 0.55,
-      endX,
-      endY
-    );
+    context.quadraticCurveTo((rootX + jointX) * 0.5, (rootY + jointY) * 0.5, jointX, jointY);
+    context.quadraticCurveTo((jointX + endX) * 0.5, (jointY + endY) * 0.5, endX, endY);
     drawRawStroke();
   }
 
@@ -2295,7 +2339,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     leftArmRootX,
     rightArmRootX,
     perspectiveBlend,
-    perspectiveOffsetX = 0
+    perspectiveOffsetX = 0,
+    legBendDirection = 1
   ) {
     const shadowFill = shadowStyle.fillColor;
     const shadowStroke = shadowStyle.strokeColor;
@@ -2314,7 +2359,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       5.5,
       shadowFill,
       4.2 * wobbleScale,
-      seconds * 7 + 0.5
+      seconds * 7 + 0.5,
+      legBendDirection
     );
     drawFlatLimb(
       rightLegRootX + shadowOffsetX,
@@ -2324,7 +2370,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       5.5,
       shadowFill,
       4.2 * wobbleScale,
-      seconds * 7 + 2.2
+      seconds * 7 + 2.2,
+      legBendDirection
     );
 
     const torsoWidth = bodyProfile.torsoWidth;
@@ -2430,7 +2477,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     wobbleScale,
     perspectiveBlend,
     depthVisibility,
-    punchWeight = 0
+    punchWeight = 0,
+    legBendDirection = 1
   ) {
     const torsoWidth = bodyProfile.torsoWidth;
     const torsoHeight = bodyProfile.torsoHeight;
@@ -2446,15 +2494,21 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.lineCap = "round";
     context.lineJoin = "round";
 
-    const drawOutlineLimb = (rootX, rootY, endX, endY, wobble, phase) => {
+    const drawOutlineLimb = (rootX, rootY, endX, endY, wobble, phase, bendDirection = 1) => {
+      const dx = endX - rootX;
+      const dy = endY - rootY;
+      const distance = Math.max(1, Math.hypot(dx, dy));
+      const nx = -dy / distance;
+      const ny = dx / distance;
+      const gaitBend = wobble * 0.44 + Math.sin(phase * 0.55) * (distance * 0.03);
+      const perspectiveBend = wobble * 0.72 * clamp(bendDirection, -1, 1);
+      const bendAmount = gaitBend + perspectiveBend;
+      const jointX = rootX + dx * 0.5 + nx * bendAmount;
+      const jointY = rootY + dy * 0.5 + ny * bendAmount;
       context.beginPath();
       context.moveTo(rootX, rootY);
-      context.quadraticCurveTo(
-        (rootX + endX) * 0.5 + Math.sin(phase) * wobble,
-        (rootY + endY) * 0.5 + Math.cos(phase * 1.2) * wobble * 0.55,
-        endX,
-        endY
-      );
+      context.quadraticCurveTo((rootX + jointX) * 0.5, (rootY + jointY) * 0.5, jointX, jointY);
+      context.quadraticCurveTo((jointX + endX) * 0.5, (jointY + endY) * 0.5, endX, endY);
       drawRawStroke();
     };
 
@@ -2492,10 +2546,10 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     };
 
     const drawLeftOutlineLeg = () => {
-      drawOutlineLimb(leftLegRootX, 18, legPose.leftLeg.x, leftLegEndY, 4.2 * wobbleScale, seconds * 7 + 0.5);
+      drawOutlineLimb(leftLegRootX, 18, legPose.leftLeg.x, leftLegEndY, 4.2 * wobbleScale, seconds * 7 + 0.5, legBendDirection);
     };
     const drawRightOutlineLeg = () => {
-      drawOutlineLimb(rightLegRootX, 18, legPose.rightLeg.x, rightLegEndY, 4.2 * wobbleScale, seconds * 7 + 2.2);
+      drawOutlineLimb(rightLegRootX, 18, legPose.rightLeg.x, rightLegEndY, 4.2 * wobbleScale, seconds * 7 + 2.2, legBendDirection);
     };
     const drawLeftOutlineArm = () => {
       drawOutlineLimb(leftArmRootX, -28, armPose.leftArm.x, armPose.leftArm.y, 4.6 * wobbleScale * 0.1, seconds * 9 + 0.8);
@@ -2769,6 +2823,10 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     );
     const perspectiveStrength = Math.abs(perspectiveBlend);
     const isRightArmFront = perspectiveBlend <= 0;
+    // Continuous mapping avoids abrupt sign flips at perspective crossover.
+    const targetLegBendDirection = -Math.tanh(perspectiveBlend * 3.2);
+    legBendDirectionValue = lerp(legBendDirectionValue, targetLegBendDirection, 0.18);
+    const legBendDirection = clamp(legBendDirectionValue, -1, 1);
     const facePerspectiveShiftX = perspectiveBlend * FACE_FEATURE_ORBIT_RADIUS;
     const shadowPerspectiveShiftX = -perspectiveBlend * 15;
     const dampedBounce = pose.bounce * 0.35 * (1 - idleWeight);
@@ -2983,7 +3041,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       leftArmRootX,
       rightArmRootX,
       perspectiveBlend,
-      shadowPerspectiveShiftX
+      shadowPerspectiveShiftX,
+      legBendDirection
     );
 
     if (holderVisible) {
@@ -3001,7 +3060,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         wobbleScale,
         perspectiveBlend,
         depthVisibility,
-        punchWeight
+        punchWeight,
+        legBendDirection
       );
     }
 
@@ -3014,7 +3074,14 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         5.5,
         colors.pantsColor,
         4.2 * wobbleScale,
-        seconds * 7 + 0.5
+        seconds * 7 + 0.5,
+        "#332923",
+        0.1,
+        null,
+        3,
+        1,
+        1,
+        legBendDirection
       );
     };
     const drawRightLeg = () => {
@@ -3026,7 +3093,14 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         5.5,
         colors.pantsColor,
         4.2 * wobbleScale,
-        seconds * 7 + 2.2
+        seconds * 7 + 2.2,
+        "#332923",
+        0.1,
+        null,
+        3,
+        1,
+        1,
+        legBendDirection
       );
     };
 
