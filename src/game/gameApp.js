@@ -65,10 +65,12 @@ export function createGameApp() {
     characterPreviewPropAnimation: document.querySelector("#characterPreviewPropAnimation"),
     characterPreviewPropOffsetX: document.querySelector("#characterPreviewPropOffsetX"),
     characterPreviewPropOffsetY: document.querySelector("#characterPreviewPropOffsetY"),
+    characterPreviewPropOffsetZ: document.querySelector("#characterPreviewPropOffsetZ"),
     characterPreviewPropScale: document.querySelector("#characterPreviewPropScale"),
     characterPreviewPropRotation: document.querySelector("#characterPreviewPropRotation"),
     characterPreviewPropOffsetXValue: document.querySelector("#characterPreviewPropOffsetXValue"),
     characterPreviewPropOffsetYValue: document.querySelector("#characterPreviewPropOffsetYValue"),
+    characterPreviewPropOffsetZValue: document.querySelector("#characterPreviewPropOffsetZValue"),
     characterPreviewPropScaleValue: document.querySelector("#characterPreviewPropScaleValue"),
     characterPreviewPropRotationValue: document.querySelector("#characterPreviewPropRotationValue"),
     characterPreviewCopyProp: document.querySelector("#characterPreviewCopyProp"),
@@ -130,6 +132,7 @@ export function createGameApp() {
   function syncPropControlLabels(transform) {
     elements.characterPreviewPropOffsetXValue.textContent = formatPropValue(transform.x, 0);
     elements.characterPreviewPropOffsetYValue.textContent = formatPropValue(transform.y, 0);
+    elements.characterPreviewPropOffsetZValue.textContent = formatPropValue(transform.z, 0);
     elements.characterPreviewPropScaleValue.textContent = formatPropValue(transform.scale, 2);
     elements.characterPreviewPropRotationValue.textContent = formatPropValue(transform.rotation, 0);
   }
@@ -155,6 +158,7 @@ export function createGameApp() {
 
     elements.characterPreviewPropOffsetX.value = String(currentTransform.x);
     elements.characterPreviewPropOffsetY.value = String(currentTransform.y);
+    elements.characterPreviewPropOffsetZ.value = String(currentTransform.z);
     elements.characterPreviewPropScale.value = String(currentTransform.scale);
     elements.characterPreviewPropRotation.value = String(currentTransform.rotation);
     syncPropControlLabels(currentTransform);
@@ -180,6 +184,7 @@ export function createGameApp() {
     characterPreview.setPropTransform(selectedPropAnimation, {
       x: Number(elements.characterPreviewPropOffsetX.value),
       y: Number(elements.characterPreviewPropOffsetY.value),
+      z: Number(elements.characterPreviewPropOffsetZ.value),
       scale: Number(elements.characterPreviewPropScale.value),
       rotation: Number(elements.characterPreviewPropRotation.value)
     });
@@ -474,6 +479,7 @@ export function createGameApp() {
   [
     elements.characterPreviewPropOffsetX,
     elements.characterPreviewPropOffsetY,
+    elements.characterPreviewPropOffsetZ,
     elements.characterPreviewPropScale,
     elements.characterPreviewPropRotation
   ].forEach((input) => {

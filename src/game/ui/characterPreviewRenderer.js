@@ -80,23 +80,25 @@ const DEFAULT_SHADOW_STYLE = {
 };
 
 const PROP_TRANSFORM_DEFAULTS = Object.freeze({
-  sandwich: { x: 0, y: 0, scale: 1, rotation: 0 },
-  shower: { x: 0, y: 0, scale: 1, rotation: 0 },
-  wash: { x: 0, y: 0, scale: 1, rotation: 0 },
+  sandwich: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
+  shower: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
+  wash: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
   dig: {
       "x": 0,
       "y": 13,
+      "z": 0,
       "scale": 1.5,
       "rotation": -98
     },
   search: {
       "x": -16,
       "y": -18,
+      "z": 0,
       "scale": 1.45,
       "rotation": 31
     },
-  hunt: { x: 0, y: 0, scale: 1, rotation: 0 },
-  cook: { x: 0, y: 0, scale: 1, rotation: 0 }
+  hunt: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
+  cook: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 }
 });
 
 
@@ -153,8 +155,27 @@ function normalizePropTransform(transform, defaults) {
   return {
     x: normalizePropTransformValue(transform?.x, defaults.x),
     y: normalizePropTransformValue(transform?.y, defaults.y),
+    z: clamp(normalizePropTransformValue(transform?.z, defaults.z), -180, 180),
     scale: clamp(normalizePropTransformValue(transform?.scale, defaults.scale), 0.1, 8),
     rotation: normalizePropTransformValue(transform?.rotation, defaults.rotation)
+  };
+}
+
+function withPointDepth(point, fallbackZ = 0) {
+  return {
+    x: Number(point?.x) || 0,
+    y: Number(point?.y) || 0,
+    z: Number.isFinite(Number(point?.z)) ? Number(point.z) : fallbackZ
+  };
+}
+
+function withPoseDepth(pose) {
+  return {
+    ...pose,
+    leftArm: withPointDepth(pose.leftArm),
+    rightArm: withPointDepth(pose.rightArm),
+    leftLeg: withPointDepth(pose.leftLeg),
+    rightLeg: withPointDepth(pose.rightLeg)
   };
 }
 
@@ -312,8 +333,8 @@ function createPose(timeSeconds, animationName) {
     const jab = Math.max(0, Math.sin(timeSeconds * 11.2));
     pose.lean = 0.15 * jab;
     pose.bounce = Math.sin(timeSeconds * 11.2) * 1.8;
-    pose.leftArm = { x: -36 + Math.sin(timeSeconds * 5.6) * 2, y: -12 };
-    pose.rightArm = { x: 34 + jab * 25, y: -22 + jab * 2 };
+    pose.leftArm = { x: -36 + Math.sin(timeSeconds * 5.6) * 2, y: -12, z: -8 * jab };
+    pose.rightArm = { x: 34 + Math.sin(timeSeconds * 5.6) * 1.7, y: -22 + jab * 2, z: 36 * jab };
     pose.leftLeg = { x: -20 - jab * 4, y: 78 + jab * 2.2 };
     pose.rightLeg = { x: 20 + jab * 4, y: 78 + jab * 1.4 };
   }
@@ -414,7 +435,7 @@ function createPose(timeSeconds, animationName) {
     pose.rightLeg = { x: 18, y: 79.5 + impact * 0.7 };
   }
 
-  return pose;
+  return withPoseDepth(pose);
 }
 
 function createPetPose(timeSeconds, animationName) {
@@ -658,26 +679,32 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   }
 
   function interpolatePose(fromPose, toPose, mix) {
+    const resolvedFrom = withPoseDepth(fromPose);
+    const resolvedTo = withPoseDepth(toPose);
     return {
-      bounce: lerp(fromPose.bounce, toPose.bounce, mix),
-      lean: lerp(fromPose.lean, toPose.lean, mix),
-      perspectiveTilt: lerp(fromPose.perspectiveTilt || 0, toPose.perspectiveTilt || 0, mix),
-      perspectiveTiltMix: lerp(fromPose.perspectiveTiltMix || 0, toPose.perspectiveTiltMix || 0, mix),
+      bounce: lerp(resolvedFrom.bounce, resolvedTo.bounce, mix),
+      lean: lerp(resolvedFrom.lean, resolvedTo.lean, mix),
+      perspectiveTilt: lerp(resolvedFrom.perspectiveTilt || 0, resolvedTo.perspectiveTilt || 0, mix),
+      perspectiveTiltMix: lerp(resolvedFrom.perspectiveTiltMix || 0, resolvedTo.perspectiveTiltMix || 0, mix),
       leftArm: {
-        x: lerp(fromPose.leftArm.x, toPose.leftArm.x, mix),
-        y: lerp(fromPose.leftArm.y, toPose.leftArm.y, mix)
+        x: lerp(resolvedFrom.leftArm.x, resolvedTo.leftArm.x, mix),
+        y: lerp(resolvedFrom.leftArm.y, resolvedTo.leftArm.y, mix),
+        z: lerp(resolvedFrom.leftArm.z, resolvedTo.leftArm.z, mix)
       },
       rightArm: {
-        x: lerp(fromPose.rightArm.x, toPose.rightArm.x, mix),
-        y: lerp(fromPose.rightArm.y, toPose.rightArm.y, mix)
+        x: lerp(resolvedFrom.rightArm.x, resolvedTo.rightArm.x, mix),
+        y: lerp(resolvedFrom.rightArm.y, resolvedTo.rightArm.y, mix),
+        z: lerp(resolvedFrom.rightArm.z, resolvedTo.rightArm.z, mix)
       },
       leftLeg: {
-        x: lerp(fromPose.leftLeg.x, toPose.leftLeg.x, mix),
-        y: lerp(fromPose.leftLeg.y, toPose.leftLeg.y, mix)
+        x: lerp(resolvedFrom.leftLeg.x, resolvedTo.leftLeg.x, mix),
+        y: lerp(resolvedFrom.leftLeg.y, resolvedTo.leftLeg.y, mix),
+        z: lerp(resolvedFrom.leftLeg.z, resolvedTo.leftLeg.z, mix)
       },
       rightLeg: {
-        x: lerp(fromPose.rightLeg.x, toPose.rightLeg.x, mix),
-        y: lerp(fromPose.rightLeg.y, toPose.rightLeg.y, mix)
+        x: lerp(resolvedFrom.rightLeg.x, resolvedTo.rightLeg.x, mix),
+        y: lerp(resolvedFrom.rightLeg.y, resolvedTo.rightLeg.y, mix),
+        z: lerp(resolvedFrom.rightLeg.z, resolvedTo.rightLeg.z, mix)
       }
     };
   }
@@ -695,17 +722,25 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   }
 
   function getResolvedPropTransform(animationName) {
-    const defaults = PROP_TRANSFORM_DEFAULTS[animationName] || { x: 0, y: 0, scale: 1, rotation: 0 };
+    const defaults = PROP_TRANSFORM_DEFAULTS[animationName] || { x: 0, y: 0, z: 0, scale: 1, rotation: 0 };
     const current = propTransforms[animationName] || defaults;
     return normalizePropTransform(current, defaults);
   }
 
-  function getPropPlacement(animationName, baseX, baseY, baseRotationRadians = 0) {
+  function getPropPlacement(animationName, baseX, baseY, baseRotationRadians = 0, options = {}) {
+    const perspectiveBlend = Number(options.perspectiveBlend) || 0;
+    const depthVisibility = clamp(Number(options.depthVisibility) || 0, 0, 1);
+    const baseZ = Number(options.baseZ) || 0;
     const transform = getResolvedPropTransform(animationName);
+    const combinedZ = baseZ + transform.z;
+    const projectedX = baseX + transform.x + combinedZ * perspectiveBlend * 0.42;
+    const projectedY = baseY + transform.y - combinedZ * depthVisibility * 0.24;
+    const projectedScale = clamp(transform.scale * (1 + combinedZ * depthVisibility * 0.0035), 0.1, 8);
     return {
-      x: baseX + transform.x,
-      y: baseY + transform.y,
-      scale: transform.scale,
+      x: projectedX,
+      y: projectedY,
+      z: combinedZ,
+      scale: projectedScale,
       rotation: baseRotationRadians + transform.rotation * DEG_TO_RAD
     };
   }
@@ -2253,7 +2288,10 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     leftArmRootX,
     rightArmRootX,
     seconds,
-    wobbleScale
+    wobbleScale,
+    perspectiveBlend,
+    depthVisibility,
+    punchWeight = 0
   ) {
     const torsoWidth = bodyProfile.torsoWidth;
     const torsoHeight = bodyProfile.torsoHeight;
@@ -2281,11 +2319,64 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       drawRawStroke();
     };
 
+    const getOutlineHandShape = (armZ, emphasis = 0) => {
+      const forwardDepth = Math.max(0, armZ);
+      const backwardDepth = Math.max(0, -armZ);
+      const sizeScale = clamp(
+        1
+          + forwardDepth * 0.012 * depthVisibility
+          - backwardDepth * 0.005 * depthVisibility
+          + emphasis * 0.1,
+        0.82,
+        1.75
+      );
+      return {
+        radiusX: 9.2 * sizeScale,
+        radiusY: 7.7 * sizeScale
+      };
+    };
+
+    const getOutlineFootShape = (legZ) => {
+      const forwardDepth = Math.max(0, legZ);
+      const backwardDepth = Math.max(0, -legZ);
+      const sizeScale = clamp(
+        1
+          + forwardDepth * 0.008 * depthVisibility
+          - backwardDepth * 0.004 * depthVisibility,
+        0.86,
+        1.45
+      );
+      return {
+        radiusX: 10.8 * sizeScale,
+        radiusY: 5.9 * sizeScale
+      };
+    };
+
+    const drawLeftOutlineLeg = () => {
+      drawOutlineLimb(leftLegRootX, 18, legPose.leftLeg.x, leftLegEndY, 4.2 * wobbleScale, seconds * 7 + 0.5);
+    };
+    const drawRightOutlineLeg = () => {
+      drawOutlineLimb(rightLegRootX, 18, legPose.rightLeg.x, rightLegEndY, 4.2 * wobbleScale, seconds * 7 + 2.2);
+    };
+    const drawLeftOutlineArm = () => {
+      drawOutlineLimb(leftArmRootX, -28, armPose.leftArm.x, armPose.leftArm.y, 4.6 * wobbleScale * 0.1, seconds * 9 + 0.8);
+    };
+    const drawRightOutlineArm = () => {
+      drawOutlineLimb(rightArmRootX, -28, armPose.rightArm.x, armPose.rightArm.y, 4.6 * wobbleScale * 0.1, seconds * 9 + 2.7);
+    };
+
     context.lineWidth = limbOutlineWidth;
-    drawOutlineLimb(leftLegRootX, 18, legPose.leftLeg.x, leftLegEndY, 4.2 * wobbleScale, seconds * 7 + 0.5);
-    drawOutlineLimb(rightLegRootX, 18, legPose.rightLeg.x, rightLegEndY, 4.2 * wobbleScale, seconds * 7 + 2.2);
-    drawOutlineLimb(leftArmRootX, -28, armPose.leftArm.x, armPose.leftArm.y, 4.6 * wobbleScale * 0.1, seconds * 9 + 0.8);
-    drawOutlineLimb(rightArmRootX, -28, armPose.rightArm.x, armPose.rightArm.y, 4.6 * wobbleScale * 0.1, seconds * 9 + 2.7);
+    if (perspectiveBlend > 0) {
+      drawRightOutlineLeg();
+      drawLeftOutlineLeg();
+      drawRightOutlineArm();
+      drawLeftOutlineArm();
+    } else {
+      drawLeftOutlineLeg();
+      drawRightOutlineLeg();
+      drawLeftOutlineArm();
+      drawRightOutlineArm();
+    }
 
     context.lineWidth = outlineWidth;
     context.beginPath();
@@ -2302,21 +2393,75 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.arc(0, -66 + headOffsetY, 25.5, 0, Math.PI * 2);
     drawRawStroke();
 
-    context.beginPath();
-    context.ellipse(armPose.leftArm.x, armPose.leftArm.y, 9.2, 7.7, 0, 0, Math.PI * 2);
-    drawRawStroke();
+    const leftOutlineHand = getOutlineHandShape(armPose.leftArm.z, 0);
+    const rightOutlineHand = getOutlineHandShape(armPose.rightArm.z, punchWeight);
+    const leftOutlineFoot = getOutlineFootShape(legPose.leftLeg.z);
+    const rightOutlineFoot = getOutlineFootShape(legPose.rightLeg.z);
 
-    context.beginPath();
-    context.ellipse(armPose.rightArm.x, armPose.rightArm.y, 9.2, 7.7, 0, 0, Math.PI * 2);
-    drawRawStroke();
+    const drawLeftOutlineHand = () => {
+      context.beginPath();
+      context.ellipse(
+        armPose.leftArm.x,
+        armPose.leftArm.y,
+        leftOutlineHand.radiusX,
+        leftOutlineHand.radiusY,
+        0,
+        0,
+        Math.PI * 2
+      );
+      drawRawStroke();
+    };
+    const drawRightOutlineHand = () => {
+      context.beginPath();
+      context.ellipse(
+        armPose.rightArm.x,
+        armPose.rightArm.y,
+        rightOutlineHand.radiusX,
+        rightOutlineHand.radiusY,
+        0,
+        0,
+        Math.PI * 2
+      );
+      drawRawStroke();
+    };
+    const drawLeftOutlineFoot = () => {
+      context.beginPath();
+      context.ellipse(
+        legPose.leftLeg.x - 1,
+        leftLegEndY + 1.5,
+        leftOutlineFoot.radiusX,
+        leftOutlineFoot.radiusY,
+        0,
+        0,
+        Math.PI * 2
+      );
+      drawRawStroke();
+    };
+    const drawRightOutlineFoot = () => {
+      context.beginPath();
+      context.ellipse(
+        legPose.rightLeg.x + 1,
+        rightLegEndY + 1.5,
+        rightOutlineFoot.radiusX,
+        rightOutlineFoot.radiusY,
+        0,
+        0,
+        Math.PI * 2
+      );
+      drawRawStroke();
+    };
 
-    context.beginPath();
-    context.ellipse(legPose.leftLeg.x - 1, leftLegEndY + 1.5, 10.8, 5.9, 0, 0, Math.PI * 2);
-    drawRawStroke();
-
-    context.beginPath();
-    context.ellipse(legPose.rightLeg.x + 1, rightLegEndY + 1.5, 10.8, 5.9, 0, 0, Math.PI * 2);
-    drawRawStroke();
+    if (perspectiveBlend > 0) {
+      drawRightOutlineHand();
+      drawLeftOutlineHand();
+      drawRightOutlineFoot();
+      drawLeftOutlineFoot();
+    } else {
+      drawLeftOutlineHand();
+      drawRightOutlineHand();
+      drawLeftOutlineFoot();
+      drawRightOutlineFoot();
+    }
 
     context.save();
     context.translate(0, headOffsetY);
@@ -2463,6 +2608,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const searchWeight = getAnimationWeight("search", easedMix);
     const huntWeight = getAnimationWeight("hunt", easedMix);
     const cookWeight = getAnimationWeight("cook", easedMix);
+    const punchWeight = getAnimationWeight("punch", easedMix);
     const idleWeight = getAnimationWeight("idle", easedMix);
     const animatedTiltMix = clamp(pose.perspectiveTiltMix || 0, 0, 1);
     const basePerspectiveAngle = normalizeAngleDegrees(perspectiveAngle);
@@ -2473,6 +2619,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const resolvedPerspectiveRadians = resolvedPerspectiveAngle * DEG_TO_RAD;
     const perspectiveBlend = clamp(Math.sin(resolvedPerspectiveRadians), -1, 1);
     const yawCos = Math.cos(resolvedPerspectiveRadians);
+    const depthVisibility = clamp(Math.abs(yawCos), 0, 1);
     const sideSwapScale = Math.sign(yawCos || 1) * Math.pow(Math.abs(yawCos), 1.22);
     const frontFacingAngleDistance = Math.min(resolvedPerspectiveAngle, 360 - resolvedPerspectiveAngle);
     const faceFeatureVisibility = clamp(
@@ -2500,24 +2647,22 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     // Slight skew makes the character feel less flat and more staged.
     context.transform(1, 0, -0.08, 1, 0, 0);
 
+    const projectPosePoint = (point) => {
+      const scaledX = point.x * sideSwapScale;
+      const depth = Number(point.z) || 0;
+      return {
+        x: scaledX + depth * perspectiveBlend * 0.42,
+        y: point.y - depth * depthVisibility * 0.24,
+        z: depth
+      };
+    };
+
     const perspectivePose = {
       ...pose,
-      leftLeg: {
-        ...pose.leftLeg,
-        x: pose.leftLeg.x * sideSwapScale
-      },
-      rightLeg: {
-        ...pose.rightLeg,
-        x: pose.rightLeg.x * sideSwapScale
-      },
-      leftArm: {
-        ...pose.leftArm,
-        x: pose.leftArm.x * sideSwapScale
-      },
-      rightArm: {
-        ...pose.rightArm,
-        x: pose.rightArm.x * sideSwapScale
-      }
+      leftLeg: projectPosePoint(pose.leftLeg),
+      rightLeg: projectPosePoint(pose.rightLeg),
+      leftArm: projectPosePoint(pose.leftArm),
+      rightArm: projectPosePoint(pose.rightArm)
     };
 
     const idleLockedPose = {
@@ -2525,12 +2670,14 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       leftLeg: {
         ...perspectivePose.leftLeg,
         x: lerp(perspectivePose.leftLeg.x, -18 * sideSwapScale, idleWeight),
-        y: lerp(perspectivePose.leftLeg.y, 78, idleWeight)
+        y: lerp(perspectivePose.leftLeg.y, 78, idleWeight),
+        z: lerp(perspectivePose.leftLeg.z, 0, idleWeight)
       },
       rightLeg: {
         ...perspectivePose.rightLeg,
         x: lerp(perspectivePose.rightLeg.x, 18 * sideSwapScale, idleWeight),
-        y: lerp(perspectivePose.rightLeg.y, 78, idleWeight)
+        y: lerp(perspectivePose.rightLeg.y, 78, idleWeight),
+        z: lerp(perspectivePose.rightLeg.z, 0, idleWeight)
       }
     };
 
@@ -2541,8 +2688,32 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const rightLegRootX = 14 * sideSwapScale;
     const leftArmRootX = -18 * sideSwapScale;
     const rightArmRootX = 18 * sideSwapScale;
+    const leftArmDepth = perspectiveBlend * 24;
+    const rightArmDepth = -perspectiveBlend * 24;
+    const centerDepth = (leftArmDepth + rightArmDepth) * 0.5;
+
+    const getHandVisual = (armZ, emphasis = 0) => {
+      const forwardDepth = Math.max(0, armZ);
+      const backwardDepth = Math.max(0, -armZ);
+      const depthStrength = depthVisibility;
+      const sizeScale = clamp(
+        1
+          + forwardDepth * 0.012 * depthStrength
+          - backwardDepth * 0.005 * depthStrength
+          + emphasis * 0.12,
+        0.8,
+        1.8
+      );
+      return {
+        radiusX: 8.25 * sizeScale,
+        radiusY: 6.9 * sizeScale,
+        outlineWidth: 1.2 + forwardDepth * 0.018 * depthStrength + emphasis * 0.28,
+        highlightAlpha: clamp(0.14 + forwardDepth * 0.011 * depthStrength + emphasis * 0.26, 0.08, 0.62)
+      };
+    };
 
     const drawLeftArmAndHand = () => {
+      const leftHandVisual = getHandVisual(perspectivePose.leftArm.z, 0);
       drawLimb(
         leftArmRootX,
         -28,
@@ -2562,23 +2733,47 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       const leftHandShadeDriftX = Math.sin(seconds * 2.5 + perspectivePose.leftArm.x * 0.05) * 1.6;
       const leftHandShadeDriftY = Math.cos(seconds * 2 + perspectivePose.leftArm.y * 0.05) * 1.1;
       context.strokeStyle = handOutlineColor;
-      context.lineWidth = 1.2;
+      context.lineWidth = leftHandVisual.outlineWidth;
       fillShadedEllipse(
         perspectivePose.leftArm.x,
         perspectivePose.leftArm.y,
-        8.25,
-        6.9,
+        leftHandVisual.radiusX,
+        leftHandVisual.radiusY,
         faceSkinColor,
         0,
         leftHandShadeDriftX,
         leftHandShadeDriftY
       );
+      context.save();
+      context.globalAlpha = leftHandVisual.highlightAlpha;
+      context.fillStyle = "rgba(248, 238, 227, 0.78)";
       context.beginPath();
-      context.ellipse(perspectivePose.leftArm.x, perspectivePose.leftArm.y, 8.25, 6.9, 0, 0, Math.PI * 2);
+      context.ellipse(
+        perspectivePose.leftArm.x - leftHandVisual.radiusX * 0.22,
+        perspectivePose.leftArm.y - leftHandVisual.radiusY * 0.3,
+        leftHandVisual.radiusX * 0.38,
+        leftHandVisual.radiusY * 0.32,
+        -0.25,
+        0,
+        Math.PI * 2
+      );
+      context.fill();
+      context.restore();
+      context.beginPath();
+      context.ellipse(
+        perspectivePose.leftArm.x,
+        perspectivePose.leftArm.y,
+        leftHandVisual.radiusX,
+        leftHandVisual.radiusY,
+        0,
+        0,
+        Math.PI * 2
+      );
       context.stroke();
     };
 
     const drawRightArmAndHand = () => {
+      const rightHandVisual = getHandVisual(perspectivePose.rightArm.z, punchWeight);
       drawLimb(
         rightArmRootX,
         -28,
@@ -2598,19 +2793,42 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       const rightHandShadeDriftX = Math.sin(seconds * 2.5 + 1.4 + perspectivePose.rightArm.x * 0.05) * 1.6;
       const rightHandShadeDriftY = Math.cos(seconds * 2 + 1.1 + perspectivePose.rightArm.y * 0.05) * 1.1;
       context.strokeStyle = handOutlineColor;
-      context.lineWidth = 1.2;
+      context.lineWidth = rightHandVisual.outlineWidth;
       fillShadedEllipse(
         perspectivePose.rightArm.x,
         perspectivePose.rightArm.y,
-        8.25,
-        6.9,
+        rightHandVisual.radiusX,
+        rightHandVisual.radiusY,
         faceSkinColor,
         0,
         rightHandShadeDriftX,
         rightHandShadeDriftY
       );
+      context.save();
+      context.globalAlpha = rightHandVisual.highlightAlpha;
+      context.fillStyle = "rgba(255, 243, 229, 0.84)";
       context.beginPath();
-      context.ellipse(perspectivePose.rightArm.x, perspectivePose.rightArm.y, 8.25, 6.9, 0, 0, Math.PI * 2);
+      context.ellipse(
+        perspectivePose.rightArm.x - rightHandVisual.radiusX * 0.24,
+        perspectivePose.rightArm.y - rightHandVisual.radiusY * 0.32,
+        rightHandVisual.radiusX * 0.4,
+        rightHandVisual.radiusY * 0.34,
+        -0.25,
+        0,
+        Math.PI * 2
+      );
+      context.fill();
+      context.restore();
+      context.beginPath();
+      context.ellipse(
+        perspectivePose.rightArm.x,
+        perspectivePose.rightArm.y,
+        rightHandVisual.radiusX,
+        rightHandVisual.radiusY,
+        0,
+        0,
+        Math.PI * 2
+      );
       context.stroke();
     };
 
@@ -2641,7 +2859,10 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         leftArmRootX,
         rightArmRootX,
         seconds,
-        wobbleScale
+        wobbleScale,
+        perspectiveBlend,
+        depthVisibility,
+        punchWeight
       );
     }
 
@@ -2864,7 +3085,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         "sandwich",
         perspectivePose.leftArm.x + 7,
         perspectivePose.leftArm.y - 2,
-        -0.22 + Math.sin(seconds * 6) * 0.05
+        -0.22 + Math.sin(seconds * 6) * 0.05,
+        { perspectiveBlend, depthVisibility, baseZ: leftArmDepth }
       );
       context.save();
       context.globalAlpha = sandwichWeight;
@@ -2876,7 +3098,11 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
 
     if (showerWeight > 0.01) {
-      const showerPlacement = getPropPlacement("shower", 0, -86, 0);
+      const showerPlacement = getPropPlacement("shower", 0, -86, 0, {
+        perspectiveBlend,
+        depthVisibility,
+        baseZ: centerDepth
+      });
       context.save();
       context.globalAlpha = showerWeight;
       context.translate(showerPlacement.x, showerPlacement.y);
@@ -2891,13 +3117,15 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         "wash",
         perspectivePose.leftArm.x + 6,
         perspectivePose.leftArm.y - 4,
-        0
+        0,
+        { perspectiveBlend, depthVisibility, baseZ: leftArmDepth }
       );
       const washPlacementRight = getPropPlacement(
         "wash",
         perspectivePose.rightArm.x - 6,
         perspectivePose.rightArm.y - 2,
-        0
+        0,
+        { perspectiveBlend, depthVisibility, baseZ: rightArmDepth }
       );
       context.save();
       context.globalAlpha = washWeight;
@@ -2921,7 +3149,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         "dig",
         perspectivePose.rightArm.x + 4,
         perspectivePose.rightArm.y - 4,
-        0.4 + Math.sin(seconds * 5.4) * 0.1
+        0.4 + Math.sin(seconds * 5.4) * 0.1,
+        { perspectiveBlend, depthVisibility, baseZ: rightArmDepth }
       );
       context.save();
       context.globalAlpha = digWeight;
@@ -2937,7 +3166,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         "search",
         perspectivePose.rightArm.x + 5,
         perspectivePose.rightArm.y - 1,
-        -0.18 + Math.sin(seconds * 2.8) * 0.08
+        -0.18 + Math.sin(seconds * 2.8) * 0.08,
+        { perspectiveBlend, depthVisibility, baseZ: rightArmDepth }
       );
       context.save();
       context.globalAlpha = searchWeight;
@@ -2953,7 +3183,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         "hunt",
         perspectivePose.leftArm.x - 4,
         perspectivePose.leftArm.y - 1,
-        -0.1 + Math.sin(seconds * 4.8) * 0.05
+        -0.1 + Math.sin(seconds * 4.8) * 0.05,
+        { perspectiveBlend, depthVisibility, baseZ: leftArmDepth }
       );
       context.save();
       context.globalAlpha = huntWeight;
@@ -2973,7 +3204,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         "cook",
         (perspectivePose.leftArm.x + perspectivePose.rightArm.x) * 0.5,
         (perspectivePose.leftArm.y + perspectivePose.rightArm.y) * 0.5 + 8,
-        -0.08 - chopImpact * 0.06
+        -0.08 - chopImpact * 0.06,
+        { perspectiveBlend, depthVisibility, baseZ: centerDepth }
       );
       context.save();
       context.globalAlpha = cookWeight;
@@ -3355,6 +3587,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         [parsed.animation]: {
           x: parsed.x,
           y: parsed.y,
+          z: parsed.z,
           scale: parsed.scale,
           rotation: parsed.rotation
         }
