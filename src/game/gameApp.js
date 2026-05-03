@@ -417,7 +417,7 @@ export function createGameApp() {
     const depthOffset = rowIndex * 60 + distanceFromCenter * 8 + (rowCount > 1 ? 14 : 0);
     const centerBias = -Math.round((rowCount - 1) * 30);
     const verticalOffset = Math.round(depthOffset + rowWave + centerBias);
-    const scale = 1.22;
+    const scale = Math.min(1.1, Math.max(0.55, 0.72 + verticalOffset * 0.009));
     const zIndex = Math.max(1, 1000 + verticalOffset);
 
     card.style.setProperty("--photo-x", `${horizontalOffset}px`);
