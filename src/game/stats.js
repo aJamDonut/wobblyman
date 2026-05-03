@@ -23,9 +23,9 @@ export const survivorStatDefinitions = [
     lowest: 0,
     highest: 1000,
     default: 100,
-    icon: "🍔",
+    icon: "🍽️",
     toneClass: "#f1f1f1",
-    recoverPerTick: 1,
+    recoverPerTick: 0,
     showInRosterBar: true,
     showInHeader: true
   },
@@ -36,9 +36,9 @@ export const survivorStatDefinitions = [
     lowest: 0,
     highest: 1000,
     default: 100,
-    icon: "😴",
+    icon: "💤",
     toneClass: "#f1f1f1",
-    recoverPerTick: 1,
+    recoverPerTick: 0,
     showInRosterBar: true,
     showInHeader: true
   },
@@ -49,9 +49,9 @@ export const survivorStatDefinitions = [
     lowest: 0,
     highest: 1000,
     default: 100,
-    icon: "🧼",
+    icon: "🛁",
     toneClass: "#f1f1f1",
-    recoverPerTick: 1,
+    recoverPerTick: 0,
     showInRosterBar: true,
     showInHeader: true
   },
@@ -62,9 +62,9 @@ export const survivorStatDefinitions = [
     lowest: 0,
     highest: 1000,
     default: 100,
-    icon: "🤝",
+    icon: "💕",
     toneClass: "#f1f1f1",
-    recoverPerTick: 1,
+    recoverPerTick: 0,
     showInRosterBar: true,
     showInHeader: true
   },
@@ -77,7 +77,7 @@ export const survivorStatDefinitions = [
     default: 100,
     icon: "🚽",
     toneClass: "#f1f1f1",
-    recoverPerTick: 1,
+    recoverPerTick: 0,
     showInRosterBar: true,
     showInHeader: true
   },
@@ -88,7 +88,27 @@ export const survivorStatDefinitions = [
     lowest: 0,
     highest: 1000,
     default: 1,
-    icon: "🍕",
+    icon: "🥣",
+    showInHeader: true
+  },
+  {
+    key: "physical",
+    label: "Physical",
+    displayType: STAT_DISPLAY_TYPES.INT,
+    lowest: 0,
+    highest: 1000,
+    default: 1,
+    icon: "💪",
+    showInHeader: true
+  },
+  {
+    key: "speech",
+    label: "Speech",
+    displayType: STAT_DISPLAY_TYPES.INT,
+    lowest: 0,
+    highest: 1000,
+    default: 1,
+    icon: "💬",
     showInHeader: true
   },
   {
@@ -99,16 +119,6 @@ export const survivorStatDefinitions = [
     highest: 1000,
     default: 1,
     icon: "💼",
-    showInHeader: true
-  },
-  {
-    key: "music",
-    label: "Music",
-    displayType: STAT_DISPLAY_TYPES.INT,
-    lowest: 0,
-    highest: 1000,
-    default: 1,
-    icon: "🎵",
     showInHeader: true
   },
   {
@@ -128,17 +138,7 @@ export const survivorStatDefinitions = [
     lowest: 0,
     highest: 1000,
     default: 1,
-    icon: "📚",
-    showInHeader: true
-  },
-  {
-    key: "speech",
-    label: "Speech",
-    displayType: STAT_DISPLAY_TYPES.INT,
-    lowest: 0,
-    highest: 1000,
-    default: 1,
-    icon: "🗣️",
+    icon: "🧠",
     showInHeader: true
   }
 ];
@@ -286,6 +286,44 @@ export function gainStatXp(survivor, statKey, xpAmount) {
   }
 
   return levelsGained;
+}
+
+export function applyStatDelta(survivor, statKey, deltaAmount) {
+  if (!survivor) {
+    return 0;
+  }
+
+  const definition = getStatDefinition(statKey);
+  if (!definition) {
+    return 0;
+  }
+
+  const delta = toNumber(deltaAmount, 0);
+  if (delta === 0) {
+    return 0;
+  }
+
+  const { key, lowest, highest, default: defaultValue, displayType } = definition;
+  const { max } = getStatHiddenKeys(key);
+
+  if (!Number.isFinite(survivor[key])) {
+    survivor[key] = defaultValue;
+  }
+
+  if (displayType === STAT_DISPLAY_TYPES.BAR && !Number.isFinite(survivor[max])) {
+    survivor[max] = clamp(defaultValue, lowest, highest);
+  }
+
+  const ceiling =
+    displayType === STAT_DISPLAY_TYPES.BAR
+      ? clamp(toNumber(survivor[max], highest), lowest, highest)
+      : highest;
+
+  const previous = clamp(survivor[key], lowest, ceiling);
+  const next = clamp(previous + delta, lowest, ceiling);
+
+  survivor[key] = next;
+  return next - previous;
 }
 
 export { STAT_DISPLAY_TYPES };

@@ -57,7 +57,7 @@ export function renderActive(state, elements, activeSurvivor) {
             <div class="label">${definition.label.toUpperCase()}</div>
             <div class="bar-wrap"><span class="bar-fill ${definition.toneClass || ""}" style="width:${fillPercent}%"></span></div>
           </div>
-          <div class="bar-value">${current} / ${maxValue}</div>
+          <!-- <div class="bar-value">${current} / ${maxValue}</div>-->
         </div>`;
     })
     .join("");

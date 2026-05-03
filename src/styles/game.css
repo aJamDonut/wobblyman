@@ -29,7 +29,8 @@ body {
   color: var(--text);
   font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
   letter-spacing: .2px;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 button {
@@ -39,7 +40,7 @@ button {
   cursor: pointer;
 }
 
-.screen { display: none; height: 100vh; padding: 8px; }
+.screen { display: none; min-height: 100vh; padding: 8px; }
 .screen.active { display: block; }
 
 .missions-layout {
@@ -214,7 +215,7 @@ h1, h2, h3, p { margin: 0; }
 }
 
 .bars { margin-top: 22px; display: grid; gap: 10px; }
-.dynamic-stat-bar { display: grid; grid-template-columns: 24px 1fr 58px; align-items: center; gap: 8px; }
+.dynamic-stat-bar { display: grid; grid-template-columns: 24px 1fr 0px; align-items: center; gap: 8px; }
 .icon-big { font-size: 23px; line-height: 1; }
 .label { font-family: Arial, sans-serif; font-size: 10px; color: var(--muted); font-weight: 700; }
 .bar-wrap { position: relative; height: 4px; background: var(--bar); }
@@ -250,7 +251,7 @@ h1, h2, h3, p { margin: 0; }
   line-height: 1.05;
 }
 .dynamic-int b {
-  color: #f0f1f2;
+  color: #2d2520;
   font-size: 12px;
 }
 .dynamic-int small {

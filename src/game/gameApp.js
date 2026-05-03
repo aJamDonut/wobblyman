@@ -19,7 +19,7 @@ import {
   selectPreviousSurvivor,
   selectSurvivor
 } from "./state.js";
-import { gainStatXp } from "./stats.js";
+import { applyStatDelta, gainStatXp } from "./stats.js";
 import { missionProgressSystem } from "./systems/missionProgressSystem.js";
 import { survivorRecoverySystem } from "./systems/survivorRecoverySystem.js";
 
@@ -495,6 +495,7 @@ export function createGameApp() {
         survivorId: activeSurvivor.id,
         xp: mission.xp,
         statXp: mission.statXp || null,
+        statChange: mission.statChange || mission.statChanges || null,
         reward: mission.reward,
         rewardLabel: mission.rewardLabel,
         cycleSeconds,
@@ -587,6 +588,23 @@ export function createGameApp() {
     }
   }
 
+  function applyMissionStatChanges(activeSurvivor, missionProgress, mission) {
+    const statChanges =
+      missionProgress.statChange && typeof missionProgress.statChange === "object"
+        ? missionProgress.statChange
+        : missionProgress.statChanges && typeof missionProgress.statChanges === "object"
+          ? missionProgress.statChanges
+          : mission?.statChange || mission?.statChanges;
+
+    if (!statChanges || typeof statChanges !== "object") {
+      return;
+    }
+
+    Object.entries(statChanges).forEach(([statKey, delta]) => {
+      applyStatDelta(activeSurvivor, statKey, delta);
+    });
+  }
+
   function applyMissionCycleRewards(missionProgress) {
     const activeSurvivor = getSurvivorById(state, missionProgress.survivorId);
     if (!activeSurvivor) {
@@ -607,6 +625,8 @@ export function createGameApp() {
         gainStatXp(activeSurvivor, statKey, xpAmount);
       });
     }
+
+    applyMissionStatChanges(activeSurvivor, missionProgress, mission);
 
     activeSurvivor.morale = Math.max(0, activeSurvivor.morale - (missionProgress.key === "platter" ? 2 : 1));
     state.resources[missionProgress.reward] += 1;
