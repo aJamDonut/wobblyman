@@ -237,37 +237,58 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  function drawLimb(rootX, rootY, endX, endY, thickness, color, wobble = 0, phase = 0) {
+  function drawLimb(
+    rootX,
+    rootY,
+    endX,
+    endY,
+    thickness,
+    color,
+    wobble = 0,
+    phase = 0,
+    detailColor = "#332923",
+    fillShift = 0.1,
+    detailWidth = null,
+    sketchPasses = 3,
+    strokeWidthBoost = 1,
+    jitterScale = 1
+  ) {
     const graphite = "#332923";
-    const fillTone = blendHexColor(color, 0.1);
+    const motionScale = Math.max(0, jitterScale);
+    const fillTone = blendHexColor(color, fillShift);
 
     context.strokeStyle = fillTone;
-    context.lineWidth = thickness + 1;
+    context.lineWidth = Math.max(0.8, thickness + strokeWidthBoost);
     context.lineCap = "round";
 
-    for (let pass = 0; pass < 3; pass += 1) {
+    const passes = Math.max(1, Math.floor(sketchPasses));
+    for (let pass = 0; pass < passes; pass += 1) {
       const passSeed = phase + pass * 0.73;
-      const jitterX = sketchNoise(passSeed, 0.9);
-      const jitterY = sketchNoise(passSeed + 2.4, 0.8);
-      const midX = (rootX + endX) * 0.5 + Math.sin(phase + pass * 0.35) * wobble + jitterX;
-      const midY = (rootY + endY) * 0.5 + Math.cos(phase * 1.2 + pass * 0.42) * wobble * 0.55 + jitterY;
+      const jitterX = sketchNoise(passSeed, 0.9 * motionScale);
+      const jitterY = sketchNoise(passSeed + 2.4, 0.8 * motionScale);
+      const scaledWobble = wobble * motionScale;
+      const midX = (rootX + endX) * 0.5 + Math.sin(phase + pass * 0.35) * scaledWobble + jitterX;
+      const midY = (rootY + endY) * 0.5 + Math.cos(phase * 1.2 + pass * 0.42) * scaledWobble * 0.55 + jitterY;
       context.beginPath();
       context.moveTo(rootX + jitterX * 0.35, rootY + jitterY * 0.35);
       context.quadraticCurveTo(midX, midY, endX - jitterX * 0.25, endY - jitterY * 0.25);
       context.stroke();
     }
 
-    context.strokeStyle = graphite;
-    context.lineWidth = Math.max(1.2, thickness * 0.28);
-    context.beginPath();
-    context.moveTo(rootX, rootY);
-    context.quadraticCurveTo(
-      (rootX + endX) * 0.5 + Math.sin(phase) * wobble,
-      (rootY + endY) * 0.5 + Math.cos(phase * 1.2) * wobble * 0.55,
-      endX,
-      endY
-    );
-    context.stroke();
+    const resolvedDetailWidth = Number.isFinite(detailWidth) ? detailWidth : Math.max(1.2, thickness * 0.28);
+    if (resolvedDetailWidth > 0) {
+      context.strokeStyle = detailColor || graphite;
+      context.lineWidth = resolvedDetailWidth;
+      context.beginPath();
+      context.moveTo(rootX, rootY);
+      context.quadraticCurveTo(
+        (rootX + endX) * 0.5 + Math.sin(phase) * wobble,
+        (rootY + endY) * 0.5 + Math.cos(phase * 1.2) * wobble * 0.55,
+        endX,
+        endY
+      );
+      context.stroke();
+    }
   }
 
   function drawSandwich(x, y, tilt = 0) {
@@ -364,18 +385,6 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.quadraticCurveTo((pose.leftLeg.x - 14) * 0.5, (leftLegEndY + 18) * 0.5, pose.leftLeg.x, leftLegEndY);
     context.moveTo(14, 18);
     context.quadraticCurveTo((pose.rightLeg.x + 14) * 0.5, (rightLegEndY + 18) * 0.5, pose.rightLeg.x, rightLegEndY);
-    context.moveTo(-18, -28);
-    context.quadraticCurveTo((pose.leftArm.x - 18) * 0.5, (pose.leftArm.y - 28) * 0.5, pose.leftArm.x, pose.leftArm.y);
-    context.moveTo(18, -28);
-    context.quadraticCurveTo((pose.rightArm.x + 18) * 0.5, (pose.rightArm.y - 28) * 0.5, pose.rightArm.x, pose.rightArm.y);
-    context.stroke();
-
-    context.beginPath();
-    context.ellipse(pose.leftArm.x, pose.leftArm.y, 9.2, 7.7, 0, 0, Math.PI * 2);
-    context.stroke();
-
-    context.beginPath();
-    context.ellipse(pose.rightArm.x, pose.rightArm.y, 9.2, 7.7, 0, 0, Math.PI * 2);
     context.stroke();
 
     context.beginPath();
@@ -1004,7 +1013,10 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.save();
     context.translate(0, headOffsetY);
 
-    context.fillStyle = blendHexColor(colors.skinColor, 0.2);
+    const faceSkinColor = blendHexColor(colors.skinColor, 0.2);
+    const handOutlineColor = blendHexColor(faceSkinColor, -0.18);
+
+    context.fillStyle = faceSkinColor;
     context.strokeStyle = "#382d25";
     context.lineWidth = 1.5;
     context.beginPath();
@@ -1094,11 +1106,42 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
 
     // Arms are rendered last so they always stay in the foreground.
-    drawLimb(-18, -28, pose.leftArm.x, pose.leftArm.y, 5, colors.skinColor, 4.6 * wobbleScale, seconds * 9 + 0.8);
-    drawLimb(18, -28, pose.rightArm.x, pose.rightArm.y, 5, colors.skinColor, 4.6 * wobbleScale, seconds * 9 + 2.7);
+    drawLimb(
+      -18,
+      -28,
+      pose.leftArm.x,
+      pose.leftArm.y,
+      5,
+      faceSkinColor,
+      4.6 * wobbleScale,
+      seconds * 9 + 0.8,
+      handOutlineColor,
+      0,
+      0,
+      1,
+      0,
+      0.1
+    );
+    drawLimb(
+      18,
+      -28,
+      pose.rightArm.x,
+      pose.rightArm.y,
+      5,
+      faceSkinColor,
+      4.6 * wobbleScale,
+      seconds * 9 + 2.7,
+      handOutlineColor,
+      0,
+      0,
+      1,
+      0,
+      0.1
+    );
 
-    context.fillStyle = "#f1d6b1";
-    context.strokeStyle = "#3b302a";
+    // Hands are rendered after arms so they stay visually in front.
+    context.fillStyle = faceSkinColor;
+    context.strokeStyle = handOutlineColor;
     context.lineWidth = 1.2;
     context.beginPath();
     context.ellipse(pose.leftArm.x, pose.leftArm.y, 8.25, 6.9, 0, 0, Math.PI * 2);
