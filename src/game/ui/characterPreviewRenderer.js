@@ -797,6 +797,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   let effectMaskCanvas = null;
   let effectMaskWidth = 0;
   let effectMaskHeight = 0;
+  let printEffectsEnabled = true;
 
   function lerp(a, b, t) {
     return a + (b - a) * t;
@@ -3904,8 +3905,10 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.restore();
     }
 
-    applyPosterizedPrintPass(width, height);
-    drawPaperTextureOverlay(width, height);
+    if (printEffectsEnabled) {
+      applyPosterizedPrintPass(width, height);
+      drawPaperTextureOverlay(width, height);
+    }
 
     rafId = window.requestAnimationFrame(drawFrame);
   }
@@ -4137,6 +4140,10 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     holderVisible = Boolean(value);
   }
 
+  function setPrintEffectsEnabled(value) {
+    printEffectsEnabled = Boolean(value);
+  }
+
   function getHolderVisibility() {
     return holderVisible;
   }
@@ -4292,6 +4299,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     setPetType,
     setPetVisibility,
     setHolderVisibility,
+    setPrintEffectsEnabled,
     getHolderVisibility,
     toggleHolderVisibility,
     setPerspectiveTilt,

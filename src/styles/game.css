@@ -554,7 +554,7 @@ h1, h2, h3, p { margin: 0; }
 .stronghold-stage {
   min-height: calc(100vh - 130px);
   display: grid;
-  place-items: end center;
+  place-items: center center;
   padding: 18px 12px 26px;
   overflow: hidden;
   background:
@@ -581,6 +581,7 @@ h1, h2, h3, p { margin: 0; }
   width: 194px;
   transform: translate(var(--photo-x, 0px), var(--photo-y, 0px)) scale(var(--photo-scale, 1));
   z-index: var(--photo-z, 1);
+  opacity: var(--photo-opacity, 1);
   filter: none;
 }
 

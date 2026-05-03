@@ -402,7 +402,7 @@ export function createGameApp() {
     const card = document.createElement("article");
     card.className = "stronghold-survivor";
 
-    const rowWidth = Math.max(4, Math.min(10, Math.ceil(Math.sqrt(total) * 1.9)));
+    const rowWidth = Math.max(3, Math.min(8, Math.ceil(Math.sqrt(total) * 1.45)));
     const rowIndex = Math.floor(index / rowWidth);
     const rowCount = Math.ceil(total / rowWidth);
     const rowStart = rowIndex * rowWidth;
@@ -410,25 +410,21 @@ export function createGameApp() {
     const indexInRow = index - rowStart;
     const centerOffset = indexInRow - (rowSize - 1) / 2;
     const distanceFromCenter = Math.abs(centerOffset);
-    const depthClass = rowIndex <= 0
-      ? "is-front"
-      : rowIndex <= 1
-        ? "is-mid"
-        : "is-back";
-    card.classList.add(depthClass);
 
-    const spacing = Math.max(18, 34 - rowIndex * 1.3);
+    const spacing = Math.max(28, 52 - rowIndex * 1.4);
     const horizontalOffset = Math.round(centerOffset * spacing);
-    const rowWave = Math.sin((indexInRow + rowIndex * 0.7) * 1.4) * 4;
-    const depthOffset = rowIndex * 20 + distanceFromCenter * 2.2 + (rowCount > 1 ? 2 : 0);
-    const verticalOffset = Math.max(0, Math.round(depthOffset + rowWave));
-    const scale = Math.max(0.82, 1 - rowIndex * 0.05 - verticalOffset * 0.0014);
-    const zIndex = 10 + verticalOffset;
+    const rowWave = Math.sin((indexInRow + rowIndex * 0.7) * 1.4) * 12;
+    const depthOffset = rowIndex * 60 + distanceFromCenter * 8 + (rowCount > 1 ? 14 : 0);
+    const centerBias = -Math.round((rowCount - 1) * 30);
+    const verticalOffset = Math.round(depthOffset + rowWave + centerBias);
+    const scale = 1.22;
+    const zIndex = Math.max(1, 1000 + verticalOffset);
 
     card.style.setProperty("--photo-x", `${horizontalOffset}px`);
     card.style.setProperty("--photo-y", `${verticalOffset}px`);
     card.style.setProperty("--photo-scale", String(scale));
     card.style.setProperty("--photo-z", String(zIndex));
+    card.style.setProperty("--photo-opacity", "1");
 
     const canvas = document.createElement("canvas");
     canvas.className = "stronghold-character-canvas";
@@ -472,7 +468,8 @@ export function createGameApp() {
       renderer.setBodyType(previewBodyTypes[styleSeed % previewBodyTypes.length] || "classic");
       renderer.setPetType(previewPetTypes[styleSeed % previewPetTypes.length] || "cat");
       renderer.setPetVisibility(false);
-      renderer.setPerspectiveTilt(20 + (index % 5) * 12);
+      renderer.setPerspectiveTilt(0);
+      renderer.setPrintEffectsEnabled(false);
       renderer.setShadowProperties({ fillColor: "rgba(0,0,0,0)", strokeColor: "rgba(0,0,0,0)" });
       renderer.playAnimation(chooseStrongholdAnimation(survivor, index), { loop: true });
       strongholdRenderers.push(renderer);
