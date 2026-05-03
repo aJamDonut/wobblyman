@@ -123,6 +123,10 @@ button {
   background: #0d1216;
 }
 
+.preview-caption[hidden] {
+  display: none !important;
+}
+
 .preview-row {
   display: flex;
   align-items: center;

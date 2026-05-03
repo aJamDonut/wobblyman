@@ -59,6 +59,7 @@ export function createGameApp() {
     missionsCash: document.querySelector("#missionsCash"),
     missionsList: document.querySelector("#missionsList"),
     characterPreviewCanvas: document.querySelector("#characterPreviewCanvas"),
+    characterPreviewCaption: document.querySelector("#characterPreviewCaption"),
     characterPreviewStatus: document.querySelector("#characterPreviewStatus"),
     characterPreviewHairStyle: document.querySelector("#characterPreviewHairStyle"),
     characterPreviewEyeStyle: document.querySelector("#characterPreviewEyeStyle"),
@@ -67,6 +68,7 @@ export function createGameApp() {
     characterPreviewHolderToggle: document.querySelector("#characterPreviewHolderToggle"),
     characterPreviewPerspective: document.querySelector("#characterPreviewPerspective"),
     characterPreviewPerspectiveValue: document.querySelector("#characterPreviewPerspectiveValue"),
+    characterPreviewPropTool: document.querySelector("#characterPreviewPropTool"),
     characterPreviewPropAnimation: document.querySelector("#characterPreviewPropAnimation"),
     characterPreviewPropOffsetX: document.querySelector("#characterPreviewPropOffsetX"),
     characterPreviewPropOffsetY: document.querySelector("#characterPreviewPropOffsetY"),
@@ -114,9 +116,19 @@ export function createGameApp() {
   let previewBodyTypeCycleIndex = Math.max(0, previewBodyTypes.indexOf("classic"));
   let previewPetTypeCycleIndex = Math.max(0, previewPetTypes.indexOf("cat"));
   let previewPerspectiveTilt = 35;
+  let previewDevToolsVisible = false;
   let selectedPropAnimation = previewPropAnimations[0] || null;
   const strongholdRenderers = [];
   let strongholdRosterSignature = "";
+
+  function syncPreviewDevToolsVisibility() {
+    if (!elements.characterPreviewCaption) {
+      return;
+    }
+
+    elements.characterPreviewCaption.hidden = !previewDevToolsVisible;
+    elements.characterPreviewCaption.setAttribute("aria-hidden", String(!previewDevToolsVisible));
+  }
 
   function formatPropValue(value, digits = 0) {
     const numericValue = Number(value);
@@ -547,6 +559,7 @@ export function createGameApp() {
   syncHolderToggleLabel();
   characterPreview.setPerspectiveTilt(previewPerspectiveTilt);
   syncPerspectiveLabel();
+  syncPreviewDevToolsVisibility();
 
   previewPropAnimations.forEach((animationName) => {
     const option = document.createElement("option");
@@ -1459,6 +1472,13 @@ export function createGameApp() {
   });
 
   window.addEventListener("keydown", (event) => {
+    if (event.code === "Numpad9") {
+      previewDevToolsVisible = !previewDevToolsVisible;
+      syncPreviewDevToolsVisibility();
+      toast(previewDevToolsVisible ? "Preview dev tools shown." : "Preview dev tools hidden.");
+      return;
+    }
+
     if (event.key === "ArrowLeft") {
       selectPreviousSurvivor(state);
       renderAll();
