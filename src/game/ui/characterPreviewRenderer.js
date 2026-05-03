@@ -72,6 +72,13 @@ const PROP_TRANSFORM_DEFAULTS = Object.freeze({
   read: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
   shower: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
   wash: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
+  pushups: {
+      "x": 0,
+      "y": 7,
+      "z": 12,
+      "scale": 1.05,
+      "rotation": -8
+    },
   dig: {
       "x": 0,
       "y": 13,
@@ -488,13 +495,23 @@ function createPose(timeSeconds, animationName) {
   }
 
   if (animationName === "pushups") {
-    const rep = (Math.sin(timeSeconds * 6.8) + 1) * 0.5;
-    pose.lean = 0.28;
-    pose.bounce = 10 + rep * 8;
-    pose.leftArm = { x: -34 + rep * 6, y: -2 + rep * 14 };
-    pose.rightArm = { x: 34 - rep * 6, y: -2 + rep * 14 };
-    pose.leftLeg = { x: -18 + rep * 4, y: 88 - rep * 8 };
-    pose.rightLeg = { x: 18 - rep * 4, y: 88 - rep * 8 };
+    const leftCurl = (Math.sin(timeSeconds * 3.2) + 1) * 0.5;
+    const rightCurl = (Math.sin(timeSeconds * 3.2 + Math.PI) + 1) * 0.5;
+    const curlSwing = Math.sin(timeSeconds * 6.4);
+    pose.lean = 0.04 + Math.sin(timeSeconds * 1.8) * 0.02;
+    pose.bounce = 1.2 + Math.sin(timeSeconds * 6.4) * 1.3;
+    pose.leftArm = {
+      x: -32 + leftCurl * 11,
+      y: -20 - leftCurl * 32,
+      z: 14 * leftCurl - 8 * rightCurl
+    };
+    pose.rightArm = {
+      x: 32 - rightCurl * 11,
+      y: -20 - rightCurl * 32,
+      z: 14 * rightCurl - 8 * leftCurl
+    };
+    pose.leftLeg = { x: -18 + curlSwing * 1.2, y: 79 + Math.abs(curlSwing) * 1.8 };
+    pose.rightLeg = { x: 18 - curlSwing * 1.2, y: 79 + Math.abs(curlSwing) * 1.8 };
   }
 
   if (animationName === "shower") {
@@ -1801,6 +1818,39 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.moveTo(-9, 1.8);
     context.quadraticCurveTo(0, 8.2, 9, 1.8);
     context.stroke();
+
+    context.restore();
+  }
+
+  function drawDumbbell(x, y, tilt = 0) {
+    context.save();
+    context.translate(x, y);
+    context.rotate(tilt);
+
+    const plateGradient = context.createLinearGradient(-15, 0, 15, 0);
+    plateGradient.addColorStop(0, "#6e7680");
+    plateGradient.addColorStop(0.55, "#9aa2ab");
+    plateGradient.addColorStop(1, "#4f5660");
+
+    context.fillStyle = "#3e444c";
+    context.beginPath();
+    context.roundRect(-12, -2.2, 24, 4.4, 2.1);
+    context.fill();
+
+    context.fillStyle = plateGradient;
+    context.strokeStyle = "#353a40";
+    context.lineWidth = 1;
+    context.beginPath();
+    context.roundRect(-19.5, -8.5, 6.5, 17, 1.8);
+    context.roundRect(13, -8.5, 6.5, 17, 1.8);
+    context.fill();
+    context.stroke();
+
+    context.fillStyle = "#8d96a0";
+    context.beginPath();
+    context.roundRect(-15.2, -10.5, 3.8, 21, 1.2);
+    context.roundRect(11.4, -10.5, 3.8, 21, 1.2);
+    context.fill();
 
     context.restore();
   }
@@ -3467,6 +3517,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const huntWeight = getAnimationWeight("hunt", easedMix);
     const cookWeight = getAnimationWeight("cook", easedMix);
     const buyingWeight = getAnimationWeight("buying", easedMix);
+    const pushupsWeight = getAnimationWeight("pushups", easedMix);
     const punchWeight = getAnimationWeight("punch", easedMix);
     const idleWeight = getAnimationWeight("idle", easedMix);
     const animatedTiltMix = clamp(pose.perspectiveTiltMix || 0, 0, 1);
@@ -4207,6 +4258,27 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         { perspectiveBlend, depthVisibility, baseZ: centerDepth + 24 }
       );
       drawBuyingMoneySymbols(symbolPlacement.x, symbolPlacement.y, seconds, buyingWeight);
+    }
+
+    if (pushupsWeight > 0.01) {
+      const leftCurl = (Math.sin(seconds * 3.2) + 1) * 0.5;
+      const rightCurl = (Math.sin(seconds * 3.2 + Math.PI) + 1) * 0.5;
+      const activeArm = rightCurl >= leftCurl ? perspectivePose.rightArm : perspectivePose.leftArm;
+      const activeArmDepth = rightCurl >= leftCurl ? rightArmDepth : leftArmDepth;
+      const dumbbellPlacement = getPropPlacement(
+        "pushups",
+        activeArm.x,
+        activeArm.y + 4,
+        0.2 + Math.sin(seconds * 6.4) * 0.14,
+        { perspectiveBlend, depthVisibility, baseZ: activeArmDepth + 8 }
+      );
+      context.save();
+      context.globalAlpha = pushupsWeight;
+      context.translate(dumbbellPlacement.x, dumbbellPlacement.y);
+      context.rotate(dumbbellPlacement.rotation);
+      context.scale(dumbbellPlacement.scale, dumbbellPlacement.scale);
+      drawDumbbell(0, 0, 0);
+      context.restore();
     }
 
     // Draw the arm that's closer to the camera in front of the body.
