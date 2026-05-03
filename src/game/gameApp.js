@@ -115,7 +115,7 @@ export function createGameApp() {
   let previewEyeStyleCycleIndex = Math.max(0, previewEyeStyles.indexOf("classic"));
   let previewBodyTypeCycleIndex = Math.max(0, previewBodyTypes.indexOf("classic"));
   let previewPetTypeCycleIndex = Math.max(0, previewPetTypes.indexOf("cat"));
-  let previewPerspectiveTilt = 100;
+  let previewPerspectiveTilt = 0;
   let selectedPropAnimation = previewPropAnimations[0] || null;
 
   function formatPropValue(value, digits = 0) {
@@ -455,7 +455,7 @@ export function createGameApp() {
 
   elements.characterPreviewPerspective.addEventListener("input", () => {
     const nextTilt = Number(elements.characterPreviewPerspective.value);
-    previewPerspectiveTilt = Number.isFinite(nextTilt) ? Math.max(-100, Math.min(100, nextTilt)) : 0;
+    previewPerspectiveTilt = Number.isFinite(nextTilt) ? Math.max(0, Math.min(360, nextTilt)) : 0;
     characterPreview.setPerspectiveTilt(previewPerspectiveTilt);
     syncPerspectiveLabel();
   });

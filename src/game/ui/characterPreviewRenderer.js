@@ -115,6 +115,11 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
+function normalizeAngleDegrees(angle) {
+  const normalized = Number(angle) % 360;
+  return normalized < 0 ? normalized + 360 : normalized;
+}
+
 function blendHexColor(hexColor, amount) {
   const color = String(hexColor || "#000000").replace("#", "");
   const safe = color.length === 3
@@ -624,7 +629,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   let eyeStyle = "classic";
   let petType = "cat";
   let holderVisible = true;
-  let perspectiveTilt = 0;
+  let perspectiveAngle = 0;
   let shadowStyle = { ...DEFAULT_SHADOW_STYLE };
   let propTransforms = Object.fromEntries(
     Object.entries(PROP_TRANSFORM_DEFAULTS).map(([animationName, defaults]) => [
@@ -2457,34 +2462,17 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const cookWeight = getAnimationWeight("cook", easedMix);
     const idleWeight = getAnimationWeight("idle", easedMix);
     const animatedTiltMix = clamp(pose.perspectiveTiltMix || 0, 0, 1);
-    const animatedPerspectiveTilt = clamp(pose.perspectiveTilt || 0, -100, 100);
-    const resolvedPerspectiveTilt = clamp(lerp(perspectiveTilt, animatedPerspectiveTilt, animatedTiltMix), -100, 100);
-    const perspectiveBlend = clamp(resolvedPerspectiveTilt / 100, -1, 1);
+    const basePerspectiveAngle = normalizeAngleDegrees(perspectiveAngle);
+    const animatedPerspectiveOffset = clamp(pose.perspectiveTilt || 0, -100, 100) * 0.9;
+    const resolvedPerspectiveAngle = normalizeAngleDegrees(
+      basePerspectiveAngle + lerp(0, animatedPerspectiveOffset, animatedTiltMix)
+    );
+    const resolvedPerspectiveRadians = resolvedPerspectiveAngle * DEG_TO_RAD;
+    const perspectiveBlend = clamp(Math.sin(resolvedPerspectiveRadians), -1, 1);
+    const yawCos = Math.cos(resolvedPerspectiveRadians);
+    const sideSwapScale = Math.sign(yawCos || 1) * Math.pow(Math.abs(yawCos), 1.22);
+    const faceFeatureVisibility = clamp((Math.cos(resolvedPerspectiveRadians) - 0.14) / 0.22, 0, 1);
     const perspectiveStrength = Math.abs(perspectiveBlend);
-    const leftLegShiftX = perspectiveBlend < 0
-      ? 4.2 * perspectiveStrength
-      : 8.4 * perspectiveStrength;
-    const rightLegShiftX = perspectiveBlend < 0
-      ? -8.4 * perspectiveStrength
-      : -4.2 * perspectiveStrength;
-    const leftLegRootShiftX = perspectiveBlend < 0
-      ? 2.4 * perspectiveStrength
-      : 5.2 * perspectiveStrength;
-    const rightLegRootShiftX = perspectiveBlend < 0
-      ? -5.2 * perspectiveStrength
-      : -2.4 * perspectiveStrength;
-    const leftArmShiftX = perspectiveBlend < 0
-      ? 3.1 * perspectiveStrength
-      : 6.2 * perspectiveStrength;
-    const rightArmShiftX = perspectiveBlend < 0
-      ? -6.2 * perspectiveStrength
-      : -3.1 * perspectiveStrength;
-    const leftArmRootShiftX = perspectiveBlend < 0
-      ? 2 * perspectiveStrength
-      : 4.3 * perspectiveStrength;
-    const rightArmRootShiftX = perspectiveBlend < 0
-      ? -4.3 * perspectiveStrength
-      : -2 * perspectiveStrength;
     const isRightArmFront = perspectiveBlend <= 0;
     const facePerspectiveShiftX = perspectiveBlend * 6.2;
     const shadowPerspectiveShiftX = -perspectiveBlend * 15;
@@ -2507,19 +2495,19 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       ...pose,
       leftLeg: {
         ...pose.leftLeg,
-        x: pose.leftLeg.x + leftLegShiftX
+        x: pose.leftLeg.x * sideSwapScale
       },
       rightLeg: {
         ...pose.rightLeg,
-        x: pose.rightLeg.x + rightLegShiftX
+        x: pose.rightLeg.x * sideSwapScale
       },
       leftArm: {
         ...pose.leftArm,
-        x: pose.leftArm.x + leftArmShiftX
+        x: pose.leftArm.x * sideSwapScale
       },
       rightArm: {
         ...pose.rightArm,
-        x: pose.rightArm.x + rightArmShiftX
+        x: pose.rightArm.x * sideSwapScale
       }
     };
 
@@ -2527,12 +2515,12 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       ...perspectivePose,
       leftLeg: {
         ...perspectivePose.leftLeg,
-        x: lerp(perspectivePose.leftLeg.x, -18 + leftLegShiftX, idleWeight),
+        x: lerp(perspectivePose.leftLeg.x, -18 * sideSwapScale, idleWeight),
         y: lerp(perspectivePose.leftLeg.y, 78, idleWeight)
       },
       rightLeg: {
         ...perspectivePose.rightLeg,
-        x: lerp(perspectivePose.rightLeg.x, 18 + rightLegShiftX, idleWeight),
+        x: lerp(perspectivePose.rightLeg.x, 18 * sideSwapScale, idleWeight),
         y: lerp(perspectivePose.rightLeg.y, 78, idleWeight)
       }
     };
@@ -2540,10 +2528,10 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const plantedCompensation = dampedBounce * 0.85;
     const leftLegEndY = idleLockedPose.leftLeg.y - plantedCompensation;
     const rightLegEndY = idleLockedPose.rightLeg.y - plantedCompensation;
-    const leftLegRootX = -14 + leftLegRootShiftX;
-    const rightLegRootX = 14 + rightLegRootShiftX;
-    const leftArmRootX = -18 + leftArmRootShiftX;
-    const rightArmRootX = 18 + rightArmRootShiftX;
+    const leftLegRootX = -14 * sideSwapScale;
+    const rightLegRootX = 14 * sideSwapScale;
+    const leftArmRootX = -18 * sideSwapScale;
+    const rightArmRootX = 18 * sideSwapScale;
 
     const drawLeftArmAndHand = () => {
       drawLimb(
@@ -2770,7 +2758,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
 
     drawHairStyle(hairStyle, colors.hairColor, seconds);
 
-    const openEyesAlpha = 1 - sleepWeight;
+    const openEyesAlpha = (1 - sleepWeight) * faceFeatureVisibility;
     if (openEyesAlpha > 0.01) {
       context.save();
       context.globalAlpha = openEyesAlpha;
@@ -2779,9 +2767,10 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.restore();
     }
 
-    if (sleepWeight > 0.01) {
+    const closedEyesAlpha = sleepWeight * faceFeatureVisibility;
+    if (closedEyesAlpha > 0.01) {
       context.save();
-      context.globalAlpha = sleepWeight;
+      context.globalAlpha = closedEyesAlpha;
       context.translate(faceFeatureDriftX, faceFeatureDriftY);
       context.strokeStyle = "#342a24";
       context.lineWidth = 1.8;
@@ -2794,17 +2783,20 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.restore();
     }
 
-    context.strokeStyle = "#3b3029";
-    context.lineWidth = 1.8;
-    context.lineCap = "round";
-    context.save();
-    context.translate(faceFeatureDriftX, faceFeatureDriftY);
-    context.beginPath();
-    const talkOpen = talkWeight * ((Math.sin(seconds * 18) + 1) * 0.5);
-    context.moveTo(-7, -58);
-    context.quadraticCurveTo(0, -53 + talkOpen * 3.5, 8, -58);
-    drawRawStroke();
-    context.restore();
+    if (faceFeatureVisibility > 0.01) {
+      context.strokeStyle = "#3b3029";
+      context.lineWidth = 1.8;
+      context.lineCap = "round";
+      context.save();
+      context.globalAlpha = faceFeatureVisibility;
+      context.translate(faceFeatureDriftX, faceFeatureDriftY);
+      context.beginPath();
+      const talkOpen = talkWeight * ((Math.sin(seconds * 18) + 1) * 0.5);
+      context.moveTo(-7, -58);
+      context.quadraticCurveTo(0, -53 + talkOpen * 3.5, 8, -58);
+      drawRawStroke();
+      context.restore();
+    }
 
     context.restore();
 
@@ -3231,7 +3223,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   function setPerspectiveTilt(value) {
     const nextTilt = Number(value);
     if (Number.isFinite(nextTilt)) {
-      perspectiveTilt = clamp(nextTilt, -100, 100);
+      perspectiveAngle = normalizeAngleDegrees(nextTilt);
     }
   }
 
