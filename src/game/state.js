@@ -242,6 +242,27 @@ export function createInitialState() {
           statXp: { sleep: 3, knowledge: 1 },
         }
       },
+      catalog: {
+        phone: {
+          title: "BUY PHONE",
+          seconds: 10,
+          xp: 0.35,
+          oneTime: true,
+          cashCost: 10,
+          flags: [{ flagName: "hasPhone", newValue: true }],
+          hideFlags: ["hasPhone"]
+        }
+      },
+      phone: {
+        job: {
+          title: "FIND JOB",
+          seconds: 10,
+          xp: 0.35,
+          oneTime: true,
+          flags: [{ flagName: "hasJob", newValue: true }],
+          hideFlags: ["hasJob"]
+        }
+      },
       work: {
         foraging: {
           title: "FORAGE SUPPLIES",
