@@ -1009,6 +1009,20 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.roundRect(-innerWidth * 0.5, torsoY + 8, innerWidth, innerHeight, Math.max(12, bodyProfile.torsoRadius * 0.65));
     context.fill();
 
+    const pantsHalfWidth = torsoWidth * 0.5;
+    const pantsHeight = torsoHeight / 3;
+    const torsoBottomY = torsoY + torsoHeight - 1;
+    const pantsDrop = Math.max(6, torsoHeight * 0.115);
+    const pantsTopY = torsoBottomY - pantsHeight + pantsDrop;
+    const pantsCurveY = torsoBottomY + pantsHeight * 0.35 + pantsDrop;
+    context.fillStyle = blendHexColor(colors.pantsColor, 0.05);
+    context.beginPath();
+    context.moveTo(-pantsHalfWidth, pantsTopY);
+    context.lineTo(pantsHalfWidth, pantsTopY);
+    context.quadraticCurveTo(0, pantsCurveY, -pantsHalfWidth, pantsTopY);
+    context.closePath();
+    context.fill();
+
     const headOffsetY = 4;
     context.save();
     context.translate(0, headOffsetY);
