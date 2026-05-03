@@ -1075,7 +1075,7 @@ export function createGameApp() {
 
       if (!runningMissionKey) {
         button.disabled = cashCost > availableCash;
-        button.textContent = cashCost > availableCash ? "NO CASH" : "START";
+        button.textContent = cashCost > availableCash ? "CANT AFFORD" : "START";
         return;
       }
 
