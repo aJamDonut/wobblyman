@@ -80,6 +80,10 @@ function blendHexColor(hexColor, amount) {
   return `#${r}${g}${b}`;
 }
 
+function sketchNoise(seed, amplitude = 1) {
+  return Math.sin(seed * 12.9898) * amplitude;
+}
+
 function createPose(timeSeconds, animationName) {
   const bounce = Math.sin(timeSeconds * 2.1) * 4;
   const shoulderY = -30;
@@ -234,22 +238,35 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   }
 
   function drawLimb(rootX, rootY, endX, endY, thickness, color, wobble = 0, phase = 0) {
-    const midX = (rootX + endX) * 0.5 + Math.sin(phase) * wobble;
-    const midY = (rootY + endY) * 0.5 + Math.cos(phase * 1.2) * wobble * 0.55;
+    const graphite = "#332923";
+    const fillTone = blendHexColor(color, 0.1);
 
-    context.strokeStyle = blendHexColor(color, -0.45);
-    context.lineWidth = thickness + 3;
+    context.strokeStyle = fillTone;
+    context.lineWidth = thickness + 1;
     context.lineCap = "round";
-    context.beginPath();
-    context.moveTo(rootX, rootY);
-    context.quadraticCurveTo(midX, midY, endX, endY);
-    context.stroke();
 
-    context.strokeStyle = color;
-    context.lineWidth = thickness;
+    for (let pass = 0; pass < 3; pass += 1) {
+      const passSeed = phase + pass * 0.73;
+      const jitterX = sketchNoise(passSeed, 0.9);
+      const jitterY = sketchNoise(passSeed + 2.4, 0.8);
+      const midX = (rootX + endX) * 0.5 + Math.sin(phase + pass * 0.35) * wobble + jitterX;
+      const midY = (rootY + endY) * 0.5 + Math.cos(phase * 1.2 + pass * 0.42) * wobble * 0.55 + jitterY;
+      context.beginPath();
+      context.moveTo(rootX + jitterX * 0.35, rootY + jitterY * 0.35);
+      context.quadraticCurveTo(midX, midY, endX - jitterX * 0.25, endY - jitterY * 0.25);
+      context.stroke();
+    }
+
+    context.strokeStyle = graphite;
+    context.lineWidth = Math.max(1.2, thickness * 0.28);
     context.beginPath();
     context.moveTo(rootX, rootY);
-    context.quadraticCurveTo(midX, midY, endX, endY);
+    context.quadraticCurveTo(
+      (rootX + endX) * 0.5 + Math.sin(phase) * wobble,
+      (rootY + endY) * 0.5 + Math.cos(phase * 1.2) * wobble * 0.55,
+      endX,
+      endY
+    );
     context.stroke();
   }
 
@@ -258,20 +275,29 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.translate(x, y);
     context.rotate(tilt);
 
-    context.fillStyle = "#c9954f";
+    context.fillStyle = "#e9c383";
     context.beginPath();
     context.roundRect(-11, -8, 22, 7, 3);
     context.fill();
 
-    context.fillStyle = "#82c566";
+    context.fillStyle = "#95bb6f";
     context.beginPath();
     context.roundRect(-10, -2, 20, 3, 2);
     context.fill();
 
-    context.fillStyle = "#f5d98d";
+    context.fillStyle = "#f6dba5";
     context.beginPath();
     context.roundRect(-11, 1, 22, 7, 3);
     context.fill();
+
+    context.strokeStyle = "#342b24";
+    context.lineWidth = 1;
+    context.beginPath();
+    context.moveTo(-8, -6);
+    context.lineTo(6, 4);
+    context.moveTo(-3, -6);
+    context.lineTo(11, 3);
+    context.stroke();
 
     context.restore();
   }
@@ -283,9 +309,9 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.save();
     context.translate(x, y);
 
-    context.fillStyle = "rgba(255,255,255,0.96)";
-    context.strokeStyle = "rgba(19,27,35,0.55)";
-    context.lineWidth = 1.5;
+    context.fillStyle = "rgba(250,247,236,0.97)";
+    context.strokeStyle = "rgba(51,42,35,0.8)";
+    context.lineWidth = 1.3;
     context.beginPath();
     context.roundRect(-bubbleWidth * 0.5, -bubbleHeight * 0.5, bubbleWidth, bubbleHeight, 10);
     context.fill();
@@ -299,7 +325,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.fill();
     context.stroke();
 
-    context.fillStyle = "#2a3240";
+    context.fillStyle = "#41352d";
     context.beginPath();
     context.arc(-12, 0, 2.2, 0, Math.PI * 2);
     context.arc(0, 0, 2.2, 0, Math.PI * 2);
@@ -317,19 +343,21 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const headCenterY = -62;
 
     context.save();
-    context.strokeStyle = "rgba(16, 12, 9, 0.75)";
-    context.lineWidth = 4.2;
+    context.strokeStyle = "rgba(45, 37, 32, 0.86)";
+    context.lineWidth = 1.8;
     context.lineJoin = "round";
     context.lineCap = "round";
 
-    // Main silhouette edge.
-    context.beginPath();
-    context.roundRect(torsoX, torsoY, torsoWidth, torsoHeight, bodyProfile.torsoRadius);
-    context.stroke();
+    for (let pass = 0; pass < 2; pass += 1) {
+      const jitter = pass === 0 ? 0 : 0.75;
+      context.beginPath();
+      context.roundRect(torsoX + jitter, torsoY + jitter, torsoWidth, torsoHeight, bodyProfile.torsoRadius);
+      context.stroke();
 
-    context.beginPath();
-    context.arc(0, headCenterY, 25.5, 0, Math.PI * 2);
-    context.stroke();
+      context.beginPath();
+      context.arc(jitter * 0.4, headCenterY + jitter, 25.5, 0, Math.PI * 2);
+      context.stroke();
+    }
 
     context.beginPath();
     context.moveTo(-14, 18);
@@ -345,6 +373,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.beginPath();
     context.ellipse(pose.leftArm.x, pose.leftArm.y, 9.2, 7.7, 0, 0, Math.PI * 2);
     context.stroke();
+
     context.beginPath();
     context.ellipse(pose.rightArm.x, pose.rightArm.y, 9.2, 7.7, 0, 0, Math.PI * 2);
     context.stroke();
@@ -352,18 +381,9 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.beginPath();
     context.ellipse(pose.leftLeg.x - 1, leftLegEndY + 1.5, 10.8, 5.8, 0, 0, Math.PI * 2);
     context.stroke();
+
     context.beginPath();
     context.ellipse(pose.rightLeg.x + 1, rightLegEndY + 1.5, 10.8, 5.8, 0, 0, Math.PI * 2);
-    context.stroke();
-
-    // Soft outer glow to mimic post-process shader edge.
-    context.strokeStyle = "rgba(20, 14, 10, 0.26)";
-    context.lineWidth = 6.8;
-    context.beginPath();
-    context.roundRect(torsoX, torsoY, torsoWidth, torsoHeight, bodyProfile.torsoRadius);
-    context.stroke();
-    context.beginPath();
-    context.arc(0, headCenterY, 25.5, 0, Math.PI * 2);
     context.stroke();
 
     context.restore();
@@ -921,16 +941,29 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const wobbleScale = 0.65;
     const bodyProfile = BODY_TYPE_PROFILES[bodyType] || BODY_TYPE_PROFILES.classic;
 
-    const gradient = context.createRadialGradient(centerX, centerY - 48, 24, centerX, centerY, Math.max(width, height));
-    gradient.addColorStop(0, "rgba(255,255,255,0.13)");
-    gradient.addColorStop(1, "rgba(7,11,15,0.92)");
-    context.fillStyle = gradient;
+    context.fillStyle = "#f8f3de";
     context.fillRect(0, 0, width, height);
 
-    context.fillStyle = "rgba(0,0,0,0.26)";
+    context.strokeStyle = "rgba(69, 130, 186, 0.22)";
+    context.lineWidth = 1;
+    for (let y = 18; y < height; y += 24) {
+      context.beginPath();
+      context.moveTo(0, y);
+      context.lineTo(width, y);
+      context.stroke();
+    }
+
+    context.strokeStyle = "rgba(193, 80, 80, 0.42)";
+    context.beginPath();
+    context.moveTo(26, 0);
+    context.lineTo(26, height);
+    context.stroke();
+
+    context.strokeStyle = "rgba(59, 48, 41, 0.38)";
+    context.lineWidth = 1.1;
     context.beginPath();
     context.ellipse(centerX, centerY + 88, 52, 11, 0, 0, Math.PI * 2);
-    context.fill();
+    context.stroke();
 
     context.save();
     context.translate(centerX, centerY + dampedBounce);
@@ -948,9 +981,9 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     drawLimb(-14, 18, pose.leftLeg.x, leftLegEndY, 5.5, colors.pantsColor, 4.2 * wobbleScale, seconds * 7 + 0.5);
     drawLimb(14, 18, pose.rightLeg.x, rightLegEndY, 5.5, colors.pantsColor, 4.2 * wobbleScale, seconds * 7 + 2.2);
 
-    context.fillStyle = colors.shirtColor;
-    context.strokeStyle = blendHexColor(colors.shirtColor, -0.45);
-    context.lineWidth = 2.5;
+    context.fillStyle = blendHexColor(colors.shirtColor, 0.25);
+    context.strokeStyle = "#372d26";
+    context.lineWidth = 1.5;
     const torsoWidth = bodyProfile.torsoWidth;
     const torsoHeight = bodyProfile.torsoHeight;
     const torsoY = -38 + bodyProfile.torsoYOffset;
@@ -960,7 +993,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.fill();
     context.stroke();
 
-    context.fillStyle = blendHexColor(colors.shirtColor, 0.1);
+    context.fillStyle = blendHexColor(colors.shirtColor, 0.32);
     const innerWidth = torsoWidth * bodyProfile.insetScaleX;
     const innerHeight = torsoHeight * bodyProfile.insetScaleY;
     context.beginPath();
@@ -971,9 +1004,9 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.save();
     context.translate(0, headOffsetY);
 
-    context.fillStyle = colors.skinColor;
-    context.strokeStyle = blendHexColor(colors.skinColor, -0.45);
-    context.lineWidth = 2.2;
+    context.fillStyle = blendHexColor(colors.skinColor, 0.2);
+    context.strokeStyle = "#382d25";
+    context.lineWidth = 1.5;
     context.beginPath();
     context.arc(0, -66, 24, 0, Math.PI * 2);
     context.fill();
@@ -986,9 +1019,9 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.save();
       context.globalAlpha = openEyesAlpha;
       // Bold cartoon eyes.
-      context.fillStyle = "#ffffff";
-      context.strokeStyle = "#1f1715";
-      context.lineWidth = 2.5;
+      context.fillStyle = "#fffdf3";
+      context.strokeStyle = "#362d27";
+      context.lineWidth = 1.5;
       context.beginPath();
       context.ellipse(-8.8, -68, 5.4, 6.8, 0, 0, Math.PI * 2);
       context.fill();
@@ -998,7 +1031,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.fill();
       context.stroke();
 
-      context.fillStyle = "#1e1615";
+      context.fillStyle = "#2e2520";
       context.beginPath();
       context.arc(-8.6, -67.5, 2.3, 0, Math.PI * 2);
       context.fill();
@@ -1006,7 +1039,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.arc(8.6, -67.5, 2.3, 0, Math.PI * 2);
       context.fill();
 
-      context.fillStyle = "rgba(255,255,255,0.85)";
+      context.fillStyle = "rgba(255,255,255,0.6)";
       context.beginPath();
       context.arc(-9.8, -68.8, 0.8, 0, Math.PI * 2);
       context.fill();
@@ -1019,8 +1052,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     if (sleepWeight > 0.01) {
       context.save();
       context.globalAlpha = sleepWeight;
-      context.strokeStyle = "#2f2220";
-      context.lineWidth = 2.7;
+      context.strokeStyle = "#342a24";
+      context.lineWidth = 1.8;
       context.beginPath();
       context.moveTo(-14, -68);
       context.lineTo(-3.5, -68);
@@ -1030,8 +1063,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.restore();
     }
 
-    context.strokeStyle = "#5a3b35";
-    context.lineWidth = 2.8;
+    context.strokeStyle = "#3b3029";
+    context.lineWidth = 1.8;
     context.lineCap = "round";
     context.beginPath();
     const talkOpen = talkWeight * ((Math.sin(seconds * 18) + 1) * 0.5);
@@ -1041,9 +1074,9 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
 
     context.restore();
 
-    context.fillStyle = colors.shoeColor;
-    context.strokeStyle = blendHexColor(colors.shoeColor, -0.35);
-    context.lineWidth = 1.8;
+    context.fillStyle = blendHexColor(colors.shoeColor, 0.06);
+    context.strokeStyle = "#2f2622";
+    context.lineWidth = 1.2;
     context.beginPath();
     context.ellipse(pose.leftLeg.x - 1, leftLegEndY + 1.5, 9.5, 5, 0, 0, Math.PI * 2);
     context.fill();
@@ -1064,9 +1097,9 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     drawLimb(-18, -28, pose.leftArm.x, pose.leftArm.y, 5, colors.skinColor, 4.6 * wobbleScale, seconds * 9 + 0.8);
     drawLimb(18, -28, pose.rightArm.x, pose.rightArm.y, 5, colors.skinColor, 4.6 * wobbleScale, seconds * 9 + 2.7);
 
-    context.fillStyle = "#f7f2e9";
-    context.strokeStyle = "#4a3530";
-    context.lineWidth = 1.8;
+    context.fillStyle = "#f1d6b1";
+    context.strokeStyle = "#3b302a";
+    context.lineWidth = 1.2;
     context.beginPath();
     context.ellipse(pose.leftArm.x, pose.leftArm.y, 8.25, 6.9, 0, 0, Math.PI * 2);
     context.fill();
@@ -1088,8 +1121,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     if (sleepWeight > 0.01) {
       context.save();
       context.globalAlpha = sleepWeight;
-      context.fillStyle = "rgba(210, 236, 255, 0.86)";
-      context.font = "700 18px Arial";
+      context.fillStyle = "rgba(80, 126, 180, 0.86)";
+      context.font = "700 22px 'Patrick Hand', 'Comic Sans MS', cursive";
       context.fillText("Z", centerX + 42, centerY - 132);
       context.fillText("Z", centerX + 58, centerY - 152);
       context.restore();

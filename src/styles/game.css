@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Permanent+Marker&display=swap");
+
 :root {
   --bg: #2f3b3f;
   --panel: #1d2327;
@@ -591,5 +593,251 @@ body.popup-open {
   .popup-current-time {
     font-size: 26px;
     margin-top: 16px;
+  }
+}
+
+:root {
+  --bg: #f4ecd2;
+  --panel: #fcf5de;
+  --panel-dark: #f7efd3;
+  --panel-soft: #fff8e7;
+  --line: #473a30;
+  --muted: #6d6254;
+  --text: #2f2722;
+  --blue: #3f7db4;
+  --red: #b74f4f;
+  --purple: #6f668a;
+  --yellow: #b08b2d;
+  --green: #4f8754;
+  --bar: #d3c7aa;
+}
+
+body {
+  color: var(--text);
+  font-family: "Patrick Hand", "Comic Sans MS", cursive;
+  letter-spacing: 0.5px;
+  background:
+    radial-gradient(circle at 12% 14%, rgba(255,255,255,0.75), transparent 25%),
+    radial-gradient(circle at 90% 75%, rgba(190,173,122,0.2), transparent 32%),
+    repeating-linear-gradient(180deg, transparent 0, transparent 30px, rgba(77, 132, 186, 0.2) 30px, rgba(77, 132, 186, 0.2) 32px),
+    linear-gradient(90deg, rgba(191, 76, 76, 0.26) 36px, transparent 36px),
+    linear-gradient(180deg, #f8f1d7, #f0e7cb 70%, #e8debf);
+}
+
+button {
+  font-family: "Permanent Marker", "Patrick Hand", cursive;
+  letter-spacing: 0.8px;
+}
+
+.top-link,
+.section-title,
+.survivor-name,
+.name,
+.header-strip,
+.popup-title {
+  font-family: "Permanent Marker", "Patrick Hand", cursive;
+  text-shadow: none;
+  color: #2d2520;
+}
+
+.chevron {
+  border-left-color: #2f2722;
+  border-bottom-color: #2f2722;
+}
+
+.card,
+.survivor-card,
+.mission,
+.mission-panel,
+.popup-window,
+.roster-btn,
+.tab,
+.base-tab,
+.start-btn,
+.survivor-nav-btn,
+.reward,
+.res,
+.status,
+.avatar,
+.mini-avatar,
+.trait,
+.dynamic-int,
+.level-pill,
+.count-chip,
+.popup-current-time,
+.popup-step-btn {
+  background: var(--panel);
+  border: 2px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  box-shadow: 1px 2px 0 rgba(52, 42, 36, 0.5);
+}
+
+.card,
+.mission,
+.mission-panel,
+.survivor-card,
+.popup-window {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.3), rgba(255,255,255,0)),
+    repeating-linear-gradient(175deg, rgba(80, 65, 54, 0.035), rgba(80, 65, 54, 0.035) 1px, transparent 1px, transparent 6px),
+    var(--panel);
+}
+
+.header-strip {
+  height: 38px;
+  background: rgba(255, 245, 212, 0.86);
+  border-bottom: 2px solid var(--line);
+  color: #2d2621;
+}
+
+.mission:nth-child(odd),
+.survivor-card:nth-child(odd),
+.tab:nth-child(odd),
+.base-tab:nth-child(odd),
+.roster-btn:nth-child(odd) {
+  transform: rotate(-0.6deg);
+}
+
+.mission:nth-child(even),
+.survivor-card:nth-child(even),
+.tab:nth-child(even),
+.base-tab:nth-child(even),
+.roster-btn:nth-child(even) {
+  transform: rotate(0.5deg);
+}
+
+.tab,
+.base-tab {
+  background: #f8f1dc;
+  color: #5f5348;
+}
+
+.tab.active,
+.base-tab.active {
+  color: #2f2722;
+  border-top: 2px solid var(--blue);
+  background: #fff7e2;
+}
+
+.character-preview-canvas {
+  background:
+    repeating-linear-gradient(180deg, transparent 0, transparent 25px, rgba(73, 134, 188, 0.2) 25px, rgba(73, 134, 188, 0.2) 27px),
+    linear-gradient(90deg, rgba(190, 77, 77, 0.28) 32px, transparent 32px),
+    linear-gradient(180deg, #f8f1d8, #f0e7c8);
+}
+
+.preview-caption {
+  font-family: "Patrick Hand", "Comic Sans MS", cursive;
+  color: #5f5145;
+  border-top: 2px dashed #9f8d76;
+  background: rgba(255, 249, 232, 0.9);
+}
+
+.preview-caption b {
+  color: #2d2721;
+  text-decoration-style: wavy;
+}
+
+.bar-wrap,
+.xp,
+.small-xp,
+.dynamic-int-xp {
+  background: #dacfb2;
+  border-radius: 999px;
+}
+
+.bar-fill,
+.xp-fill,
+.dynamic-int-xp i {
+  background: repeating-linear-gradient(90deg, rgba(0,0,0,0.07), rgba(0,0,0,0.07) 2px, transparent 2px, transparent 8px), currentColor;
+}
+
+.red {
+  color: #bc5050;
+  background-color: #bc5050;
+}
+
+.blue {
+  color: #467fb2;
+  background-color: #467fb2;
+}
+
+.purple {
+  color: #706287;
+  background-color: #706287;
+}
+
+.start-btn,
+.popup-confirm {
+  background: #e6f0d9;
+  color: #2b3c24;
+}
+
+.popup-cancel {
+  color: #9a3d3d;
+}
+
+.resources,
+.stats,
+.info,
+.provides,
+.bar-value,
+.dynamic-int small,
+.small-xp-text,
+.danger-skulls {
+  color: #65594c;
+}
+
+.popup-layer {
+  background: rgba(64, 54, 46, 0.38);
+}
+
+.toast {
+  background: #fff5d8;
+  border: 2px solid var(--line);
+  color: #2f2722;
+}
+
+.survivor-card.active {
+  border-color: #487eb0;
+  box-shadow: 0 0 0 2px rgba(72, 126, 176, 0.3);
+}
+
+.survivor-card.empty {
+  background: transparent;
+  border: 0;
+  border-left: 2px dashed rgba(71, 58, 48, 0.4);
+  box-shadow: none;
+}
+
+.popup-scale-track {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent calc(25% - 1px),
+      rgba(83, 73, 64, 0.32) calc(25% - 1px),
+      rgba(83, 73, 64, 0.32) 25%
+    ),
+    rgba(75, 132, 185, 0.22);
+}
+
+.popup-scale-track::before {
+  background: linear-gradient(90deg, rgba(74, 131, 184, 0.4), rgba(74, 131, 184, 0.82));
+}
+
+.popup-scale-track::after {
+  background: #467fb2;
+  box-shadow: 0 0 0 2px rgba(54, 45, 38, 0.4);
+}
+
+@media (max-width: 640px) {
+  .mission,
+  .survivor-card,
+  .tab,
+  .base-tab,
+  .roster-btn {
+    transform: none;
   }
 }
