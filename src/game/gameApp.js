@@ -5,6 +5,7 @@ import { clock } from "./helpers.js";
 import { clearPersistedState, loadPersistedState, savePersistedState } from "./persistence.js";
 import { renderActive, renderMissionsCash, renderResources, renderRoster } from "./render.js";
 import { createCharacterPreviewRenderer } from "./ui/characterPreviewRenderer.js";
+import { createMissionCompletionPopup } from "./ui/missionCompletionPopup.js";
 import { createPopupSystem } from "./ui/popupSystem.js";
 import {
   addSurvivor,
@@ -92,6 +93,7 @@ export function createGameApp() {
   };
 
   const popupSystem = createPopupSystem(elements.popupLayer);
+  const missionCompletionPopup = createMissionCompletionPopup(popupSystem);
   const characterPreview = createCharacterPreviewRenderer({
     canvas: elements.characterPreviewCanvas,
     statusLabel: elements.characterPreviewStatus
@@ -1328,11 +1330,18 @@ export function createGameApp() {
     renderAll();
 
     const cycles = missionProgress.cyclesCompleted || 0;
-    if (cycles > 0) {
-      toast(`Completed ${mission?.title || "mission"}: ${cycles} cycle${cycles === 1 ? "" : "s"}.`);
-    } else {
-      toast(`${mission?.title || "Mission"} finished with no full cycle completed.`);
-    }
+    const missionTitle = mission?.title || "Mission";
+    const fallbackText =
+      cycles > 0
+        ? `Completed ${missionTitle}: ${cycles} cycle${cycles === 1 ? "" : "s"}.`
+        : `${missionTitle} finished with no full cycle completed.`;
+
+    missionCompletionPopup.showCompletionInfo({
+      missionTitle,
+      popupTitle: mission?.popupTitle,
+      popupText: mission?.popupText || fallbackText,
+      popupIcon: mission?.popupIcon
+    });
   }
 
   function applyMissionStatChangesForDuration(activeSurvivor, missionProgress, mission, durationSeconds) {

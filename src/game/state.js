@@ -197,6 +197,9 @@ export function createInitialState() {
           xp: 0.35,
           cashCost: 10,
           oneTime: true,
+          popupTitle: "Catalog Purchased",
+          popupText: "You bought the catalog. New options are now available.",
+          popupIcon: "📚",
           flags: [{ flagName: "hasCatalog", newValue: true }],
           hideFlags: ["hasCatalog"]
         },
@@ -249,6 +252,9 @@ export function createInitialState() {
           xp: 0.35,
           oneTime: true,
           cashCost: 10,
+          popupTitle: "Phone Purchased",
+          popupText: "You bought a phone and unlocked new contacts.",
+          popupIcon: "📱",
           flags: [{ flagName: "hasPhone", newValue: true }],
           hideFlags: ["hasPhone"]
         }
@@ -259,6 +265,9 @@ export function createInitialState() {
           seconds: 10,
           xp: 0.35,
           oneTime: true,
+          popupTitle: "Job Locked In",
+          popupText: "You found steady work and unlocked the Work tab.",
+          popupIcon: "💼",
           flags: [{ flagName: "hasJob", newValue: true }],
           hideFlags: ["hasJob"]
         }

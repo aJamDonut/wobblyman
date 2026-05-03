@@ -1411,3 +1411,83 @@ button {
     overflow: auto;
   }
 }
+
+body .screen,
+body .resources,
+body .actions-launcher-wrap,
+body .toast {
+  transition: filter .2s ease;
+}
+
+body.popup-open .screen,
+body.popup-open .resources,
+body.popup-open .actions-launcher-wrap,
+body.popup-open .toast {
+  filter: blur(4px);
+}
+
+.popup-layer {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.mission-completion-popup {
+  width: min(92vw, 560px);
+  display: grid;
+  gap: 14px;
+  text-align: center;
+  justify-items: center;
+  padding: 22px 20px 18px;
+}
+
+.mission-completion-icon {
+  width: 92px;
+  height: 92px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 52px;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(0, 0, 0, 0.2);
+}
+
+.mission-completion-title {
+  margin: 2px 0 0;
+}
+
+.mission-completion-text {
+  margin: 0;
+  max-width: 44ch;
+  font-family: Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.mission-completion-actions {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.mission-completion-continue {
+  min-width: 160px;
+  height: 42px;
+}
+
+@media (max-width: 640px) {
+  .mission-completion-popup {
+    padding: 16px 14px;
+  }
+
+  .mission-completion-icon {
+    width: 82px;
+    height: 82px;
+    font-size: 46px;
+  }
+
+  .mission-completion-text {
+    font-size: 14px;
+  }
+}
