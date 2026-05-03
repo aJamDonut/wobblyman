@@ -2178,7 +2178,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         pose.leftArm.y + shadowOffsetY,
         5,
         shadowFill,
-        4.6 * wobbleScale,
+        4.6 * wobbleScale * 0.1,
         seconds * 9 + 0.8
       );
     };
@@ -2190,7 +2190,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
         pose.rightArm.y + shadowOffsetY,
         5,
         shadowFill,
-        4.6 * wobbleScale,
+        4.6 * wobbleScale * 0.1,
         seconds * 9 + 2.7
       );
     };
@@ -2223,6 +2223,100 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       drawLeftShadowHand();
       drawRightShadowHand();
     }
+
+    context.restore();
+  }
+
+  function drawOutlineHolder(
+    legPose,
+    armPose,
+    leftLegEndY,
+    rightLegEndY,
+    bodyProfile,
+    leftLegRootX,
+    rightLegRootX,
+    leftArmRootX,
+    rightArmRootX,
+    seconds,
+    wobbleScale
+  ) {
+    const torsoWidth = bodyProfile.torsoWidth;
+    const torsoHeight = bodyProfile.torsoHeight;
+    const torsoY = -38 + bodyProfile.torsoYOffset;
+    const torsoX = -torsoWidth * 0.5;
+    const outlineWidth = 7;
+    const limbOutlineWidth = 13;
+    const headOffsetY = 4;
+
+    context.save();
+    context.strokeStyle = "#000000";
+    context.lineWidth = outlineWidth;
+    context.lineCap = "round";
+    context.lineJoin = "round";
+
+    const drawOutlineLimb = (rootX, rootY, endX, endY, wobble, phase) => {
+      context.beginPath();
+      context.moveTo(rootX, rootY);
+      context.quadraticCurveTo(
+        (rootX + endX) * 0.5 + Math.sin(phase) * wobble,
+        (rootY + endY) * 0.5 + Math.cos(phase * 1.2) * wobble * 0.55,
+        endX,
+        endY
+      );
+      drawRawStroke();
+    };
+
+    context.lineWidth = limbOutlineWidth;
+    drawOutlineLimb(leftLegRootX, 18, legPose.leftLeg.x, leftLegEndY, 4.2 * wobbleScale, seconds * 7 + 0.5);
+    drawOutlineLimb(rightLegRootX, 18, legPose.rightLeg.x, rightLegEndY, 4.2 * wobbleScale, seconds * 7 + 2.2);
+    drawOutlineLimb(leftArmRootX, -28, armPose.leftArm.x, armPose.leftArm.y, 4.6 * wobbleScale * 0.1, seconds * 9 + 0.8);
+    drawOutlineLimb(rightArmRootX, -28, armPose.rightArm.x, armPose.rightArm.y, 4.6 * wobbleScale * 0.1, seconds * 9 + 2.7);
+
+    context.lineWidth = outlineWidth;
+    context.beginPath();
+    context.roundRect(
+      torsoX - 1.5,
+      torsoY - 1.5,
+      torsoWidth + 3,
+      torsoHeight + 3,
+      bodyProfile.torsoRadius + 1.5
+    );
+    drawRawStroke();
+
+    context.beginPath();
+    context.arc(0, -66 + headOffsetY, 25.5, 0, Math.PI * 2);
+    drawRawStroke();
+
+    context.beginPath();
+    context.ellipse(armPose.leftArm.x, armPose.leftArm.y, 9.2, 7.7, 0, 0, Math.PI * 2);
+    drawRawStroke();
+
+    context.beginPath();
+    context.ellipse(armPose.rightArm.x, armPose.rightArm.y, 9.2, 7.7, 0, 0, Math.PI * 2);
+    drawRawStroke();
+
+    context.beginPath();
+    context.ellipse(legPose.leftLeg.x - 1, leftLegEndY + 1.5, 10.8, 5.9, 0, 0, Math.PI * 2);
+    drawRawStroke();
+
+    context.beginPath();
+    context.ellipse(legPose.rightLeg.x + 1, rightLegEndY + 1.5, 10.8, 5.9, 0, 0, Math.PI * 2);
+    drawRawStroke();
+
+    context.save();
+    context.translate(0, headOffsetY);
+    context.translate(0, -66);
+    context.scale(1.08, 1.08);
+    context.translate(0, 66);
+    const previousSuppressDecorativeStrokes = suppressDecorativeStrokes;
+    suppressDecorativeStrokes = false;
+    drawHairStyle(hairStyle, "#000000", seconds, true);
+    suppressDecorativeStrokes = previousSuppressDecorativeStrokes;
+    context.restore();
+
+    context.beginPath();
+    context.ellipse(0, -86 + headOffsetY, 22.5, 11, 0, 0, Math.PI * 2);
+    drawRawStroke();
 
     context.restore();
   }
@@ -2526,6 +2620,20 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       rightArmRootX,
       perspectiveBlend,
       shadowPerspectiveShiftX
+    );
+
+    drawOutlineHolder(
+      idleLockedPose,
+      perspectivePose,
+      leftLegEndY,
+      rightLegEndY,
+      bodyProfile,
+      leftLegRootX,
+      rightLegRootX,
+      leftArmRootX,
+      rightArmRootX,
+      seconds,
+      wobbleScale
     );
 
     const drawLeftLeg = () => {
