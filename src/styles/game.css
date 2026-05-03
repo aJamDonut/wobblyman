@@ -1,28 +1,29 @@
-@import url("https://fonts.googleapis.com/css2?family=Bree+Serif&family=Outfit:wght@500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@500;600;700;800&display=swap");
 
 :root {
-  --sky-1: #c8deeb;
-  --sky-2: #e7f1f7;
-  --sky-3: #fafdff;
-  --ground-1: #c8b999;
-  --ground-2: #9f8763;
+  --sky-1: #9eb8cb;
+  --sky-2: #dde9f0;
+  --sky-3: #f8fbff;
+  --ground-1: #cab394;
+  --ground-2: #9b8057;
 
-  --panel: #f8f3e8;
-  --panel-soft: #fcf8ef;
-  --panel-deep: #efe5d2;
-  --ink: #3f362d;
-  --ink-soft: #706556;
-  --line: #cfbea2;
+  --panel: #f6efe3;
+  --panel-soft: #fff9ee;
+  --panel-deep: #eadcc3;
+  --ink: #2f261c;
+  --ink-soft: #685949;
+  --line: #ccb696;
 
-  --red: #be6a63;
-  --blue: #5d8eae;
-  --purple: #86719b;
-  --yellow: #c9a555;
-  --green: #70926d;
-  --bar: #dccfb4;
+  --red: #c26e66;
+  --blue: #3f7fa5;
+  --purple: #7e718f;
+  --yellow: #bd9650;
+  --green: #648c65;
+  --bar: #d9caad;
 
-  --shadow-soft: 0 10px 28px rgba(70, 53, 31, 0.1);
-  --shadow-hard: 0 1px 0 rgba(111, 88, 59, 0.18);
+  --shadow-soft: 0 18px 42px rgba(56, 39, 18, 0.13);
+  --shadow-hard: 0 1px 0 rgba(120, 95, 66, 0.24);
+  --shadow-edge: 0 0 0 1px rgba(132, 108, 80, 0.1);
 }
 
 * {
@@ -38,17 +39,18 @@ body {
   margin: 0;
   min-height: 100vh;
   color: var(--ink);
-  font-family: "Outfit", "Segoe UI", sans-serif;
+  font-family: "Manrope", "Segoe UI", sans-serif;
   letter-spacing: 0.2px;
   overflow-x: hidden;
   overflow-y: auto;
   background:
-    radial-gradient(circle at 14% 15%, rgba(255, 255, 255, 0.68), transparent 22%),
-    radial-gradient(circle at 80% 11%, rgba(255, 255, 255, 0.58), transparent 18%),
-    radial-gradient(circle at 88% 78%, rgba(137, 176, 108, 0.15), transparent 28%),
-    repeating-linear-gradient(160deg, rgba(98, 78, 52, 0.03), rgba(98, 78, 52, 0.03) 2px, transparent 2px, transparent 12px),
-    linear-gradient(180deg, var(--sky-3) 0%, var(--sky-2) 26%, var(--sky-1) 63%, #e1dbca 82%, #d3c2a4 100%);
-  animation: page-settle 420ms ease-out;
+    radial-gradient(circle at 11% 8%, rgba(255, 255, 255, 0.8), transparent 24%),
+    radial-gradient(circle at 86% 14%, rgba(255, 255, 255, 0.62), transparent 20%),
+    radial-gradient(circle at 84% 84%, rgba(103, 145, 91, 0.16), transparent 26%),
+    linear-gradient(130deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 42%),
+    repeating-linear-gradient(160deg, rgba(87, 67, 43, 0.028), rgba(87, 67, 43, 0.028) 2px, transparent 2px, transparent 10px),
+    linear-gradient(180deg, var(--sky-3) 0%, var(--sky-2) 29%, var(--sky-1) 63%, #dfd3bf 83%, #cfbc9a 100%);
+  animation: page-settle 520ms cubic-bezier(0.2, 0.9, 0.15, 1);
 }
 
 body::before,
@@ -57,26 +59,26 @@ body::after {
   position: fixed;
   border-radius: 999px;
   pointer-events: none;
-  filter: blur(0.1px);
+  filter: blur(0.2px);
   z-index: -1;
 }
 
 body::before {
-  top: 48px;
-  left: 8%;
-  width: 190px;
-  height: 62px;
+  top: 52px;
+  left: 7%;
+  width: 216px;
+  height: 64px;
   background: rgba(255, 255, 255, 0.42);
-  box-shadow: 70px 15px 0 16px rgba(255, 255, 255, 0.26);
+  box-shadow: 82px 18px 0 14px rgba(255, 255, 255, 0.24);
 }
 
 body::after {
-  top: 112px;
-  right: 10%;
-  width: 150px;
-  height: 50px;
-  background: rgba(255, 255, 255, 0.36);
-  box-shadow: -58px 10px 0 12px rgba(255, 255, 255, 0.2);
+  top: 122px;
+  right: 8%;
+  width: 170px;
+  height: 54px;
+  background: rgba(255, 255, 255, 0.34);
+  box-shadow: -70px 8px 0 11px rgba(255, 255, 255, 0.2);
 }
 
 button {
@@ -96,7 +98,7 @@ p {
 .screen {
   display: none;
   min-height: 100vh;
-  padding: 10px;
+  padding: 14px;
 }
 
 .screen.active {
@@ -106,7 +108,7 @@ p {
 .missions-layout {
   display: grid;
   grid-template-columns: minmax(0, 968px) minmax(280px, 360px);
-  gap: 12px;
+  gap: 14px;
   align-items: start;
 }
 
@@ -119,7 +121,7 @@ p {
   align-items: center;
   gap: 8px;
   color: var(--ink);
-  font-family: "Bree Serif", serif;
+  font-family: "Fraunces", serif;
   font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.3px;
@@ -136,7 +138,7 @@ p {
 }
 
 .card {
-  border-radius: 14px;
+  border-radius: 18px;
 }
 
 .card,
@@ -162,27 +164,28 @@ p {
 .actions-menu-btn,
 .popup-window {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.2)),
-    repeating-linear-gradient(165deg, rgba(94, 75, 53, 0.035), rgba(94, 75, 53, 0.035) 1px, transparent 1px, transparent 7px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.18)),
+    repeating-linear-gradient(165deg, rgba(94, 75, 53, 0.028), rgba(94, 75, 53, 0.028) 1px, transparent 1px, transparent 8px),
     var(--panel);
   border: 1px solid var(--line);
-  box-shadow: var(--shadow-hard), var(--shadow-soft);
+  box-shadow: var(--shadow-hard), var(--shadow-soft), var(--shadow-edge);
+  backdrop-filter: saturate(1.04);
 }
 
 .header-strip {
   height: 42px;
-  border-radius: 14px 14px 0 0;
+  border-radius: 18px 18px 0 0;
   border-bottom: 1px solid var(--line);
   display: flex;
   align-items: center;
   padding: 0 14px;
-  font-family: "Bree Serif", serif;
+  font-family: "Fraunces", serif;
   font-size: 17px;
   font-weight: 600;
   letter-spacing: 0.4px;
   color: var(--ink);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 245, 226, 0.68)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(255, 245, 226, 0.68)),
     var(--panel-soft);
 }
 
@@ -214,15 +217,23 @@ p {
   height: 46px;
   padding: 0 20px;
   border-radius: 999px;
-  color: var(--ink);
+  color: #2f2419;
   font-weight: 800;
-  letter-spacing: 0.6px;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  letter-spacing: 0.8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(250, 241, 222, 0.92)),
+    var(--panel-soft);
+  border: 1px solid rgba(112, 87, 57, 0.42);
+  box-shadow: 0 9px 22px rgba(72, 53, 30, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.76);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .actions-menu-btn:hover {
-  transform: translateY(-1px);
-  background: var(--panel-soft);
+  transform: translateY(-2px);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 243, 217, 0.96)),
+    var(--panel-soft);
+  box-shadow: 0 12px 28px rgba(72, 53, 30, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.76);
 }
 
 .mission-actions-overlay {
@@ -235,7 +246,7 @@ p {
 .mission-actions-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(73, 56, 35, 0.3);
+  background: rgba(52, 38, 21, 0.42);
   opacity: 0;
   transition: opacity 0.22s ease;
 }
@@ -249,12 +260,12 @@ p {
   padding: 14px 14px 20px;
   overflow: auto;
   background:
-    radial-gradient(circle at 15% -5%, rgba(255, 255, 255, 0.7), transparent 32%),
-    linear-gradient(180deg, #fbf4e2, #efe1c1 70%, #e2d0ad);
+    radial-gradient(circle at 15% -5%, rgba(255, 255, 255, 0.78), transparent 34%),
+    linear-gradient(180deg, #fbf4e2, #efe1c1 68%, #decca7);
   border-top: 1px solid var(--line);
-  box-shadow: 0 -18px 30px rgba(83, 64, 39, 0.24);
+  box-shadow: 0 -22px 34px rgba(83, 64, 39, 0.3);
   transform: translateY(calc(100% + 24px));
-  transition: transform 0.24s ease;
+  transition: transform 0.28s cubic-bezier(0.16, 0.84, 0.25, 1);
 }
 
 .mission-actions-header {
@@ -265,7 +276,7 @@ p {
 }
 
 .mission-actions-header h2 {
-  font-family: "Bree Serif", serif;
+  font-family: "Fraunces", serif;
   font-size: 20px;
   font-weight: 600;
   color: var(--ink);
@@ -307,6 +318,9 @@ body.mission-actions-open {
   min-height: 410px;
   max-height: calc(100vh - 24px);
   overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.18)),
+    var(--panel);
 }
 
 .preview-body {
@@ -320,19 +334,21 @@ body.mission-actions-open {
   height: 336px;
   display: block;
   background:
-    radial-gradient(circle at 50% 25%, rgba(255, 255, 255, 0.7), transparent 45%),
-    linear-gradient(180deg, rgba(176, 211, 232, 0.65), rgba(214, 231, 191, 0.56));
+    radial-gradient(circle at 50% 21%, rgba(255, 255, 255, 0.75), transparent 46%),
+    linear-gradient(180deg, rgba(160, 204, 229, 0.68), rgba(211, 230, 184, 0.58));
 }
 
 .preview-mission-status {
   margin: 7px 12px 0;
-  padding: 8px 10px;
+  padding: 9px 12px;
   border-radius: 10px;
-  color: #4b4032;
+  color: #3f3328;
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.3px;
   text-transform: uppercase;
+  background: rgba(255, 249, 236, 0.68);
+  border: 1px solid rgba(188, 165, 135, 0.54);
 }
 
 .preview-caption {
@@ -622,10 +638,11 @@ body.mission-actions-open {
 .name {
   margin-top: 12px;
   color: var(--ink);
-  font-family: "Bree Serif", serif;
-  font-size: 27px;
-  font-weight: 600;
+  font-family: "Fraunces", serif;
+  font-size: 29px;
+  font-weight: 700;
   line-height: 1;
+  letter-spacing: 0.2px;
 }
 
 .level-pill {
@@ -690,7 +707,7 @@ body.mission-actions-open {
 
 .bar-wrap {
   position: relative;
-  height: 8px;
+  height: 9px;
   background: #d4c4a5;
   border: 1px solid rgba(108, 88, 63, 0.32);
   border-radius: 999px;
@@ -726,8 +743,8 @@ body.mission-actions-open {
 }
 
 .dynamic-int {
-  border-radius: 9px;
-  padding: 4px 6px;
+  border-radius: 10px;
+  padding: 5px 7px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -780,7 +797,7 @@ body.mission-actions-open {
 
 .xp {
   margin: 24px 3px 0;
-  height: 6px;
+  height: 8px;
   background: var(--bar);
   border-radius: 999px;
   position: relative;
@@ -828,38 +845,49 @@ body.mission-actions-open {
 .tabs {
   display: flex;
   gap: 8px;
-  margin: 10px 0 9px;
+  margin: 12px 0 10px;
   max-width: 540px;
 }
 
 .tab {
   width: 100px;
-  height: 38px;
-  border-radius: 10px;
+  height: 40px;
+  border-radius: 11px;
   color: #726558;
   font-size: 12px;
   font-weight: 800;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .tab.active {
   color: var(--ink);
   border-top: 3px solid var(--blue);
-  background: var(--panel-soft);
+  border-color: rgba(89, 131, 157, 0.5);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(242, 248, 251, 0.62)),
+    var(--panel-soft);
+}
+
+.tab:hover,
+.base-tab:hover,
+.roster-btn:hover,
+.start-btn:hover,
+.popup-confirm:hover {
+  transform: translateY(-1px) rotate(var(--tilt, 0deg));
 }
 
 .mission-panel {
   max-width: 968px;
-  height: 60px;
+  height: 64px;
   padding: 11px 15px;
-  margin-bottom: 6px;
-  border-radius: 12px;
+  margin-bottom: 8px;
+  border-radius: 14px;
 }
 
 .section-title {
-  font-family: "Bree Serif", serif;
-  font-size: 26px;
-  font-weight: 600;
+  font-family: "Fraunces", serif;
+  font-size: 28px;
+  font-weight: 700;
   color: var(--ink);
 }
 
@@ -885,15 +913,21 @@ body.mission-actions-open {
 
 .mission {
   max-width: 968px;
-  min-height: 108px;
-  padding: 11px 14px;
-  margin-bottom: 7px;
+  min-height: 112px;
+  padding: 12px 15px;
+  margin-bottom: 9px;
   display: grid;
   grid-template-columns: 1fr 122px;
   align-items: center;
   gap: 20px;
-  border-radius: 12px;
-  animation: card-pop 420ms ease both;
+  border-radius: 14px;
+  animation: card-pop 460ms ease both;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mission:hover {
+  transform: translateY(-2px) rotate(var(--tilt, 0deg));
+  box-shadow: 0 18px 38px rgba(65, 47, 25, 0.2), var(--shadow-hard);
 }
 
 .mission-empty {
@@ -907,9 +941,9 @@ body.mission-actions-open {
 }
 
 .mission h2 {
-  font-family: "Bree Serif", serif;
-  font-size: 24px;
-  font-weight: 600;
+  font-family: "Fraunces", serif;
+  font-size: 25px;
+  font-weight: 700;
   color: #584730;
 }
 
@@ -1015,10 +1049,12 @@ body.mission-actions-open {
   border-radius: 10px;
   font-size: 12px;
   font-weight: 900;
-  color: #33452f;
+  color: #2c432a;
   background:
-    linear-gradient(180deg, #f1f6e8, #dbe8cb),
+    linear-gradient(180deg, #f4f9ea, #d9e8c8),
     var(--panel);
+  border: 1px solid #78906e;
+  box-shadow: 0 3px 0 rgba(78, 99, 72, 0.36);
 }
 
 .timer {
@@ -1029,18 +1065,23 @@ body.mission-actions-open {
 
 .resources {
   position: fixed;
-  right: 12px;
-  top: 10px;
+  right: 14px;
+  top: 12px;
   display: flex;
   gap: 8px;
   font-weight: 800;
   font-size: 13px;
-  z-index: 4;
+  z-index: 46;
 }
 
 .res {
-  padding: 4px 10px;
-  border-radius: 10px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(199, 173, 137, 0.72);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(250, 239, 218, 0.8)),
+    var(--panel-soft);
+  box-shadow: 0 8px 18px rgba(76, 55, 29, 0.2);
 }
 
 .base-tabs {
@@ -1051,8 +1092,8 @@ body.mission-actions-open {
 
 .base-tab {
   width: 117px;
-  height: 36px;
-  border-radius: 9px;
+  height: 38px;
+  border-radius: 11px;
   color: #75685a;
   font-weight: 800;
 }
@@ -1060,7 +1101,10 @@ body.mission-actions-open {
 .base-tab.active {
   color: var(--ink);
   border-top: 3px solid var(--blue);
-  background: var(--panel-soft);
+  border-color: rgba(89, 131, 157, 0.48);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(242, 248, 251, 0.62)),
+    var(--panel-soft);
 }
 
 .survivor-count {
@@ -1095,10 +1139,16 @@ body.mission-actions-open {
 .survivor-card {
   width: 120px;
   height: 357px;
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 8px;
   position: relative;
-  animation: card-pop 420ms ease both;
+  animation: card-pop 460ms ease both;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.survivor-card:hover {
+  transform: translateY(-2px) rotate(var(--tilt, 0deg));
+  box-shadow: 0 16px 32px rgba(72, 54, 32, 0.24), var(--shadow-hard);
 }
 
 .survivor-card.active {
@@ -1115,9 +1165,9 @@ body.mission-actions-open {
 }
 
 .survivor-name {
-  font-family: "Bree Serif", serif;
+  font-family: "Fraunces", serif;
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 700;
   color: #5b4c3b;
   line-height: 0.96;
 }
@@ -1162,7 +1212,7 @@ body.mission-actions-open {
   border-radius: 9px;
   display: grid;
   place-items: center;
-  color: #655749;
+  color: #584a3d;
   font-size: 12px;
   font-weight: 700;
 }
@@ -1221,8 +1271,8 @@ body.mission-actions-open {
 }
 
 .roster-btn {
-  border-radius: 9px;
-  padding: 7px 10px;
+  border-radius: 10px;
+  padding: 8px 11px;
   font-size: 11px;
   font-weight: 900;
 }
@@ -1281,6 +1331,11 @@ body.mission-actions-open {
   padding: 10px 14px;
   font-size: 13px;
   font-weight: 700;
+  border: 1px solid rgba(194, 166, 128, 0.72);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(252, 242, 222, 0.88)),
+    var(--panel-soft);
+  box-shadow: 0 10px 22px rgba(75, 53, 27, 0.27);
   opacity: 0;
   pointer-events: none;
   transition: 0.2s;
@@ -1301,7 +1356,7 @@ body.popup-open {
   display: none;
   align-items: center;
   justify-content: center;
-  background: rgba(78, 61, 42, 0.33);
+  background: rgba(45, 31, 15, 0.44);
   z-index: 100;
   backdrop-filter: blur(7px);
   -webkit-backdrop-filter: blur(7px);
@@ -1314,8 +1369,8 @@ body.popup-open {
 .popup-window {
   display: none;
   width: min(92vw, 620px);
-  border-radius: 14px;
-  padding: 18px 22px 16px;
+  border-radius: 18px;
+  padding: 18px 22px 18px;
 }
 
 .popup-window.show {
@@ -1323,9 +1378,9 @@ body.popup-open {
 }
 
 .popup-title {
-  font-family: "Bree Serif", serif;
+  font-family: "Fraunces", serif;
   font-size: 28px;
-  font-weight: 600;
+  font-weight: 700;
   color: #5a4835;
 }
 
@@ -1338,7 +1393,7 @@ body.popup-open {
   font-size: 32px;
   font-weight: 800;
   color: #4f4235;
-  border-radius: 12px;
+  border-radius: 14px;
 }
 
 .popup-scale {
@@ -1443,9 +1498,9 @@ body.popup-open {
   border-radius: 10px;
   font-size: 14px;
   font-weight: 800;
-  color: #34472f;
+  color: #2c432a;
   background:
-    linear-gradient(180deg, #f1f7e7, #d8e5ca),
+    linear-gradient(180deg, #f4f9ea, #d8e6ca),
     var(--panel-soft);
   border: 1px solid #78906e;
   box-shadow: 0 2px 0 rgba(78, 99, 72, 0.38);
@@ -1740,11 +1795,20 @@ body.popup-open .toast {
 @keyframes card-pop {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.99) rotate(var(--tilt, 0deg));
+    transform: translateY(12px) scale(0.985) rotate(var(--tilt, 0deg));
   }
 
   to {
     opacity: 1;
     transform: translateY(0) scale(1) rotate(var(--tilt, 0deg));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
   }
 }
