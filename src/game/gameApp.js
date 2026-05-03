@@ -121,6 +121,7 @@ export function createGameApp() {
   const previewPetTypes = characterPreview.getPetTypes();
   const previewPropAnimations = characterPreview.getPropAnimations();
   const mobilePreviewQuery = window.matchMedia("(max-width: 640px)");
+  const mobileRendererQualityQuery = window.matchMedia("(max-width: 768px), (pointer: coarse)");
   const previewPanelDesktopParent = elements.characterPreviewPanel?.parentElement || null;
   const previewPanelDesktopNextSibling = elements.characterPreviewPanel?.nextSibling || null;
   let previewAnimationOverride = null;
@@ -174,6 +175,11 @@ export function createGameApp() {
 
     elements.characterPreviewCaption.hidden = !previewDevToolsVisible;
     elements.characterPreviewCaption.setAttribute("aria-hidden", String(!previewDevToolsVisible));
+  }
+
+  function syncProfileRendererQuality() {
+    const lowPower = mobileRendererQualityQuery.matches;
+    characterPreview.setPrintEffectsEnabled(!lowPower);
   }
 
   function syncMobilePreviewPlacement() {
@@ -687,11 +693,18 @@ export function createGameApp() {
   syncPerspectiveLabel();
   syncPreviewDevToolsVisibility();
   syncMobilePreviewPlacement();
+  syncProfileRendererQuality();
 
   if (typeof mobilePreviewQuery.addEventListener === "function") {
     mobilePreviewQuery.addEventListener("change", syncMobilePreviewPlacement);
   } else if (typeof mobilePreviewQuery.addListener === "function") {
     mobilePreviewQuery.addListener(syncMobilePreviewPlacement);
+  }
+
+  if (typeof mobileRendererQualityQuery.addEventListener === "function") {
+    mobileRendererQualityQuery.addEventListener("change", syncProfileRendererQuality);
+  } else if (typeof mobileRendererQualityQuery.addListener === "function") {
+    mobileRendererQualityQuery.addListener(syncProfileRendererQuality);
   }
 
   if (typeof mobilePreviewQuery.addEventListener === "function") {

@@ -899,6 +899,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   let printEffectsEnabled = true;
   let animationEnabled = true;
   let lastRenderTimestamp = 0;
+  let currentCanvasScale = 1;
 
   const lowPowerMediaQuery = window.matchMedia("(max-width: 768px), (pointer: coarse)");
   let lowPowerMode = lowPowerMediaQuery.matches;
@@ -1235,16 +1236,21 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
   function updateCanvasSize() {
     const dprLimit = lowPowerMode ? 1.25 : 2;
     const dpr = Math.min(window.devicePixelRatio || 1, dprLimit);
+    const resolutionScale = lowPowerMode ? 0.72 : 1;
+    const canvasScale = dpr * resolutionScale;
     const width = Math.max(280, Math.floor(canvas.clientWidth));
     const height = Math.max(320, Math.floor(canvas.clientHeight));
+    const targetWidth = Math.floor(width * canvasScale);
+    const targetHeight = Math.floor(height * canvasScale);
 
-    if (canvas.width !== Math.floor(width * dpr) || canvas.height !== Math.floor(height * dpr)) {
-      canvas.width = Math.floor(width * dpr);
-      canvas.height = Math.floor(height * dpr);
+    if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
     }
 
-    context.setTransform(dpr, 0, 0, dpr, 0, 0);
-    if (printEffectsEnabled) {
+    currentCanvasScale = canvasScale;
+    context.setTransform(canvasScale, 0, 0, canvasScale, 0, 0);
+    if (printEffectsEnabled && !lowPowerMode) {
       ensurePaperTexture(width, height);
     }
   }
@@ -3460,7 +3466,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.scale(1.08, 1.08);
     context.translate(0, 66);
     const previousSuppressDecorativeStrokes = suppressDecorativeStrokes;
-    suppressDecorativeStrokes = false;
+    suppressDecorativeStrokes = lowPowerMode;
     drawHairStyle(hairStyle, outlineHairColor, seconds, true);
     suppressDecorativeStrokes = previousSuppressDecorativeStrokes;
     context.restore();
@@ -3562,7 +3568,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       return;
     }
 
-    const targetFrameMs = lowPowerMode ? 1000 / 30 : 1000 / 60;
+    const targetFrameMs = lowPowerMode ? 1000 / 24 : 1000 / 60;
     if (lastRenderTimestamp > 0 && now - lastRenderTimestamp < targetFrameMs) {
       rafId = window.requestAnimationFrame(drawFrame);
       return;
@@ -3576,9 +3582,9 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
 
     // Use backing-store dimensions so transient clientWidth/clientHeight=0 states do not break rendering.
-    const dpr = Math.min(window.devicePixelRatio || 1, lowPowerMode ? 1.25 : 2);
-    const width = Math.max(1, Math.floor(canvas.width / dpr));
-    const height = Math.max(1, Math.floor(canvas.height / dpr));
+    const safeCanvasScale = Math.max(0.001, currentCanvasScale);
+    const width = Math.max(1, Math.floor(canvas.width / safeCanvasScale));
+    const height = Math.max(1, Math.floor(canvas.height / safeCanvasScale));
     const centerX = width * 0.5;
     const centerY = height * 0.58;
 
@@ -4440,7 +4446,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.restore();
     }
 
-    if (printEffectsEnabled) {
+    if (printEffectsEnabled && !lowPowerMode) {
       applyPosterizedPrintPass(width, height);
       drawPaperTextureOverlay(width, height);
     }
