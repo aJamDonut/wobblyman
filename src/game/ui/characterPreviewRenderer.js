@@ -127,10 +127,10 @@ function createPose(timeSeconds, animationName) {
   };
 
   if (animationName === "idle") {
-    const footSettle = Math.sin(timeSeconds * 1.3);
-    pose.bounce = Math.sin(timeSeconds * 2.1) * 2.4;
-    pose.leftLeg = { x: -18 + footSettle * 0.5, y: 78 };
-    pose.rightLeg = { x: 18 + Math.sin(timeSeconds * 1.3 + Math.PI) * 0.5, y: 78 };
+    pose.bounce = 0;
+    pose.lean = 0;
+    pose.leftLeg = { x: -18, y: 78 };
+    pose.rightLeg = { x: 18, y: 78 };
   }
 
   if (animationName === "wave") {
@@ -1806,6 +1806,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const sleepWeight = getAnimationWeight("sleep", easedMix);
     const talkWeight = getAnimationWeight("talk", easedMix);
     const sandwichWeight = getAnimationWeight("sandwich", easedMix);
+    const idleWeight = getAnimationWeight("idle", easedMix);
     const perspectiveBlend = clamp(perspectiveTilt / 100, -1, 1);
     const perspectiveStrength = Math.abs(perspectiveBlend);
     const leftLegShiftX = perspectiveBlend < 0
@@ -1835,7 +1836,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const isRightArmFront = perspectiveBlend <= 0;
     const facePerspectiveShiftX = perspectiveBlend * 6.2;
     const shadowPerspectiveShiftX = -perspectiveBlend * 15;
-    const dampedBounce = pose.bounce * 0.35;
+    const dampedBounce = pose.bounce * 0.35 * (1 - idleWeight);
+    const renderedLean = lerp(pose.lean, 0, idleWeight);
     const wobbleScale = 0.65;
     const bodyProfile = BODY_TYPE_PROFILES[bodyType] || BODY_TYPE_PROFILES.classic;
     const faceSkinColor = blendHexColor(colors.skinColor, 0.04);
@@ -1845,7 +1847,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
 
     context.save();
     context.translate(centerX, centerY + dampedBounce);
-    context.rotate(pose.lean);
+    context.rotate(renderedLean);
     // Slight skew makes the character feel less flat and more staged.
     context.transform(1, 0, -0.08, 1, 0, 0);
 
@@ -1869,9 +1871,23 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       }
     };
 
+    const idleLockedPose = {
+      ...perspectivePose,
+      leftLeg: {
+        ...perspectivePose.leftLeg,
+        x: lerp(perspectivePose.leftLeg.x, -18 + leftLegShiftX, idleWeight),
+        y: lerp(perspectivePose.leftLeg.y, 78, idleWeight)
+      },
+      rightLeg: {
+        ...perspectivePose.rightLeg,
+        x: lerp(perspectivePose.rightLeg.x, 18 + rightLegShiftX, idleWeight),
+        y: lerp(perspectivePose.rightLeg.y, 78, idleWeight)
+      }
+    };
+
     const plantedCompensation = dampedBounce * 0.85;
-    const leftLegEndY = perspectivePose.leftLeg.y - plantedCompensation;
-    const rightLegEndY = perspectivePose.rightLeg.y - plantedCompensation;
+    const leftLegEndY = idleLockedPose.leftLeg.y - plantedCompensation;
+    const rightLegEndY = idleLockedPose.rightLeg.y - plantedCompensation;
     const leftLegRootX = -14 + leftLegRootShiftX;
     const rightLegRootX = 14 + rightLegRootShiftX;
     const leftArmRootX = -18 + leftArmRootShiftX;
@@ -1950,7 +1966,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     };
 
     drawBodyShadowCopy(
-      perspectivePose,
+      idleLockedPose,
       leftLegEndY,
       rightLegEndY,
       bodyProfile,
@@ -1965,13 +1981,13 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     );
 
     // Draw outline under character fills/strokes so it reads as a back edge.
-    drawCharacterShaderOutline(perspectivePose, leftLegEndY, rightLegEndY, bodyProfile, leftLegRootX, rightLegRootX);
+    drawCharacterShaderOutline(idleLockedPose, leftLegEndY, rightLegEndY, bodyProfile, leftLegRootX, rightLegRootX);
 
     const drawLeftLeg = () => {
       drawLimb(
         leftLegRootX,
         18,
-        perspectivePose.leftLeg.x,
+        idleLockedPose.leftLeg.x,
         leftLegEndY,
         5.5,
         colors.pantsColor,
@@ -1983,7 +1999,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       drawLimb(
         rightLegRootX,
         18,
-        perspectivePose.rightLeg.x,
+        idleLockedPose.rightLeg.x,
         rightLegEndY,
         5.5,
         colors.pantsColor,
@@ -2131,31 +2147,31 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.lineWidth = 1.2;
     const drawLeftShoe = () => {
       const leftShoeGradient = context.createLinearGradient(
-        perspectivePose.leftLeg.x - 10,
+        idleLockedPose.leftLeg.x - 10,
         leftLegEndY - 2,
-        perspectivePose.leftLeg.x + 10,
+        idleLockedPose.leftLeg.x + 10,
         leftLegEndY + 4
       );
       leftShoeGradient.addColorStop(0, blendHexColor(shoeTone, 0.18));
       leftShoeGradient.addColorStop(1, blendHexColor(shoeTone, -0.22));
       context.fillStyle = leftShoeGradient;
       context.beginPath();
-      context.ellipse(perspectivePose.leftLeg.x - 1, leftLegEndY + 1.5, 9.5, 5, 0, 0, Math.PI * 2);
+      context.ellipse(idleLockedPose.leftLeg.x - 1, leftLegEndY + 1.5, 9.5, 5, 0, 0, Math.PI * 2);
       context.fill();
       context.stroke();
     };
     const drawRightShoe = () => {
       const rightShoeGradient = context.createLinearGradient(
-        perspectivePose.rightLeg.x - 10,
+        idleLockedPose.rightLeg.x - 10,
         rightLegEndY - 2,
-        perspectivePose.rightLeg.x + 10,
+        idleLockedPose.rightLeg.x + 10,
         rightLegEndY + 4
       );
       rightShoeGradient.addColorStop(0, blendHexColor(shoeTone, 0.18));
       rightShoeGradient.addColorStop(1, blendHexColor(shoeTone, -0.22));
       context.fillStyle = rightShoeGradient;
       context.beginPath();
-      context.ellipse(perspectivePose.rightLeg.x + 1, rightLegEndY + 1.5, 9.5, 5, 0, 0, Math.PI * 2);
+      context.ellipse(idleLockedPose.rightLeg.x + 1, rightLegEndY + 1.5, 9.5, 5, 0, 0, Math.PI * 2);
       context.fill();
       context.stroke();
     };
