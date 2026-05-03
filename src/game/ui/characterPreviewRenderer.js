@@ -489,7 +489,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.restore();
   }
 
-  function drawCharacterShaderOutline(pose, leftLegEndY, rightLegEndY, bodyProfile) {
+  function drawCharacterShaderOutline(pose, leftLegEndY, rightLegEndY, bodyProfile, leftLegRootX, rightLegRootX) {
     const torsoWidth = bodyProfile.torsoWidth;
     const torsoHeight = bodyProfile.torsoHeight;
     const torsoY = -38 + bodyProfile.torsoYOffset;
@@ -514,10 +514,10 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     }
 
     context.beginPath();
-    context.moveTo(-14, 18);
-    context.quadraticCurveTo((pose.leftLeg.x - 14) * 0.5, (leftLegEndY + 18) * 0.5, pose.leftLeg.x, leftLegEndY);
-    context.moveTo(14, 18);
-    context.quadraticCurveTo((pose.rightLeg.x + 14) * 0.5, (rightLegEndY + 18) * 0.5, pose.rightLeg.x, rightLegEndY);
+    context.moveTo(leftLegRootX, 18);
+    context.quadraticCurveTo((pose.leftLeg.x + leftLegRootX) * 0.5, (leftLegEndY + 18) * 0.5, pose.leftLeg.x, leftLegEndY);
+    context.moveTo(rightLegRootX, 18);
+    context.quadraticCurveTo((pose.rightLeg.x + rightLegRootX) * 0.5, (rightLegEndY + 18) * 0.5, pose.rightLeg.x, rightLegEndY);
     context.stroke();
 
     context.beginPath();
@@ -1530,7 +1530,17 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.restore();
   }
 
-  function drawBodyShadowCopy(pose, leftLegEndY, rightLegEndY, bodyProfile, seconds, wobbleScale, perspectiveOffsetX = 0) {
+  function drawBodyShadowCopy(
+    pose,
+    leftLegEndY,
+    rightLegEndY,
+    bodyProfile,
+    seconds,
+    wobbleScale,
+    leftLegRootX,
+    rightLegRootX,
+    perspectiveOffsetX = 0
+  ) {
     const shadowFill = shadowStyle.fillColor;
     const shadowStroke = shadowStyle.strokeColor;
 
@@ -1541,7 +1551,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
 
     // Keep foot contacts fixed while offsetting the upper body silhouette.
     drawLimb(
-      -14 + shadowOffsetX,
+      leftLegRootX + shadowOffsetX,
       18 + shadowOffsetY,
       pose.leftLeg.x,
       leftLegEndY,
@@ -1557,7 +1567,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       0.1
     );
     drawLimb(
-      14 + shadowOffsetX,
+      rightLegRootX + shadowOffsetX,
       18 + shadowOffsetY,
       pose.rightLeg.x,
       rightLegEndY,
@@ -1744,13 +1754,19 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const perspectiveBlend = clamp(perspectiveTilt / 100, -1, 1);
     const perspectiveStrength = Math.abs(perspectiveBlend);
     const leftLegShiftX = perspectiveBlend < 0
-      ? 2.2 * perspectiveStrength
-      : 5.2 * perspectiveStrength;
+      ? 4.2 * perspectiveStrength
+      : 8.4 * perspectiveStrength;
     const rightLegShiftX = perspectiveBlend < 0
+      ? -8.4 * perspectiveStrength
+      : -4.2 * perspectiveStrength;
+    const leftLegRootShiftX = perspectiveBlend < 0
+      ? 2.4 * perspectiveStrength
+      : 5.2 * perspectiveStrength;
+    const rightLegRootShiftX = perspectiveBlend < 0
       ? -5.2 * perspectiveStrength
-      : -2.2 * perspectiveStrength;
-    const facePerspectiveShiftX = perspectiveBlend * 3.4;
-    const shadowPerspectiveShiftX = -perspectiveBlend * 9;
+      : -2.4 * perspectiveStrength;
+    const facePerspectiveShiftX = perspectiveBlend * 6.2;
+    const shadowPerspectiveShiftX = -perspectiveBlend * 15;
     const dampedBounce = pose.bounce * 0.35;
     const wobbleScale = 0.65;
     const bodyProfile = BODY_TYPE_PROFILES[bodyType] || BODY_TYPE_PROFILES.classic;
@@ -1778,6 +1794,8 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const plantedCompensation = dampedBounce * 0.85;
     const leftLegEndY = perspectivePose.leftLeg.y - plantedCompensation;
     const rightLegEndY = perspectivePose.rightLeg.y - plantedCompensation;
+    const leftLegRootX = -14 + leftLegRootShiftX;
+    const rightLegRootX = 14 + rightLegRootShiftX;
 
     drawBodyShadowCopy(
       perspectivePose,
@@ -1786,14 +1804,46 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       bodyProfile,
       seconds,
       wobbleScale,
+      leftLegRootX,
+      rightLegRootX,
       shadowPerspectiveShiftX
     );
 
     // Draw outline under character fills/strokes so it reads as a back edge.
-    drawCharacterShaderOutline(perspectivePose, leftLegEndY, rightLegEndY, bodyProfile);
+    drawCharacterShaderOutline(perspectivePose, leftLegEndY, rightLegEndY, bodyProfile, leftLegRootX, rightLegRootX);
 
-    drawLimb(-14, 18, perspectivePose.leftLeg.x, leftLegEndY, 5.5, colors.pantsColor, 4.2 * wobbleScale, seconds * 7 + 0.5);
-    drawLimb(14, 18, perspectivePose.rightLeg.x, rightLegEndY, 5.5, colors.pantsColor, 4.2 * wobbleScale, seconds * 7 + 2.2);
+    const drawLeftLeg = () => {
+      drawLimb(
+        leftLegRootX,
+        18,
+        perspectivePose.leftLeg.x,
+        leftLegEndY,
+        5.5,
+        colors.pantsColor,
+        4.2 * wobbleScale,
+        seconds * 7 + 0.5
+      );
+    };
+    const drawRightLeg = () => {
+      drawLimb(
+        rightLegRootX,
+        18,
+        perspectivePose.rightLeg.x,
+        rightLegEndY,
+        5.5,
+        colors.pantsColor,
+        4.2 * wobbleScale,
+        seconds * 7 + 2.2
+      );
+    };
+
+    if (perspectiveBlend > 0) {
+      drawRightLeg();
+      drawLeftLeg();
+    } else {
+      drawLeftLeg();
+      drawRightLeg();
+    }
 
     const shirtBase = blendHexColor(colors.shirtColor, 0.08);
     const torsoShadeDriftX = Math.sin(seconds * 1.5 + pose.lean * 12) * 2.8;
@@ -1920,22 +1970,44 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const shoeTone = blendHexColor(colors.shoeColor, -0.02);
     context.strokeStyle = "#2f2622";
     context.lineWidth = 1.2;
-    const leftShoeGradient = context.createLinearGradient(perspectivePose.leftLeg.x - 10, leftLegEndY - 2, perspectivePose.leftLeg.x + 10, leftLegEndY + 4);
-    leftShoeGradient.addColorStop(0, blendHexColor(shoeTone, 0.18));
-    leftShoeGradient.addColorStop(1, blendHexColor(shoeTone, -0.22));
-    context.fillStyle = leftShoeGradient;
-    context.beginPath();
-    context.ellipse(perspectivePose.leftLeg.x - 1, leftLegEndY + 1.5, 9.5, 5, 0, 0, Math.PI * 2);
-    context.fill();
-    context.stroke();
-    const rightShoeGradient = context.createLinearGradient(perspectivePose.rightLeg.x - 10, rightLegEndY - 2, perspectivePose.rightLeg.x + 10, rightLegEndY + 4);
-    rightShoeGradient.addColorStop(0, blendHexColor(shoeTone, 0.18));
-    rightShoeGradient.addColorStop(1, blendHexColor(shoeTone, -0.22));
-    context.fillStyle = rightShoeGradient;
-    context.beginPath();
-    context.ellipse(perspectivePose.rightLeg.x + 1, rightLegEndY + 1.5, 9.5, 5, 0, 0, Math.PI * 2);
-    context.fill();
-    context.stroke();
+    const drawLeftShoe = () => {
+      const leftShoeGradient = context.createLinearGradient(
+        perspectivePose.leftLeg.x - 10,
+        leftLegEndY - 2,
+        perspectivePose.leftLeg.x + 10,
+        leftLegEndY + 4
+      );
+      leftShoeGradient.addColorStop(0, blendHexColor(shoeTone, 0.18));
+      leftShoeGradient.addColorStop(1, blendHexColor(shoeTone, -0.22));
+      context.fillStyle = leftShoeGradient;
+      context.beginPath();
+      context.ellipse(perspectivePose.leftLeg.x - 1, leftLegEndY + 1.5, 9.5, 5, 0, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+    };
+    const drawRightShoe = () => {
+      const rightShoeGradient = context.createLinearGradient(
+        perspectivePose.rightLeg.x - 10,
+        rightLegEndY - 2,
+        perspectivePose.rightLeg.x + 10,
+        rightLegEndY + 4
+      );
+      rightShoeGradient.addColorStop(0, blendHexColor(shoeTone, 0.18));
+      rightShoeGradient.addColorStop(1, blendHexColor(shoeTone, -0.22));
+      context.fillStyle = rightShoeGradient;
+      context.beginPath();
+      context.ellipse(perspectivePose.rightLeg.x + 1, rightLegEndY + 1.5, 9.5, 5, 0, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+    };
+
+    if (perspectiveBlend > 0) {
+      drawRightShoe();
+      drawLeftShoe();
+    } else {
+      drawLeftShoe();
+      drawRightShoe();
+    }
 
     if (sandwichWeight > 0.01) {
       context.save();
