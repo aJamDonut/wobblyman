@@ -3126,8 +3126,16 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const legBendDirection = clamp(legBendDirectionValue, -1, 1);
     const facePerspectiveShiftX = perspectiveBlend * FACE_FEATURE_ORBIT_RADIUS;
     const shadowPerspectiveShiftX = -perspectiveBlend * 15;
-    const dampedBounce = pose.bounce * 0.35 * (1 - idleWeight);
-    const renderedLean = lerp(pose.lean, 0, idleWeight);
+    const idleBodyBob = (
+      Math.sin(seconds * 1.9) * 1.55
+      + Math.sin(seconds * 0.95 + 0.7) * 0.7
+    ) * idleWeight;
+    const idleBodyLean = (
+      Math.sin(seconds * 1.3) * 0.026
+      + Math.sin(seconds * 0.6 + 0.9) * 0.015
+    ) * idleWeight;
+    const dampedBounce = pose.bounce * 0.35 * (1 - idleWeight) + idleBodyBob;
+    const renderedLean = lerp(pose.lean, 0, idleWeight) + idleBodyLean;
     const wobbleScale = 0.65;
     const bodyProfile = BODY_TYPE_PROFILES[bodyType] || BODY_TYPE_PROFILES.classic;
     const faceSkinColor = blendHexColor(colors.skinColor, 0.04);
@@ -3472,13 +3480,31 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.fill();
 
     const headOffsetY = 4;
+    const idleHeadOffsetX = (
+      Math.sin(seconds * 1.15 + 0.2) * 1.3
+      + Math.sin(seconds * 2.2 + 2.5) * 0.45
+    ) * idleWeight;
+    const idleHeadOffsetY = (
+      Math.sin(seconds * 1.7 + 0.9) * 1.25
+      + Math.sin(seconds * 0.75 + 1.8) * 0.55
+    ) * idleWeight;
     context.save();
-    context.translate(0, headOffsetY);
+    context.translate(idleHeadOffsetX, headOffsetY + idleHeadOffsetY);
 
     const headShadeDriftX = Math.sin(seconds * 2.1 + pose.lean * 10) * 2;
     const headShadeDriftY = Math.cos(seconds * 1.7 + pose.bounce * 0.06) * 1.5;
-    const faceFeatureDriftX = headShadeDriftX * 0.24 + facePerspectiveShiftX;
-    const faceFeatureDriftY = headShadeDriftY * 0.2;
+    const idleLookX = (
+      Math.sin(seconds * 0.9) * 3.2
+      + Math.sin(seconds * 0.41 + 1.35) * 2.2
+      + Math.sin(seconds * 2.25 + 0.9) * 0.9
+    ) * idleWeight;
+    const idleLookY = (
+      Math.sin(seconds * 0.74 + 0.4) * 1.35
+      + Math.sin(seconds * 1.66 + 2.1) * 0.7
+      + Math.sin(seconds * 2.1 + 0.3) * 0.45
+    ) * idleWeight;
+    const faceFeatureDriftX = headShadeDriftX * 0.24 + facePerspectiveShiftX + idleLookX;
+    const faceFeatureDriftY = headShadeDriftY * 0.2 + idleLookY;
 
     context.strokeStyle = "#382d25";
     context.lineWidth = 1.5;
