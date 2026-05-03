@@ -1050,29 +1050,29 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
 
     context.save();
     context.globalCompositeOperation = "multiply";
-    context.globalAlpha = 0.62;
+    context.globalAlpha = 0.16;
     context.drawImage(paperTextureCanvas, 0, 0, width, height);
 
     context.globalCompositeOperation = "overlay";
-    context.globalAlpha = 0.32;
-    context.drawImage(paperTextureCanvas, 0, 0, width, height);
-
-    context.globalCompositeOperation = "color-burn";
     context.globalAlpha = 0.06;
     context.drawImage(paperTextureCanvas, 0, 0, width, height);
 
+    context.globalCompositeOperation = "color-burn";
+    context.globalAlpha = 0.025;
+    context.drawImage(paperTextureCanvas, 0, 0, width, height);
+
     context.globalCompositeOperation = "soft-light";
-    context.globalAlpha = 0.24;
+    context.globalAlpha = 0.014;
     context.fillStyle = "rgba(246, 240, 226, 1)";
     context.fillRect(0, 0, width, height);
 
     context.globalCompositeOperation = "multiply";
-    context.globalAlpha = 0.1;
+    context.globalAlpha = 0.05;
     context.fillStyle = "rgba(168, 146, 112, 0.9)";
     context.fillRect(0, 0, width, height);
 
     context.globalCompositeOperation = "source-over";
-    context.globalAlpha = 0.3;
+    context.globalAlpha = 0.08;
     const vignette = context.createRadialGradient(
       width * 0.5,
       height * 0.42,
@@ -1082,7 +1082,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       Math.max(width, height) * 0.76
     );
     vignette.addColorStop(0, "rgba(251, 247, 236, 0)");
-    vignette.addColorStop(1, "rgba(88, 72, 54, 0.46)");
+    vignette.addColorStop(1, "rgba(88, 72, 54, 0.18)");
     context.fillStyle = vignette;
     context.fillRect(0, 0, width, height);
 
