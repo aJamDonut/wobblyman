@@ -24,6 +24,7 @@ import { missionProgressSystem } from "./systems/missionProgressSystem.js";
 import { survivorRecoverySystem } from "./systems/survivorRecoverySystem.js";
 
 export function createGameApp() {
+  const STAT_CHANGE_TICK_SECONDS = 0.25;
   const state = loadPersistedState(createInitialState());
   normalizeStateSurvivors(state);
   const world = new World();
@@ -937,7 +938,8 @@ export function createGameApp() {
         cyclesCompleted: 0,
         totalSeconds: selectedSeconds,
         remainingSeconds: selectedSeconds,
-        elapsedSeconds: 0
+        elapsedSeconds: 0,
+        statChangeElapsedSeconds: 0
       }
     });
 
@@ -1022,7 +1024,7 @@ export function createGameApp() {
     }
   }
 
-  function applyMissionStatChanges(activeSurvivor, missionProgress, mission) {
+  function applyMissionStatChangesForDuration(activeSurvivor, missionProgress, mission, durationSeconds) {
     const statChanges =
       missionProgress.statChange && typeof missionProgress.statChange === "object"
         ? missionProgress.statChange
@@ -1030,12 +1032,14 @@ export function createGameApp() {
           ? missionProgress.statChanges
           : mission?.statChange || mission?.statChanges;
 
-    if (!statChanges || typeof statChanges !== "object") {
+    if (!statChanges || typeof statChanges !== "object" || durationSeconds <= 0) {
       return;
     }
 
+    const tickMultiplier = durationSeconds / STAT_CHANGE_TICK_SECONDS;
+
     Object.entries(statChanges).forEach(([statKey, delta]) => {
-      applyStatDelta(activeSurvivor, statKey, delta);
+      applyStatDelta(activeSurvivor, statKey, delta * tickMultiplier);
     });
   }
 
@@ -1060,8 +1064,6 @@ export function createGameApp() {
       });
     }
 
-    applyMissionStatChanges(activeSurvivor, missionProgress, mission);
-
     activeSurvivor.morale = Math.max(0, activeSurvivor.morale - (missionProgress.key === "platter" ? 2 : 1));
     state.resources[missionProgress.reward] += 1;
 
@@ -1082,9 +1084,42 @@ export function createGameApp() {
   }
 
   gameLoop.addSystem(missionProgressSystem, {
-    onMissionTick: (missionProgress) => {
+    onMissionTick: (missionProgress, activeDeltaSeconds) => {
+      let appliedStatChange = false;
+      const activeSurvivor = getSurvivorById(state, missionProgress.survivorId);
+      if (activeSurvivor) {
+        const mission = getMission(missionProgress.categoryKey, missionProgress.key);
+        const elapsedForStatChange =
+          (Number.isFinite(missionProgress.statChangeElapsedSeconds)
+            ? missionProgress.statChangeElapsedSeconds
+            : 0) + Math.max(0, activeDeltaSeconds || 0);
+        const statChangeTicks = Math.floor(elapsedForStatChange / STAT_CHANGE_TICK_SECONDS);
+
+        missionProgress.statChangeElapsedSeconds = elapsedForStatChange;
+
+        if (statChangeTicks > 0) {
+          const appliedDurationSeconds = statChangeTicks * STAT_CHANGE_TICK_SECONDS;
+          missionProgress.statChangeElapsedSeconds =
+            elapsedForStatChange - appliedDurationSeconds;
+
+          applyMissionStatChangesForDuration(
+            activeSurvivor,
+            missionProgress,
+            mission,
+            appliedDurationSeconds,
+          );
+          appliedStatChange = true;
+        }
+
+        if (state.activeId === activeSurvivor.id && appliedStatChange) {
+          renderActive(state, elements, activeSurvivor);
+        }
+      }
+
       renderMissionTimer(missionProgress.categoryKey, missionProgress.key, missionProgress.remainingSeconds);
-      renderRoster(state, elements, onSelectSurvivor);
+      if (appliedStatChange) {
+        renderRoster(state, elements, onSelectSurvivor);
+      }
     },
     onMissionCycleComplete: applyMissionCycleRewards,
     onMissionComplete: completeMission

@@ -173,6 +173,7 @@ export function createInitialState() {
           statChange: {
             sleep: -0.1,
             food: -0.1,
+            hygiene: -0.5,
           },
         },
         pushups: {
@@ -185,6 +186,7 @@ export function createInitialState() {
           statChange: {
             sleep: -0.2,
             food: -0.1,
+            hygiene: -0.5
           },
         },
         shower: {

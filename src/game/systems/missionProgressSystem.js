@@ -5,6 +5,12 @@ export function missionProgressSystem(world, deltaSeconds, context) {
 
   missionEntityIds.forEach((entityId) => {
     const missionProgress = world.getComponent(entityId, Components.MissionProgress);
+    const exactRemainingSeconds = Math.max(
+      0,
+      missionProgress.remainingSeconds - missionProgress.elapsedSeconds,
+    );
+    const activeDeltaSeconds = Math.min(deltaSeconds, exactRemainingSeconds);
+
     missionProgress.elapsedSeconds += deltaSeconds;
 
     let wholeSecondsElapsed = Math.floor(missionProgress.elapsedSeconds);
@@ -31,7 +37,7 @@ export function missionProgressSystem(world, deltaSeconds, context) {
     }
 
     if (context.onMissionTick) {
-      context.onMissionTick(missionProgress);
+      context.onMissionTick(missionProgress, activeDeltaSeconds);
     }
 
     if (missionProgress.remainingSeconds === 0) {
