@@ -137,13 +137,13 @@ export const survivorStatDefinitions = [
     showInHeader: true
   },
   {
-    key: "art",
-    label: "Art",
+    key: "music",
+    label: "Music",
     displayType: STAT_DISPLAY_TYPES.INT,
     lowest: 0,
     highest: 1000,
     default: 1,
-    icon: "🎨",
+    icon: "🎵",
     showInHeader: true
   },
   {

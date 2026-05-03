@@ -62,6 +62,7 @@ const DEFAULT_SHADOW_STYLE = {
 
 const PROP_TRANSFORM_DEFAULTS = Object.freeze({
   sandwich: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
+  read: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
   shower: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
   wash: { x: 0, y: 0, z: 0, scale: 1, rotation: 0 },
   dig: {
@@ -315,6 +316,16 @@ function createPose(timeSeconds, animationName) {
     pose.rightArm = { x: 38 + Math.sin(timeSeconds * 6) * 2, y: -22 + Math.cos(timeSeconds * 6) * 3 };
     pose.bounce = Math.sin(timeSeconds * 6) * 2;
     pose.lean = -0.05;
+  }
+
+  if (animationName === "read") {
+    const pageTurn = (Math.sin(timeSeconds * 2.2) + 1) * 0.5;
+    pose.lean = -0.08 + Math.sin(timeSeconds * 1.8) * 0.015;
+    pose.bounce = Math.sin(timeSeconds * 2.4) * 0.8 + 1;
+    pose.leftArm = { x: -20 + pageTurn * 4, y: -34 + Math.sin(timeSeconds * 3.1) * 1.4 };
+    pose.rightArm = { x: 20 - pageTurn * 4, y: -34 + Math.cos(timeSeconds * 3.1) * 1.2 };
+    pose.leftLeg = { x: -17, y: 79.5 };
+    pose.rightLeg = { x: 17, y: 79.5 };
   }
 
   if (animationName === "celebrate") {
@@ -601,7 +612,7 @@ function createPetPose(timeSeconds, animationName) {
     pose.earPerk = 1;
   }
 
-  if (animationName === "working" || animationName === "sandwich") {
+  if (animationName === "working" || animationName === "sandwich" || animationName === "read") {
     pose.bounce = Math.sin(timeSeconds * 6.3) * 1.7;
     pose.lean = Math.sin(timeSeconds * 4.8) * 0.08;
     pose.tailSwing = Math.sin(timeSeconds * 12) * 0.7;
@@ -1327,6 +1338,54 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.lineTo(6, 4);
     context.moveTo(-3, -6);
     context.lineTo(11, 3);
+    context.stroke();
+
+    context.restore();
+  }
+
+  function drawOpenBook(x, y, tilt = 0, pageTurn = 0) {
+    context.save();
+    context.translate(x, y);
+    context.rotate(tilt);
+
+    const leftSpread = 1 - pageTurn * 0.26;
+    const rightSpread = 1 - (1 - pageTurn) * 0.26;
+
+    context.fillStyle = "#6e4b33";
+    context.beginPath();
+    context.roundRect(-17, -10, 34, 20, 5);
+    context.fill();
+
+    context.fillStyle = "#efe2c4";
+    context.beginPath();
+    context.moveTo(-14, -8);
+    context.quadraticCurveTo(-3, -11 * leftSpread, -1, -2);
+    context.lineTo(-1, 8);
+    context.quadraticCurveTo(-7, 10, -14, 7);
+    context.closePath();
+    context.fill();
+
+    context.beginPath();
+    context.moveTo(14, -8);
+    context.quadraticCurveTo(3, -11 * rightSpread, 1, -2);
+    context.lineTo(1, 8);
+    context.quadraticCurveTo(7, 10, 14, 7);
+    context.closePath();
+    context.fill();
+
+    context.strokeStyle = "#3d3027";
+    context.lineWidth = 1;
+    context.beginPath();
+    context.moveTo(0, -8);
+    context.lineTo(0, 8);
+    context.moveTo(-11, -4);
+    context.lineTo(-3, -2);
+    context.moveTo(-11, 1);
+    context.lineTo(-3, 2);
+    context.moveTo(3, -2);
+    context.lineTo(11, -4);
+    context.moveTo(3, 2);
+    context.lineTo(11, 1);
     context.stroke();
 
     context.restore();
@@ -3189,6 +3248,7 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     const sleepWeight = getAnimationWeight("sleep", easedMix);
     const talkWeight = getAnimationWeight("talk", easedMix);
     const sandwichWeight = getAnimationWeight("sandwich", easedMix);
+    const readWeight = getAnimationWeight("read", easedMix);
     const showerWeight = getAnimationWeight("shower", easedMix);
     const washWeight = getAnimationWeight("wash", easedMix);
     const digWeight = getAnimationWeight("dig", easedMix);
@@ -3743,6 +3803,24 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       context.rotate(sandwichPlacement.rotation);
       context.scale(sandwichPlacement.scale, sandwichPlacement.scale);
       drawSandwich(0, 0, 0);
+      context.restore();
+    }
+
+    if (readWeight > 0.01) {
+      const pageTurn = (Math.sin(seconds * 2.2) + 1) * 0.5;
+      const readPlacement = getPropPlacement(
+        "read",
+        (perspectivePose.leftArm.x + perspectivePose.rightArm.x) * 0.5,
+        (perspectivePose.leftArm.y + perspectivePose.rightArm.y) * 0.5 + 5,
+        -0.03 + Math.sin(seconds * 2.2) * 0.03,
+        { perspectiveBlend, depthVisibility, baseZ: centerDepth }
+      );
+      context.save();
+      context.globalAlpha = readWeight;
+      context.translate(readPlacement.x, readPlacement.y);
+      context.rotate(readPlacement.rotation);
+      context.scale(readPlacement.scale, readPlacement.scale);
+      drawOpenBook(0, 0, 0, pageTurn);
       context.restore();
     }
 

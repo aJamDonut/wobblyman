@@ -217,7 +217,7 @@ export function createInitialState() {
         },
         read: {
           title: "READ",
-          seconds: 10,
+          seconds: 1,
           xp: 0.5,
           requiredFlags: ["hasBooks"],
           statXp: { sleep: 3, knowledge: 1 },
@@ -244,12 +244,13 @@ export function createInitialState() {
         },
         busk: {
           title: "BUSK",
-          seconds: 5,
+          seconds: 1,
           xp: 0.55,
           animation: "sandwich",
           statChange: {
             food: -0.1,
           },
+          statXp: { music: 1 },
           cashPayout: 1,
         },
         sleep: {

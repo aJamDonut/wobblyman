@@ -102,6 +102,7 @@ export function createGameApp() {
     "idle",
     "wave",
     "sandwich",
+    "read",
     "working",
     "celebrate",
     "sleep",
@@ -406,6 +407,7 @@ export function createGameApp() {
     const missionAnimationMap = {
       workout: "pushups",
       pushups: "pushups",
+      read: "read",
       shower: "shower",
       wash: "wash",
       dig: "dig",
