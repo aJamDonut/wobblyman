@@ -29,6 +29,11 @@ const HAIR_STYLES = [
   "ribbon-bob",
   "cyber-visor",
   "long-flow",
+  "ki-spikes",
+  "solar-mane",
+  "battle-wave",
+  "power-crown",
+  "comet-tail",
   "hat-beanie",
   "hat-cap",
   "hat-beret",
@@ -49,6 +54,8 @@ const BODY_TYPES = [
   "tall",
   "lanky"
 ];
+
+const HAIR_SIZE_SCALE = 1.3;
 
 const BODY_TYPE_PROFILES = {
   classic: { torsoWidth: 48, torsoHeight: 62, torsoRadius: 25, torsoYOffset: 0, insetScaleX: 0.67, insetScaleY: 0.71 },
@@ -405,6 +412,13 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.strokeStyle = strokeColor;
     context.lineWidth = 2;
 
+    context.save();
+    context.translate(0, baselineY);
+    context.scale(HAIR_SIZE_SCALE, HAIR_SIZE_SCALE);
+    context.translate(0, -baselineY);
+
+    try {
+
     if (styleName === "buzz") {
       context.beginPath();
       context.roundRect(-17, -85, 34, 8, 5);
@@ -744,6 +758,125 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
       return;
     }
 
+    if (styleName === "ki-spikes") {
+      context.beginPath();
+      context.moveTo(-22, baselineY);
+      context.lineTo(-18, -94);
+      context.lineTo(-12, -82);
+      context.lineTo(-7, -100);
+      context.lineTo(-1, -84);
+      context.lineTo(4, -101);
+      context.lineTo(10, -84);
+      context.lineTo(16, -97);
+      context.lineTo(22, baselineY);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "solar-mane") {
+      context.beginPath();
+      context.roundRect(-19, -88, 38, 13, 8);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(-21, -82);
+      context.lineTo(-25, -92);
+      context.lineTo(-17, -88);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(-13, -86);
+      context.lineTo(-16, -99);
+      context.lineTo(-8, -91);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(-4, -88);
+      context.lineTo(-3, -103);
+      context.lineTo(3, -91);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(6, -87);
+      context.lineTo(10, -100);
+      context.lineTo(14, -90);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(14, -84);
+      context.lineTo(21, -94);
+      context.lineTo(20, -84);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "battle-wave") {
+      const crest = Math.sin(seconds * 4.2) * 1.3;
+      context.beginPath();
+      context.moveTo(-22, baselineY);
+      context.quadraticCurveTo(-15, -101 + crest, 2, -96 + crest * 0.8);
+      context.quadraticCurveTo(18, -90 + crest * 0.5, 23, -80);
+      context.quadraticCurveTo(16, -76, 6, -76);
+      context.quadraticCurveTo(-8, -76, -22, baselineY);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(-8, baselineY);
+      context.quadraticCurveTo(1, -88 + crest * 0.7, 11, -79);
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "power-crown") {
+      context.beginPath();
+      context.moveTo(-21, baselineY);
+      context.lineTo(-17, -86);
+      context.lineTo(-11, -95);
+      context.lineTo(-5, -86);
+      context.lineTo(0, -100);
+      context.lineTo(5, -86);
+      context.lineTo(11, -95);
+      context.lineTo(17, -86);
+      context.lineTo(21, baselineY);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.roundRect(-19, -82, 38, 8, 4);
+      context.fill();
+      context.stroke();
+      return;
+    }
+
+    if (styleName === "comet-tail") {
+      context.beginPath();
+      context.roundRect(-20, -89, 40, 14, 8);
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.moveTo(12, -83);
+      context.quadraticCurveTo(28, -86, 30, -72);
+      context.quadraticCurveTo(22, -63, 13, -70);
+      context.quadraticCurveTo(20, -74, 18, -81);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.roundRect(14, -84, 6, 6, 3);
+      context.fill();
+      context.stroke();
+      return;
+    }
+
     if (styleName === "hat-beanie") {
       context.beginPath();
       context.roundRect(-23, -92, 46, 17, 9);
@@ -912,6 +1045,9 @@ export function createCharacterPreviewRenderer({ canvas, statusLabel }) {
     context.arc(20, -81, 6, 0, Math.PI * 2);
     context.fill();
     context.stroke();
+    } finally {
+      context.restore();
+    }
   }
 
   function drawFrame(now) {
